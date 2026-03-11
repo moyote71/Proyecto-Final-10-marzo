@@ -1,0 +1,101 @@
+.liquid-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 2rem;
+    padding: 0.6rem 1.4rem;
+    font-weight: 500;
+    overflow: hidden;
+    cursor: pointer;
+
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    user-select: none;
+    isolation: isolate;
+}
+
+/* BG principal */
+.liquid-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #6e6eff, #4f46e5, #9333ea);
+    z-index: -2;
+    filter: blur(12px);
+    opacity: 0.95;
+    transition: 0.3s ease;
+}
+
+/* Glow Apple */
+.liquid-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle at 50% 0%,
+            rgba(255, 255, 255, 0.35),
+            transparent 60%);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.liquid-content {
+    position: relative;
+    z-index: 10;
+}
+
+/* Variantes */
+.liquid-primary .liquid-bg {
+    background: linear-gradient(135deg, #6366f1, #4338ca, #6d28d9);
+}
+
+.liquid-secondary .liquid-bg {
+    background: linear-gradient(135deg, #4b5563, #374151, #1f2937);
+}
+
+.liquid-danger .liquid-bg {
+    background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c);
+}
+
+.liquid-default .liquid-bg {
+    background: linear-gradient(135deg, #94a3b8, #64748b, #475569);
+}
+
+/* Tamaños */
+.liquid-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+}
+
+.liquid-md {
+    padding: 0.55rem 1.3rem;
+    font-size: 0.95rem;
+}
+
+.liquid-lg {
+    padding: 0.8rem 1.6rem;
+    font-size: 1rem;
+}
+
+/* Hover */
+.liquid-btn:hover {
+    transform: translateY(-2px);
+}
+
+.liquid-btn:hover .liquid-bg {
+    filter: blur(18px);
+}
+
+.liquid-btn:hover .liquid-glow {
+    opacity: 1;
+}
+
+/* Active */
+.liquid-btn:active {
+    transform: scale(0.96);
+}
+
+/* Apple smooth shadow */
+.liquid-btn:not(:active) {
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}

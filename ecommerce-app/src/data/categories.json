@@ -1,0 +1,154 @@
+[
+    {
+        "_id": "apps",
+        "name": "Apps",
+        "description": "Aplicaciones y software",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": null
+    },
+    {
+        "_id": "instalaciones",
+        "name": "Instalaciones",
+        "description": "Instalación de aplicaciones",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "apps",
+            "name": "Apps",
+            "description": "Aplicaciones y software",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "aplicaciones-profesionales",
+        "name": "Aplicaciones Profesionales",
+        "description": "Software profesional para trabajo creativo y empresarial",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "apps",
+            "name": "Apps",
+            "description": "Aplicaciones y software",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "smartphones",
+        "name": "Smartphones",
+        "description": "Teléfonos inteligentes",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": null
+    },
+    {
+        "_id": "iphone",
+        "name": "iPhone",
+        "description": "Dispositivos iPhone",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "smartphones",
+            "name": "Smartphones",
+            "description": "Teléfonos inteligentes",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "ipad",
+        "name": "iPad",
+        "description": "Tabletas Apple iPad",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "smartphones",
+            "name": "Smartphones",
+            "description": "Teléfonos inteligentes",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "android",
+        "name": "Android",
+        "description": "Dispositivos Android",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "smartphones",
+            "name": "Smartphones",
+            "description": "Teléfonos inteligentes",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "mac",
+        "name": "Mac",
+        "description": "Computadoras Apple",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": null
+    },
+    {
+        "_id": "macbook",
+        "name": "MacBook",
+        "description": "Laptops MacBook",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "mac",
+            "name": "Mac",
+            "description": "Computadoras Apple",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "imac",
+        "name": "iMac / Mac Mini",
+        "description": "Mac de escritorio",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "mac",
+            "name": "Mac",
+            "description": "Computadoras Apple",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "pc",
+        "name": "PC",
+        "description": "Computadoras Windows",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": null
+    },
+    {
+        "_id": "pc-windows",
+        "name": "PC Windows",
+        "description": "Laptops y PCs con Windows",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "pc",
+            "name": "PC",
+            "description": "Computadoras Windows",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    },
+    {
+        "_id": "wearables",
+        "name": "Relojes Inteligentes",
+        "description": "Dispositivos inteligentes",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": null
+    },
+    {
+        "_id": "apple-watch",
+        "name": "Apple Watch",
+        "description": "Relojes inteligentes Apple",
+        "imageURL": "https://placehold.co/800x600.png",
+        "parentCategory": {
+            "_id": "wearables",
+            "name": "Wearables",
+            "description": "Dispositivos inteligentes",
+            "imageURL": "https://placehold.co/800x600.png",
+            "parentCategory": null
+        }
+    }
+]

@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tu estilo global */
+body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+/* Spinner */
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes desktopMenuPop {
+    0% {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.92);
+        filter: blur(8px);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(2px) scale(1.04);
+        filter: blur(2px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.animate-desktop-menu-pop {
+    animation: desktopMenuPop 0.22s cubic-bezier(.2, .8, .3, 1.1) forwards;
+}
+
+/* ——— COLORES & CONTRASTE ——— */
+.header-dark,
+.header-dark * {
+    @apply text-white;
+}
+
+/* ——— USER MENU (DESKTOP) ——— */
+.user-menu-container {
+    @apply text-white bg-neutral-900/95 backdrop-blur-xl shadow-xl rounded-2xl px-4 py-3;
+}
+
+/* Asegura legibilidad total */
+.user-menu-container * {
+    @apply text-white;
+}
+
+/* ——— MOBILE MENU ——— */
+.mobile-menu-panel {
+    @apply text-white bg-neutral-900/95 backdrop-blur-xl shadow-2xl rounded-2xl p-4;
+}
+
+.mobile-menu-panel * {
+    @apply text-white;
+}
+
+/* ——— TEXTO "Hola, Usuario" ——— */
+.user-greeting {
+    @apply text-white font-semibold tracking-wide;
+}
+
+/* ——— BOTONES ——— */
+.menu-item,
+.menu-button {
+    @apply text-white hover:text-neutral-200;
+}
+
+.menu-item {
+    @apply text-white dark:text-black py-2 px-3 rounded-lg cursor-pointer transition-all;
+}
+
+.menu-item:hover {
+    @apply bg-white/10 dark:bg-black/10;
+}
+
+/* Animación */
+@keyframes dropdown {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

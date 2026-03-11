@@ -1,0 +1,27 @@
+[
+    {
+        "title": "Aquí si hay segundas oportunidades.",
+        "subtitle": "Cotiza ahora",
+        "image": "https://guide-images.cdn.ifixit.com/igi/JtBACGbyZcYSdBfL.huge",
+        "buttonText": "Cotizaciones",
+        "buttonLink": "/offers",
+        "backgroundColor": "#8677b5"
+    },
+    {
+        "title": "No gastes en un equipo nuevo, renueva tu equipo, quedando como nueva.",
+        "subtitle": "Sea a nivel componente o software.",
+        "image": "https://guide-images.cdn.ifixit.com/igi/6h26dDNqL6mnrQDq.huge",
+        "buttonText": "Explorar",
+        "buttonLink": "/tech",
+        "backgroundColor": "#3eb7ea"
+    },
+    {
+        "title": "Servicio a cualquier equipo Apple, dando soluciones instantaneas.",
+        "subtitle": "Lo mejor, Soluciones Mac",
+        "image": "https://ipadizate.com/hero/2025/01/ecosistema-apple-dispositivos.1738312301.0213.jpg?width=768&aspect_ratio=16:9",
+        "buttonText": "Ver soluciones",
+        "buttonLink": "/free-shipping",
+        "backgroundColor": "#79bf87"
+    }
+    
+]

@@ -1,0 +1,182 @@
+[
+    {
+        "_id": "prod-office-365",
+        "name": "Office 365",
+        "description": "Instalación de Office 365 para equipos Mac o Windows.",
+        "price": 700,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/Office.jpeg"
+        ],
+        "category": {
+            "_id": "instalaciones",
+            "name": "Instalaciones",
+            "parentCategory": {
+                "_id": "apps",
+                "name": "Apps"
+            }
+        }
+    },
+    {
+        "_id": "prod-adobe-cc",
+        "name": "Adobe Creative Cloud",
+        "description": "Instalación de Adobe Creative Cloud para Mac o Windows.",
+        "price": 1500,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/Adobe.jpeg"
+        ],
+        "category": {
+            "_id": "instalaciones",
+            "name": "Instalaciones",
+            "parentCategory": {
+                "_id": "apps",
+                "name": "Apps"
+            }
+        }
+    },
+    {
+        "_id": "prod-apps-pro",
+        "name": "Aplicaciones Profesionales",
+        "description": "Catálogo de aplicaciones profesionales para Mac y Windows.",
+        "price": 1200,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/apps.webp"
+        ],
+        "category": {
+            "_id": "aplicaciones-profesionales",
+            "name": "Aplicaciones Profesionales",
+            "parentCategory": {
+                "_id": "apps",
+                "name": "Apps"
+            }
+        }
+    },
+    {
+        "_id": "prod-iphone",
+        "name": "Reparación iPhone",
+        "description": "Reparación de iPhone a nivel hardware y software.",
+        "price": 2000,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/iPhone.webp"
+        ],
+        "category": {
+            "_id": "iphone",
+            "name": "iPhone",
+            "parentCategory": {
+                "_id": "smartphones",
+                "name": "Smartphones"
+            }
+        }
+    },
+    {
+        "_id": "prod-ipad",
+        "name": "Reparación iPad",
+        "description": "Reparación general de iPad.",
+        "price": 1800,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/iPad.webp"
+        ],
+        "category": {
+            "_id": "ipad",
+            "name": "iPad",
+            "parentCategory": {
+                "_id": "smartphones",
+                "name": "Smartphones"
+            }
+        }
+    },
+    {
+        "_id": "prod-android",
+        "name": "Reparación Android",
+        "description": "Reparación de dispositivos Android.",
+        "price": 1500,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/android11.webp"
+        ],
+        "category": {
+            "_id": "android",
+            "name": "Android",
+            "parentCategory": {
+                "_id": "smartphones",
+                "name": "Smartphones"
+            }
+        }
+    },
+    {
+        "_id": "prod-macbook",
+        "name": "MacBook Pro / Air",
+        "description": "Reparación de MacBook Pro y Air.",
+        "price": 2000,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/Macs.jpg"
+        ],
+        "category": {
+            "_id": "macbook",
+            "name": "MacBook",
+            "parentCategory": {
+                "_id": "mac",
+                "name": "Mac"
+            }
+        }
+    },
+    {
+        "_id": "prod-imac",
+        "name": "iMac / Mac Mini",
+        "description": "Reparación de iMac y Mac Mini.",
+        "price": 2000,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/imac1.jpg"
+        ],
+        "category": {
+            "_id": "imac",
+            "name": "iMac / Mac Mini",
+            "parentCategory": {
+                "_id": "mac",
+                "name": "Mac"
+            }
+        }
+    },
+    {
+        "_id": "prod-pc-windows",
+        "name": "PC Windows",
+        "description": "Reparación de computadoras Windows.",
+        "price": 2000,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/windows.webp"
+        ],
+        "category": {
+            "_id": "pc-windows",
+            "name": "PC Windows",
+            "parentCategory": {
+                "_id": "pc",
+                "name": "PC"
+            }
+        }
+    },
+    {
+        "_id": "prod-apple-watch",
+        "name": "Apple Watch",
+        "description": "Reparación de Apple Watch.",
+        "price": 1000,
+        "stock": 1000,
+        "imagesUrl": [
+            "/img/products/watch.jpg"
+        ],
+        "category": {
+            "_id": "apple-watch",
+            "name": "Apple Watch",
+            "parentCategory": {
+                "_id": "wearables",
+                "name": "Wearables"
+            }
+        }
+    }
+]
