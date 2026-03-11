@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ECOMMERCE-REACT
 
 Plataforma de comercio electrónico full-stack construida con **React 19** en el frontend y **Node.js + Express 5 + MongoDB** en el backend.
@@ -58,10 +57,27 @@ npm start
 
 ## 📋 Documentación
 
-- **[SPEC.md](./SPEC.md)** — Especificaciones técnicas completas: modelos, endpoints, flujos de autenticación, estructura de directorios.
-- **[IMPROVEMENTS.md](./IMPROVEMENTS.md)** — Bugs conocidos y mejoras propuestas ordenadas por prioridad.
-- **[ecommerce-app/AGENTS.md](./ecommerce-app/AGENTS.md)** — Guía para agentes de IA que trabajan en el frontend.
-- **[ecommerce-app/AGENTS.testing.md](./ecommerce-app/AGENTS.testing.md)** — Tests E2E con Cypress.
+### Backend (`ecommerce-api/`)
+- **[AGENTS.md](./ecommerce-api/AGENTS.md)** — Guía completa de la API: endpoints, autenticación JWT, modelos de datos, manejo de errores y reglas para agentes IA.
+- **[AGENTS.testing.md](./ecommerce-api/AGENTS.testing.md)** — Plan de pruebas de la API: requests/responses, pruebas de seguridad (JWT, roles, injection, rate limit) y scripts de rendimiento k6.
+
+### Frontend (`ecommerce-app/`)
+- **[AGENTS.testing.md](./ecommerce-app/AGENTS.testing.md)** — Plan de pruebas E2E con Cypress: 6 suites (auth, products, cart, checkout, wishlist, theme), tabla de `data-testid` e integración CI/CD.
+
+### General
+- **[SPEC.md](./SPEC.md)** — Especificaciones técnicas completas: modelos, endpoints, flujos, estructura de directorios.
+- **[TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)** — Deuda técnica priorizada (P0–P3) y roadmap hacia el despliegue.
+- **[IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)** — Plan de implementación con checkboxes de progreso (Fase 1→4).
+
+## 🧪 Pruebas de Rendimiento
+
+Scripts k6 en `ecommerce-api/scripts/`:
+
+```bash
+brew install k6
+k6 run ecommerce-api/scripts/load-test.js    # Carga sostenida (20 VUs)
+k6 run ecommerce-api/scripts/stress-test.js  # Estrés (hasta 200 VUs)
+```
 
 ## 🔑 Rutas Principales de la API
 
@@ -77,6 +93,3 @@ Ver [SPEC.md](./SPEC.md) para la lista completa de endpoints.
 ## ⚠️ Estado Actual
 
 El proyecto está en desarrollo activo. El frontend aún usa algunos datos mock (JSON locales) en lugar de la API real. Ver [IMPROVEMENTS.md](./IMPROVEMENTS.md) para la lista de bugs conocidos y el plan de integración completa.
-=======
-# Proyecto-Final
->>>>>>> 1ab86ff6579cc8e3eb48056b9b2f54617f94923b
