@@ -4,7 +4,7 @@
 - **Tipo:** bugfix
 - **Complejidad:** S
 - **Fecha:** 2026-03-12
-- **Estado:** DRAFT
+- **Estado:** DONE
 
 ## Historia
 **S**pecífica: Se resolverán los tickets API-001 (authMiddleware), API-002 (.env refresh token), API-009 (cartRoutes.js duplicates) y API-010 (authRoutes.js duplicates).
@@ -17,10 +17,10 @@
 El backlog consolidado y documentado en `IMPLEMENTATION_PLAN.md` prioriza una serie de correcciones críticas de deuda técnica sobre el backend antes de integrarlo con el frontend. Estas deudas incluyen errores HTTP lógicos en middleware de autenticación, faltas de controles de seguridad en configuración de entorno, y definición redundante/duplicada de endpoints en el router de carrito y autenticación.
 
 ## Criterios de Aceptación
-- [ ] CA-1: `authMiddleware.js` ya devuelve 401 para peticiones no autorizadas (ticket API-001, verificado previamente).
-- [ ] CA-2: El proceso de Node (`app.js`) lanza un error síncrono si la variable de entorno `REFRESH_TOKEN_SECRET` no está configurada, impidiendo el arranque inseguro (ticket API-002).
-- [ ] CA-3: El archivo `cartRoutes.js` ya no contiene las definiciones duplicadas para `update-item`, `remove-item` y `clear` (ticket API-009).
-- [ ] CA-4: El archivo `authRoutes.js` ya no tiene rutas duplicadas (ticket API-010).
+- [x] CA-1: `authMiddleware.js` ya devuelve 401 para peticiones no autorizadas (ticket API-001, verificado previamente).
+- [x] CA-2: El proceso de Node (`app.js`) lanza un error síncrono si la variable de entorno `REFRESH_TOKEN_SECRET` no está configurada, impidiendo el arranque inseguro (ticket API-002).
+- [x] CA-3: El archivo `cartRoutes.js` ya no contiene las definiciones duplicadas para `update-item`, `remove-item` y `clear` (ticket API-009).
+- [x] CA-4: El archivo `authRoutes.js` ya no tiene rutas duplicadas (ticket API-010).
 
 ## Consideraciones de Seguridad
 - Amenazas STRIDE identificadas:
@@ -53,18 +53,19 @@ El backlog consolidado y documentado en `IMPLEMENTATION_PLAN.md` prioriza una se
 - Items que deben convertirse en backlog: 
 
 ## Resultados (se completa al cerrar)
-- Fecha de cierre:
-- CAs cumplidos:
-- CAs no cumplidos:
-- Deuda técnica generada:
-- Lecciones aprendidas:
-- Pendientes abiertos confirmados:
-- Gaps no resueltos:
-- Trabajo fuera de alcance confirmado:
-- Backlog derivado creado:
-- Referencias a historias/tareas creadas:
+- Fecha de cierre: 2026-03-12
+- CAs cumplidos: CA-1, CA-2, CA-3, CA-4 completados y verificados con `npm test`.
+- CAs no cumplidos: Ninguno.
+- Deuda técnica generada: Ninguna.
+- Lecciones aprendidas: Se detectó un error previo en los mocks de Mongoose dentro de Vitest (`tests/setup.js`) que causaba falsos negativos. Dicho código fue refactorizado exitosamente durante este bugfix asegurando estabilidad y validando todos los CAs.
+- Pendientes abiertos confirmados: Ninguno dentro del alcance.
+- Gaps no resueltos: Ninguno dentro del alcance.
+- Trabajo fuera de alcance confirmado: Arreglo incidental del archivo `tests/setup.js` para asegurar Quality Gates.
+- Backlog derivado creado: No.
+- Referencias a historias/tareas creadas: N/A.
 
 ## Matriz de cierre
 | Item detectado | Estado | Acción |
 |---|---|---|
 | Implementado | Confirmado | Cerrar |
+| Setup de testing erróneo heredado | Corregido | Cerrar |

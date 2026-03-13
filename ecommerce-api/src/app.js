@@ -14,6 +14,11 @@ if (process.env.NODE_ENV !== 'test') {
     setupGlobalErrorHandlers();
 }
 
+if (!process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET or REFRESH_TOKEN_SECRET is not defined in the environment variables.');
+    process.exit(1);
+}
+
 const app = express();
 
 // Solo conectar a DB real si no estamos en test (el test usa setup.js)

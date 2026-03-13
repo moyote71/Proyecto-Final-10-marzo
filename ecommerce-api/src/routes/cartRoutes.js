@@ -127,38 +127,4 @@ router.post(
   validate,
   clearCartItems,
 );
-// Rutas nuevas
-router.put(
-  "/cart/update-item",
-  authMiddleware,
-  [
-    bodyMongoIdValidation("userId", "User ID"),
-    bodyMongoIdValidation("productId", "Product ID"),
-    quantityValidation("quantity", true),
-  ],
-  validate,
-  updateCartItem,
-);
-
-router.delete(
-  "/cart/remove-item/:productId",
-  authMiddleware,
-  [
-    mongoIdValidation("productId", "Product ID"),
-    bodyMongoIdValidation("userId", "User ID"),
-  ],
-  validate,
-  removeCartItem
-);
-
-router.post(
-  "/cart/clear",
-  authMiddleware,
-  [
-    bodyMongoIdValidation("userId", "User ID"),
-  ],
-  validate,
-  clearCartItems,
-);
-
 export default router;
