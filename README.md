@@ -6,10 +6,11 @@ Plataforma de comercio electrónico full-stack construida con **React 19** en el
 
 ```
 ECOMMERCE-REACT/
-├── ecommerce-api/    # Backend: Express 5 + Mongoose + JWT
-├── ecommerce-app/    # Frontend: React 19 + React Router v7
-├── SPEC.md           # Especificaciones técnicas completas
-└── IMPROVEMENTS.md   # Mejoras propuestas y bugs conocidos
+├── ecommerce-api/             # Backend: Express 5 + Mongoose + JWT
+├── ecommerce-app/             # Frontend: React 19 + React Router v7
+├── PROJECT_AUDIT_AND_SPECS.md # Especificaciones y diagnóstico completo
+├── TECHNICAL_DEBT.md          # Deuda técnica priorizada y pendientes
+└── IMPLEMENTATION_PLAN.md     # Checkpoints de progreso
 ```
 
 ## 🚀 Inicio Rápido
@@ -65,7 +66,7 @@ npm start
 - **[AGENTS.testing.md](./ecommerce-app/AGENTS.testing.md)** — Plan de pruebas E2E con Cypress: 6 suites (auth, products, cart, checkout, wishlist, theme), tabla de `data-testid` e integración CI/CD.
 
 ### General
-- **[SPEC.md](./SPEC.md)** — Especificaciones técnicas completas: modelos, endpoints, flujos, estructura de directorios.
+- **[PROJECT_AUDIT_AND_SPECS.md](./PROJECT_AUDIT_AND_SPECS.md)** — Diagnóstico, arquitectura, especificaciones completas e historias de usuario.
 - **[TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)** — Deuda técnica priorizada (P0–P3) y roadmap hacia el despliegue.
 - **[IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)** — Plan de implementación con checkboxes de progreso (Fase 1→4).
 
@@ -86,10 +87,10 @@ k6 run ecommerce-api/scripts/stress-test.js  # Estrés (hasta 200 VUs)
 | Autenticación | `POST /api/auth/register` \| `POST /api/auth/login` |
 | Productos | `GET /api/products` \| `GET /api/products/search` |
 | Órdenes | `GET/POST /api/orders` |
-| Carrito | `GET/POST /api/carts` |
+| Carrito | `GET/POST /api/cart` |
 
-Ver [SPEC.md](./SPEC.md) para la lista completa de endpoints.
+Ver [PROJECT_AUDIT_AND_SPECS.md](./PROJECT_AUDIT_AND_SPECS.md) y `AGENTS.md` para la lista completa de endpoints.
 
 ## ⚠️ Estado Actual
 
-El proyecto está en desarrollo activo. El frontend aún usa algunos datos mock (JSON locales) en lugar de la API real. Ver [IMPROVEMENTS.md](./IMPROVEMENTS.md) para la lista de bugs conocidos y el plan de integración completa.
+El proyecto está en desarrollo activo enfocado en saldar la deuda técnica. El frontend aún usa datos locales o lógica mockeada de autenticación y carrito temporalmente. Ver **[TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)** y **[PROJECT_AUDIT_AND_SPECS.md](./PROJECT_AUDIT_AND_SPECS.md)** para la lista de integraciones requeridas.

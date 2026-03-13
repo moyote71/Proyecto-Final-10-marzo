@@ -73,7 +73,16 @@ async function login(req, res, next) {
       userExist.displayName,
       userExist.role,
     );
-    res.status(200).json({ token, refreshToken });
+    res.status(200).json({
+      token,
+      refreshToken,
+      user: {
+        _id: userExist._id,
+        displayName: userExist.displayName,
+        email: userExist.email,
+        role: userExist.role,
+      }
+    });
   } catch (error) {
     next(error);
   }

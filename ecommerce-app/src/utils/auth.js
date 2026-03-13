@@ -1,29 +1,23 @@
-import { fetchUsers } from "../services/userService";
-
-const validUsers = {
-    "admin@email.com": "admin123",
-    "cliente@email.com": "cliente123",
-};
+import { http } from "../services/http";
 
 export async function login(email, password) {
-    if (!validUsers[email] || validUsers[email] !== password) {
+    try {
+        const response = await http.post('/auth/login', { email, password });
+        const { token, user } = response.data;
+        
+        if (token && user) {
+            const userWithLoginDate = { ...user, loginDate: new Date().toISOString() };
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("userData", JSON.stringify(userWithLoginDate));
+            return { success: true, user: userWithLoginDate };
+        }
+        return { success: false, error: "Respuesta inválida del servidor" };
+    } catch (error) {
         return {
             success: false,
-            error: "Email o contraseña incorrectos",
+            error: error.message || "Error al iniciar sesión",
         };
     }
-
-    const users = await fetchUsers();
-    const user = users.find((u) => u.email === email);
-
-    if (user) {
-        const token = btoa(`${email}:${Date.now()}`);
-        const userWithLoginDate = { ...user, loginDate: new Date().toISOString() };
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("userData", JSON.stringify(userWithLoginDate));
-        return { success: true, user: userWithLoginDate };
-    }
-    return { success: false, error: "Usuario no encontrado" };
 }
 
 export function logout() {

@@ -19,13 +19,16 @@ import {
     getShippingAddresses,
 } from "../services/shippingService";
 import * as styles from "./CheckoutStyles";
+import { http } from "../services/http";
+import { getCurrentUser } from "../utils/auth";
 
 export default function Checkout() {
     const navigate = useNavigate();
-    const { cartItems, total, clearCart } = useCart();
+    const { cartItems, getTotalPrice, clearCart } = useCart();
+    const user = getCurrentUser();
 
     //calculo financiero
-    const subtotal = total || 0;
+    const subtotal = getTotalPrice() || 0;
     const TAX_RATE = 0.16;
     const SHIPPING_RATE = 350;
     const FREE_SHIPPING_THRESHOLD = 1000;
@@ -226,29 +229,34 @@ export default function Checkout() {
     };
 
     //finalizar orden
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
         if (!selectedAddress || !selectedPayment) return;
+        if (!user) {
+            setLocalError("Debes iniciar sesión para completar la orden");
+            return;
+        }
 
-        const order = {
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            items: cartItems.map((i) => ({ ...i, subtotal: i.price * i.quantity })),
-            subtotal,
-            tax: taxAmount,
-            shipping: shippingCost,
-            total: grandTotal,
-            shippingAddress: selectedAddress,
-            paymentMethod: selectedPayment,
-            status: "confirmed",
+        const orderData = {
+            user: user._id,
+            products: cartItems.map((i) => ({
+                productId: i._id,
+                quantity: i.quantity,
+                price: i.price,
+            })),
+            shippingAddress: selectedAddress._id,
+            paymentMethod: selectedPayment._id,
+            shippingCost: shippingCost,
         };
 
-        const store = JSON.parse(localStorage.getItem("orders") || "[]");
-        store.push(order);
-        localStorage.setItem("orders", JSON.stringify(store));
-
-        setIsOrderFinished(true);
-        clearCart();
-        navigate("/order-confirmation", { state: { order } });
+        try {
+            const response = await http.post("/orders", orderData);
+            
+            setIsOrderFinished(true);
+            clearCart();
+            navigate("/order-confirmation", { state: { order: response.data } });
+        } catch (error) {
+            setLocalError(error.message || "Error al crear la orden. Inténtalo más tarde.");
+        }
     };
 
     // UI states 
