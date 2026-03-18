@@ -47,8 +47,6 @@ router.post(
 
 router.post("/refresh", refreshToken);
 
-router.post("/refresh", refreshToken);
-
 router.get("/check-email", [queryEmailValidation()], validate, checkEmail);
 
 export default router;

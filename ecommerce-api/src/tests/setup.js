@@ -1,10 +1,12 @@
 import { vi, beforeAll, afterEach } from 'vitest';
 
 const createModelMock = () => {
-    const model = vi.fn().mockImplementation(() => ({
-        save: vi.fn().mockResolvedValue(true),
-        populate: vi.fn().mockReturnThis(),
-    }));
+    const model = vi.fn().mockImplementation(function() {
+        return {
+            save: vi.fn().mockResolvedValue(true),
+            populate: vi.fn().mockReturnThis(),
+        };
+    });
 
     // Métodos que suelen encadenarse - ahora devuelven un objeto "query"
     const mockQuery = {
