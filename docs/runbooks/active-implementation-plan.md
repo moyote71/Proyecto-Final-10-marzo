@@ -19,16 +19,16 @@
 
 ### 1.1 Corrección de bugs críticos en la API
 
-- [ ] **[API-001]** `authMiddleware`: cambiar `res.status(403)` → `res.status(401)` para tokens inválidos/expirados  
+- [x] **[API-001]** `authMiddleware`: cambiar `res.status(403)` → `res.status(401)` para tokens inválidos/expirados  
   _Archivo: `ecommerce-api/src/middlewares/authMiddleware.js:12`_
 
-- [ ] **[API-002]** Añadir `REFRESH_TOKEN_SECRET` a `.env.example` y verificar que el proceso no arranca sin ella  
+- [x] **[API-002]** Añadir `REFRESH_TOKEN_SECRET` a `.env.example` y verificar que el proceso no arranca sin ella  
   _Archivo: `ecommerce-api/src/.env.example`_
 
-- [ ] **[API-009]** Eliminar duplicados en `cartRoutes.js` (bloques `update-item`, `remove-item`, `clear` declarados dos veces)  
+- [x] **[API-009]** Eliminar duplicados en `cartRoutes.js` (bloques `update-item`, `remove-item`, `clear` declarados dos veces)  
   _Archivo: `ecommerce-api/src/routes/cartRoutes.js` líneas 99-162_
 
-- [ ] **[API-010]** Eliminar `router.post("/refresh", refreshToken)` duplicado en `authRoutes.js`  
+- [x] **[API-010]** Eliminar `router.post("/refresh", refreshToken)` duplicado en `authRoutes.js`  
   _Archivo: `ecommerce-api/src/routes/authRoutes.js:50`_
 
 ### 1.2 Mejoras de respuesta en la API
