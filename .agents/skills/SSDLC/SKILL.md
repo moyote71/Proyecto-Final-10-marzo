@@ -132,12 +132,36 @@ Crear el documento de especificación en:
 ## Riesgos y Deuda Técnica
 [Qué puede salir mal. Qué queda pendiente conscientemente]
 
+## Pendientes Abiertos y Gaps Detectados
+- Funcionalidades faltantes: [lista]
+- Comportamientos inconsistentes detectados: [lista]
+- Gaps entre frontend y backend: [lista]
+- Persistencia pendiente de migrar: [lista]
+- Decisiones aplazadas: [lista]
+- Trabajo fuera de alcance en esta iteración: [lista]
+- Riesgos que requieren seguimiento: [lista]
+- Items que deben convertirse en backlog: [lista]
+
 ## Resultados (se completa al cerrar)
 - Fecha de cierre:
-- CAs cumplidos:
-- CAs no cumplidos:
+- CAs cumplidos: [lista detallada]
+- CAs no cumplidos: [explicación]
 - Deuda técnica generada:
 - Lecciones aprendidas:
+- Pendientes abiertos confirmados: [lista consolidada]
+- Gaps no resueltos: [explicación de impacto]
+- Trabajo fuera de alcance confirmado: [descripción]
+- Backlog derivado creado: sí | no
+- Referencias a historias/tareas creadas: [links o IDs]
+
+## Matriz de cierre
+| Item detectado | Estado | Acción |
+|---|---|---|
+| Implementado | Confirmado | Cerrar |
+| Parcial | Requiere seguimiento | Crear backlog |
+| Inconsistente | Riesgo | Crear backlog |
+| Fuera de alcance | Aplazado | Crear backlog o archivar |
+| Obsoleto | No aplica | Archivar o eliminar |
 ```
 
 Hacer commit del spec **antes de crear la rama de trabajo:**
@@ -350,47 +374,131 @@ El PR siempre va dirigido a `develop`, excepto hotfixes que van a `main`.
 
 ---
 
-## FASE 10 — CIERRE DE SPEC Y DOCUMENTACIÓN
+## FASE 10 — CIERRE DE SPEC Y DOCUMENTACIÓN ESTRICTA
 
-Actualizar el archivo de spec en `/docs/specs/`:
+Actualizar el archivo de spec en `/docs/specs/` para asegurar un cierre formal y rastreable:
 
-1. Cambiar estado a `DONE` o `REJECTED`
-2. Completar la sección `## Resultados`:
-   - Fecha de cierre
-   - CAs cumplidos y no cumplidos
-   - Deuda técnica generada (si aplica)
-   - Lecciones aprendidas (si aplica)
+1. Cambiar estado a `DONE` o `REJECTED`.
+2. Completar de manera exhaustiva la sección `## Resultados`, incluyendo links al backlog y deuda confirmada.
+3. Completar obligatoriamente la sección `## Pendientes Abiertos y Gaps Detectados`, registrando explícitamente todo lo que **NO** se resolvió.
+4. Llenar la `## Matriz de cierre` asignando una acción a cada hallazgo.
+5. Convertir cada pendiente accionable en backlog (creando tickets, issues documentados o nuevos specs).
+
+> ⚠️ **Regla Operativa:** La fase documental no se considera cerrada hasta que los pendientes abiertos, gaps detectados y trabajo fuera de alcance hayan quedado explícitamente documentados y convertidos en backlog accionable cuando corresponda.
 
 Hacer commit de cierre:
 ```bash
 git add docs/specs/
-git commit -m "docs: close spec [nombre-corto] — [DONE|REJECTED]"
+git commit -m "docs: close spec [nombre-corto] — [DONE|REJECTED] with derived backlog"
 ```
 
 ---
 
-## REGLAS GENERALES DE COMPORTAMIENTO
+## FASE 10.5 — ESTABLECER BASELINE OFICIAL (ETAPA 1)
 
-### Cuándo preguntar antes de actuar
-- La solicitud es ambigua y hay múltiples interpretaciones válidas
-- No hay suficiente contexto para escribir una historia SMART
-- Una decisión de diseño tiene implicaciones de seguridad no triviales
-- El cambio podría afectar contratos o interfaces que otros módulos usan
+Una vez terminada la auditoría, la documentación base del sistema y consolidado el backlog derivado, **debe generarse un baseline oficial del proyecto**.
 
-### Cuándo detener y reportar
-- Un quality gate falla y la corrección requiere decisión de diseño
-- Se detecta un secret en el historial de git o en el código
-- El entorno de desarrollo está en un estado inconsistente
-- Una dependencia tiene un CVE activo relevante para el cambio
+A partir de este momento, el protocolo cambia: finaliza la Etapa 1 (exploratoria/documental) y comienza la Etapa 2 (ejecución orquestada). 
 
-### Lo que nunca se omite
-- El spec, sin importar qué tan pequeño sea el cambio
-- Los tests para código nuevo
-- La revisión de diff antes del PR
-- El cierre del spec con resultados documentados
+El baseline establece que:
+- **Código actual + Documentación vigente + Backlog aprobado = Fuente oficial de verdad.**
+- Ningún trabajo posterior puede contradecir este baseline sin un proceso formal de rediseño.
 
-### Política sobre atajos
-No existen atajos en este protocolo. Un bugfix de una línea sigue el mismo proceso que una feature grande. La disciplina es consistente porque los problemas de seguridad no avisan con anticipación.
+**Ejecución del Baseline:**
+```bash
+git checkout develop
+git commit -m "chore: establish project baseline and consolidated backlog"
+git tag -a v1.0.0-baseline -m "Official project baseline before subagent execution"
+git push origin develop --tags
+```
+
+---
+
+## FASE 11 — MODO DE EJECUCIÓN CON SUBAGENTES (ETAPA 2)
+
+Después del baseline, el proyecto opera exclusivamente mediante la **Ejecución Orquestada de Pendientes Formales**. 
+
+### 11.1 Modelo de Autoridad
+
+#### El Agente Principal (Orquestador)
+- Define prioridades, selecciona tickets del backlog y asigna contexto.
+- Es el guardián de la consistencia arquitectónica y documental.
+- Es el único responsable de la integración final (merge a `develop`).
+- Es el único autorizado para decidir si una duda bloqueante requiere consultar al usuario humano.
+
+#### Los Subagentes (Ejecutores)
+- Son responsables de ejecutar **una sola unidad de trabajo** delimitada a la vez.
+- **NO** tienen autoridad para redefinir la arquitectura global.
+- **NO** tienen autoridad para cambiar prioridades del roadmap.
+- **NO** tienen autoridad para expandir el alcance por cuenta propia (inventar features).
+- Las decisiones de diseño que impacten otros módulos deben volver al Agente Principal como propuesta.
+
+### 11.2 Unidad Mínima de Trabajo
+
+En este modo rige una regla fuerte e inequívoca:
+**1 pendiente = 1 spec = 1 rama = 1 PR**
+
+- Prohibido mezclar múltiples pendientes en la misma rama.
+- Prohibido agrupar tareas no relacionadas.
+- Prohibido abrir trabajo técnico sin un spec propio o ticket previo.
+
+### 11.3 Entradas Obligatorias para el Subagente
+Antes de escribir una sola línea de código, el subagente DEBE recibir del Agente Principal:
+- ID del pendiente o ticket.
+- Historia o tarea técnica asignada.
+- Criterios de aceptación esperados.
+- Contexto funcional y técnico (arquitectura actual del módulo).
+- Dependencias y restricciones de seguridad aplicables.
+- Definición formal de Terminado (DoD).
+
+### 11.4 Flujo Operativo del Subagente
+1. **Asignación:** El Agente Principal selecciona un pendiente del backlog oficial y delega.
+2. **Clasificación:** El Subagente recibe el contexto y modela amenazas (Fase 1).
+3. **Planificación:** El Subagente redacta el Spec (Fase 3).
+4. **Rama:** El Subagente aísla su trabajo desde `develop` (Fase 4).
+5. **Implementación:** El Subagente programa siguiendo las reglas de seguridad (Fase 6).
+6. **Validación:** El Subagente ejecuta Quality Gates y tests (Fase 7 y 8).
+7. **Documentación:** El Subagente actualiza el spec con los resultados de su rama (Fase 10).
+8. **Entrega:** El Subagente devuelve el control y la evidencia al Agente Principal.
+
+### 11.5 Salida Obligatoria del Subagente
+Al finalizar su tarea, el Subagente DEBE entregar explícitamente:
+- Resumen de los cambios realizados.
+- Estado de los Criterios de Aceptación (cumplidos/no cumplidos).
+- Evidencia de pruebas (logs, capturas o comandos ejecutados).
+- Riesgos remanentes o nueva deuda técnica generada.
+- Pendientes nuevos descubiertos durante la ejecución.
+- Recomendación de integración.
+*(Nota: El Subagente NUNCA hace el merge hacia develop de forma autónoma).*
+
+### 11.6 Consolidación (Agente Principal)
+Al recibir el trabajo de un Subagente, el Agente Principal retoma el control para:
+- Revisar que la rama sea consistente con el baseline y el spec aprobado.
+- Detectar conflictos con ramas de otros subagentes paralelos.
+- Homologar criterios y validar dependencias cruzadas.
+- Preparar, validar y ejecutar el PR final hacia `develop`.
+
+---
+
+## REGLAS GENERALES DE ESCALAMIENTO Y RESTRICCIONES
+
+### Escalamiento de Hallazgos y Dudas
+- Los subagentes no deben resolver ambigüedades inventando reglas de negocio.
+- Toda duda bloqueante debe escalarse al Agente Principal documentando:
+  - La duda específica.
+  - Opciones viables descubiertas.
+  - Impacto técnico, funcional y de seguridad.
+  - Recomendación sugerida.
+- El Subagente no debe interrumpir el flujo del usuario directamente; escala al orquestador.
+
+### Restricciones No Negociables
+1. Ningún subagente puede trabajar fuera del backlog aprobado.
+2. Ningún subagente puede inventar alcance nuevo.
+3. Ningún subagente puede saltarse la creación del spec, omitir tests o ignorar Quality Gates.
+4. Ningún subagente puede mezclar dos pendientes en una sola rama.
+5. Ningún subagente puede modificar las ramas `main`, `master` o `develop` directamente.
+6. Ningún subagente puede modificar documentación arquitectónica base sin justificarlo formalmente como una propuesta al orquestador.
+7. Ningún subagente puede considerar cerrado un flujo sin completar y actualizar la sección "Resultados" de su spec.
 
 ---
 

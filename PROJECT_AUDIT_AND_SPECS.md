@@ -198,28 +198,8 @@ Centraliza la gestión de inventario y pedidos en una base de datos distribuida,
 
 # 4. Historias de usuario
 
-**ID:** US-001  
-**Título:** Login con Seguridad Real  
-**Como** usuario registrado  
-**Quiero** autenticarme mediante mi email y contraseña  
-**Para** acceder a mis datos personales y que mis compras queden registradas a mi nombre.
-
-**Criterios de aceptación:**
-- El sistema debe llamar a `POST /api/auth/login`.
-- Al recibir el JWT, debe guardarse en `localStorage`.
-- Si el token expira, el sistema debe redirigir a `/login`.
-
-**ID:** US-002  
-**Título:** Persistencia de Orden en DB  
-**Como** cliente  
-**Quiero** que mi pedido se guarde en el servidor  
-**Para** poder consultar mi historial de compras en cualquier momento.
-
-**Criterios de aceptación:**
-- El botón "Confirmar y pagar" debe llamar a `POST /api/orders`.
-- La orden no debe crearse si el backend devuelve error de stock.
-
----
+> **Nota:** Las historias de usuario han sido extraídas y expandidas a un documento independiente para facilitar su gestión.  
+> 👉 **[Ver USER_STORIES.md](./USER_STORIES.md)**
 
 # 5. Plan de limpieza documental
 

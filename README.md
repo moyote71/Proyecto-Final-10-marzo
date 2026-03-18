@@ -66,7 +66,8 @@ npm start
 - **[AGENTS.testing.md](./ecommerce-app/AGENTS.testing.md)** — Plan de pruebas E2E con Cypress: 6 suites (auth, products, cart, checkout, wishlist, theme), tabla de `data-testid` e integración CI/CD.
 
 ### General
-- **[PROJECT_AUDIT_AND_SPECS.md](./PROJECT_AUDIT_AND_SPECS.md)** — Diagnóstico, arquitectura, especificaciones completas e historias de usuario.
+- **[PROJECT_AUDIT_AND_SPECS.md](./PROJECT_AUDIT_AND_SPECS.md)** — Diagnóstico, arquitectura y especificaciones completas.
+- **[USER_STORIES.md](./USER_STORIES.md)** — Historias de usuario extraídas del backlog.
 - **[TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)** — Deuda técnica priorizada (P0–P3) y roadmap hacia el despliegue.
 - **[IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)** — Plan de implementación con checkboxes de progreso (Fase 1→4).
 
