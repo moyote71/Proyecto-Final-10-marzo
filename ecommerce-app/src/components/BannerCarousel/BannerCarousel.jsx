@@ -78,14 +78,18 @@ export default function BannerCarousel({ banners = [] }) {
                     return (
                         <div
                             key={banner.id || index}
-                            className={`absolute inset-0 bg-cover bg-center transition-all duration-500 
+                            className={`absolute inset-0 transition-all duration-500 
                              ${isActive ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}
-                            style={{
-                                backgroundImage: `url(${banner.image})`,
-                                backgroundColor: banner.backgroundColor,
-                            }}
+                            style={{ backgroundColor: banner.backgroundColor }}
                             aria-hidden={!isActive}
                         >
+                            <img
+                                src={banner.image}
+                                alt={banner.title}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                loading={index === 0 ? "eager" : "lazy"}
+                                fetchPriority={index === 0 ? "high" : "auto"}
+                            />
                             {/* Overlay */}
                             <div className="absolute inset-0 bg-black/40"></div>
 

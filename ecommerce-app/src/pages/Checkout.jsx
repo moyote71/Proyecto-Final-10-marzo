@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import CartView from "../components/Cart/CartView";
-import AddressForm from "../components/Checkout/Address/AddressForm";
 import AddressList from "../components/Checkout/Address/AddressList";
-import PaymentForm from "../components/Checkout/Payment/PaymentForm";
 import PaymentList from "../components/Checkout/Payment/PaymentList";
 import SummarySection from "../components/Checkout/shared/SummarySection";
 import Button from "../components/common/Button/Button";
@@ -22,20 +20,23 @@ import * as styles from "./CheckoutStyles";
 import { http } from "../services/http";
 import { getCurrentUser } from "../utils/auth";
 
+const AddressForm = lazy(() => import("../components/Checkout/Address/AddressForm"));
+const PaymentForm = lazy(() => import("../components/Checkout/Payment/PaymentForm"));
+
 export default function Checkout() {
     const navigate = useNavigate();
     const { cartItems, getTotalPrice, clearCart } = useCart();
     const user = getCurrentUser();
 
     //calculo financiero
-    const subtotal = getTotalPrice() || 0;
+    const subtotal = useMemo(() => getTotalPrice() || 0, [cartItems, getTotalPrice]);
     const TAX_RATE = 0.16;
     const SHIPPING_RATE = 350;
     const FREE_SHIPPING_THRESHOLD = 1000;
 
-    const taxAmount = subtotal * TAX_RATE;
-    const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE;
-    const grandTotal = subtotal + taxAmount + shippingCost;
+    const taxAmount = useMemo(() => subtotal * TAX_RATE, [subtotal]);
+    const shippingCost = useMemo(() => subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE, [subtotal]);
+    const grandTotal = useMemo(() => subtotal + taxAmount + shippingCost, [subtotal, taxAmount, shippingCost]);
 
     const [isOrderFinished, setIsOrderFinished] = useState(false);
 
@@ -296,12 +297,14 @@ export default function Checkout() {
                             onDelete={handleAddressDelete}
                         />
                     ) : (
-                        <AddressForm
-                            isEdit={!!editingAddress}
-                            initialValues={editingAddress || {}}
-                            onSubmit={handleAddressSubmit}
-                            onCancel={handleCancelAddress}
-                        />
+                        <Suspense fallback={<Loading message="Cargando formulario..." />}>
+                            <AddressForm
+                                isEdit={!!editingAddress}
+                                initialValues={editingAddress || {}}
+                                onSubmit={handleAddressSubmit}
+                                onCancel={handleCancelAddress}
+                            />
+                        </Suspense>
                     )}
                 </SummarySection>
 
@@ -331,12 +334,14 @@ export default function Checkout() {
                             onDelete={handlePaymentDelete}
                         />
                     ) : (
-                        <PaymentForm
-                            isEdit={!!editingPayment}
-                            initialValues={editingPayment || {}}
-                            onSubmit={handlePaymentSubmit}
-                            onCancel={handleCancelPayment}
-                        />
+                        <Suspense fallback={<Loading message="Cargando formulario..." />}>
+                            <PaymentForm
+                                isEdit={!!editingPayment}
+                                initialValues={editingPayment || {}}
+                                onSubmit={handlePaymentSubmit}
+                                onCancel={handleCancelPayment}
+                            />
+                        </Suspense>
                     )}
                 </SummarySection>
 
