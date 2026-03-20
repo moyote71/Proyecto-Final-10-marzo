@@ -8,7 +8,9 @@ const dbConnection = async () => {
     const dbURI = process.env.MONGODB_URI;
     const dbName = process.env.MONGODB_DB;
 
-    await mongoose.connect(`${dbURI}/${dbName}`, {
+    const connectionString = dbName ? `${dbURI}/${dbName}` : dbURI;
+
+    await mongoose.connect(connectionString, {
       // If you use MongoDB < 8 you have to use this:
       //useNewUrlParser:true,
       //useUnifiedTopology:true

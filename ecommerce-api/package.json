@@ -8,7 +8,9 @@
     "start": "node server.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed": "node scripts/seed.js",
+    "seed:reset": "SEED_ALLOW_RESET=true node scripts/seed.js"
   },
   "keywords": [],
   "author": "",
