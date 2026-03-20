@@ -34,6 +34,8 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                     src={imagesUrl ? imagesUrl[0] : "/img/products/placeholder.svg"}
                     alt={name}
                     className={ProductCardStyles.image({ orientation })}
+                    loading="lazy"
+                    decoding="async"
                     onError={(event) => {
                         event.target.src = "/img/products/placeholder.svg";
                     }}
