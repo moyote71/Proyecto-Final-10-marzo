@@ -1,17 +1,18 @@
 import { Navigate } from "react-router-dom";
-import { getCurrentUser, isAuthenticated } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({
     children,
     redirectTo = "/login",
     allowedRoles,
 }) {
-    if (!isAuthenticated()) {
+    const { isAuthenticated, user } = useAuth();
+    
+    if (!isAuthenticated) {
         return <Navigate to={redirectTo} />;
     }
 
-    if (allowedRoles) {
-        const user = getCurrentUser();
+    if (allowedRoles && user) {
         if (!allowedRoles.includes(user.role)) {
             return (
                 <div style={{ textAlign: "center", padding: "48px" }}>

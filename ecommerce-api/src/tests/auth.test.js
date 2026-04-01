@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
+import { app } from '../../server.js';
 import User from '../models/user.js';
 import bcrypt from 'bcrypt';
 
@@ -52,7 +52,10 @@ describe('Auth Integration Tests (Mocked)', () => {
             });
 
         expect(response.status).toBe(200);
-        expect(response.body.token).toBeDefined();
+        expect(response.headers['set-cookie']).toBeDefined();
+        // Verificamos que contenga al menos la instruccion token= y sea HttpOnly
+        const hasTokenCookie = response.headers['set-cookie'].some(cookie => cookie.includes('token=') && cookie.includes('HttpOnly'));
+        expect(hasTokenCookie).toBe(true);
     });
 
     it('should return 400 for invalid credentials', async () => {
@@ -85,5 +88,15 @@ describe('Auth Integration Tests (Mocked)', () => {
 
         expect(response.status).toBe(422);
         expect(response.body.errors).toBeDefined();
+    });
+
+    it('should logout and clear cookies', async () => {
+        const response = await request(app)
+            .post('/api/auth/logout');
+            
+        expect(response.status).toBe(200);
+        expect(response.headers['set-cookie']).toBeDefined();
+        const clearsToken = response.headers['set-cookie'].some(cookie => cookie.includes('token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'));
+        expect(clearsToken).toBe(true);
     });
 });

@@ -32,6 +32,23 @@ import {
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * tags:
+ *   name: Products
+ *   description: Catálogo y gestión de productos
+ */
+
+/**
+ * @openapi
+ * /products:
+ *   get:
+ *     summary: Obtener todos los productos con paginación
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: Lista de productos exitosa
+ */
 // Obtener todos los productos con paginación
 router.get("/products", [...paginationValidation()], validate, getProducts);
 // Buscar productos con filtros
@@ -57,6 +74,24 @@ router.get(
   validate,
   getProductByCategory
 );
+/**
+ * @openapi
+ * /products/{id}:
+ *   get:
+ *     summary: Obtener producto por ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Producto encontrado
+ *       404:
+ *         description: Producto no encontrado
+ */
 // Obtener producto por ID
 router.get("/products/:id", [mongoIdValidation("id", "Product ID")], validate, getProductById);
 // Crear producto (solo admin)

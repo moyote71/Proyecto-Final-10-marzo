@@ -73,9 +73,16 @@ async function login(req, res, next) {
       userExist.displayName,
       userExist.role,
     );
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    };
+
+    res.cookie("token", token, { ...cookieOptions, maxAge: 3600 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 3600 * 1000, path: "/api/auth/refresh" });
+
     res.status(200).json({
-      token,
-      refreshToken,
       user: {
         _id: userExist._id,
         displayName: userExist.displayName,
@@ -103,7 +110,7 @@ async function checkEmail(req, res, next) {
 
 async function refreshToken(req, res, next) {
   try {
-    const token = req.body.refreshToken;
+    const token = req.cookies?.refreshToken || req.body.refreshToken;
     if (!token)
       return res.status(401).json({ message: "No refresh token provided" });
 
@@ -124,13 +131,30 @@ async function refreshToken(req, res, next) {
         decoded.role,
       );
 
-      res
-        .status(200)
-        .json({ token: newAccessToken, refreshToken: newRefreshToken });
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      };
+      
+      res.cookie("token", newAccessToken, { ...cookieOptions, maxAge: 3600 * 1000 });
+      res.cookie("refreshToken", newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 3600 * 1000, path: "/api/auth/refresh" });
+
+      res.status(200).json({ message: "Token refreshed successfully" });
     });
   } catch (error) {
     next(error);
   }
 }
 
-export { checkEmail, login, register, refreshToken };
+async function logout(req, res, next) {
+  try {
+    res.clearCookie("token");
+    res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export { checkEmail, login, register, refreshToken, logout };

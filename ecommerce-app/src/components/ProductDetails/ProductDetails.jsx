@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCart } from "../../context/CartContext";
+import { useAsync } from "../../hooks/useAsync";
 import categoriesData from "../../data/categories.json";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
 import { getProductById } from "../../services/productService";
+import { getProductReviews, addReview } from "../../services/reviewService";
+import { isAuthenticated } from "../../utils/auth";
 import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
@@ -13,21 +17,33 @@ import styles from "./ProductDetailsStyles";
 
 export default function ProductDetails({ productId }) {
     const { addToCart } = useCart();
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    
+    // Custom Hook for decoupled async data fetching
+    const { execute: fetchProduct, data: product, loading, error, setError } = useAsync(getProductById);
+
+    const [reviewComment, setReviewComment] = useState("");
+    const [reviewScore, setReviewScore] = useState(5);
+    const queryClient = useQueryClient();
+
+    const { data: reviews = [], isLoading: loadingReviews } = useQuery({
+        queryKey: ["reviews", productId],
+        queryFn: () => getProductReviews(productId),
+    });
+
+    const addReviewMutation = useMutation({
+        mutationFn: (newReview) => addReview(productId, newReview),
+        onSuccess: () => {
+            setReviewComment("");
+            setReviewScore(5);
+            queryClient.invalidateQueries(["reviews", productId]);
+        }
+    });
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-        getProductById(productId)
-            .then((foundProduct) => {
-                if (!foundProduct) setError("Producto no encontrado");
-                else setProduct(foundProduct);
-            })
-            .catch(() => setError("Ocurrió un error al cargar el producto."))
-            .finally(() => setLoading(false));
-    }, [productId]);
+        fetchProduct(productId).then(foundProduct => {
+             if (!foundProduct) setError("Producto no encontrado");
+        });
+    }, [productId, fetchProduct, setError]);
 
     const resolvedCategory = useMemo(() => {
         if (!product?.category) return null;
@@ -150,6 +166,66 @@ export default function ProductDetails({ productId }) {
                             Ver carrito
                         </Link>
                     </div>
+                </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="mt-12 border-t pt-8">
+                <h2 className="text-2xl font-bold mb-6">Reseñas del Producto</h2>
+                
+                {isAuthenticated() ? (
+                    <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-3">Deja tu reseña</h3>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <label className="font-medium text-gray-700">Puntuación:</label>
+                                <select 
+                                    className="border rounded p-1"
+                                    value={reviewScore} 
+                                    onChange={(e) => setReviewScore(Number(e.target.value))}
+                                >
+                                    {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} ⭐️</option>)}
+                                </select>
+                            </div>
+                            <textarea 
+                                className="w-full border rounded p-2" 
+                                rows="3" 
+                                placeholder="Escribe tu opinión sobre el producto..."
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                            ></textarea>
+                            <Button 
+                                variant="primary" 
+                                onClick={() => addReviewMutation.mutate({ comment: reviewComment, score: reviewScore })}
+                                disabled={addReviewMutation.isPending || !reviewComment.trim()}
+                            >
+                                {addReviewMutation.isPending ? "Enviando..." : "Enviar Reseña"}
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mb-8 p-4 bg-gray-50 rounded-lg text-gray-600 text-center">
+                        <Link to="/login" className="text-strongblue font-bold hover:underline">Inicia sesión</Link> para dejar una reseña.
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-4">
+                    {loadingReviews ? (
+                        <p className="text-gray-500">Cargando reseñas...</p>
+                    ) : reviews.length === 0 ? (
+                        <p className="text-gray-500">Aún no hay reseñas para este producto. ¡Sé el primero!</p>
+                    ) : (
+                        reviews.map((review) => (
+                            <div key={review._id} className="border p-4 rounded bg-white shadow-sm">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="font-semibold">{review.user?.displayName || review.user?.email || "Usuario"}</span>
+                                    <span className="text-yellow-500 text-lg">{"★".repeat(review.score)}{"☆".repeat(5 - review.score)}</span>
+                                </div>
+                                <p className="text-gray-700">{review.comment}</p>
+                                <span className="text-xs text-gray-400 mt-2 block">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>

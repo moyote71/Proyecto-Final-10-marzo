@@ -1,6 +1,9 @@
 import cors from 'cors'
+import cookieParser from 'cookie-parser';
 import dotenv from "dotenv";
 import express from "express";
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './src/docs/swaggerDef.js';
 import mongoose from "mongoose";
 import dbConnection from "./src/config/database.js";
 import errorHandler from "./src/middlewares/errorHandler.js";
@@ -15,7 +18,9 @@ dotenv.config();
 setupGlobalErrorHandlers();
 
 export const app = express();
-dbConnection();
+if (process.env.NODE_ENV !== 'test') {
+    dbConnection();
+}
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(','),
   credentials: true
@@ -23,6 +28,7 @@ app.use(cors({
 
 // Middlewares en el orden correcto
 app.use(express.json());
+app.use(cookieParser());
 app.use(logger);
 
 // Rate limiting global para toda la API
@@ -56,6 +62,9 @@ app.get("/", (req, res) => {
   });
 });
 
+// Swagger Documentation Endpoint
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use("/api", routes);
 
 app.use((req, res) => {
@@ -68,6 +77,8 @@ app.use((req, res) => {
 // El errorHandler debe ir AL FINAL, después de todas las rutas
 app.use(errorHandler);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on http://localhost:${process.env.PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(process.env.PORT || 8000, () => {
+    console.log(`Server running on port ${process.env.PORT || 8000}`);
+  });
+}

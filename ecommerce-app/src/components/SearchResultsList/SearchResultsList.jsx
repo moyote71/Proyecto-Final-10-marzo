@@ -36,7 +36,8 @@ export default function SearchResultsList() {
 
         const normalizedQuery = query.toLowerCase();
 
-        let result = products.filter((product) => {
+        const productsList = Array.isArray(products) ? products : [];
+        let result = productsList.filter((product) => {
             const matchesName = product.name.toLowerCase().includes(normalizedQuery);
             const matchesDescription =
                 product.description?.toLowerCase().includes(normalizedQuery);
