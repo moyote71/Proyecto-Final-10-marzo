@@ -1,35 +1,29 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../utils/auth";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useForm } from "../../hooks/useForm";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Input from "../common/Input";
 import { loginContainer, loginCard, demoUsers, loginForm, loginFooter } from "./LoginFormStyles";
 
 export default function LoginForm() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
-
-    const onSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        const result = await login(email, password);
-
-        if (result.success) {
-            navigate("/");
-            window.location.reload();
-        } else {
-            setError(result.error);
+    const { login } = useAuth();
+    const {
+        values,
+        handleChange,
+        handleSubmit,
+        isSubmitting,
+        submitError,
+        setSubmitError,
+    } = useForm({
+        initialValues: { email: "", password: "" },
+        onSubmit: async (formValues) => {
+            const result = await login(formValues.email, formValues.password);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
         }
-
-        setLoading(false);
-    };
+    });
 
     return (
         <div className={loginContainer()}>
@@ -48,36 +42,41 @@ export default function LoginForm() {
                     </div>
                 </div>
 
-                <form className={loginForm()} onSubmit={onSubmit}>
+                <form className={loginForm()} onSubmit={handleSubmit}>
                     <Input
                         id="email"
+                        name="email"
                         label="Email:"
                         type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        value={values.email}
+                        onChange={handleChange}
                         placeholder="Ingresa tu email"
                         required
                     />
 
                     <Input
                         id="password"
+                        name="password"
                         label="Contraseña:"
                         type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
+                        value={values.password}
+                        onChange={handleChange}
                         placeholder="Ingresa tu contraseña"
                         required
                     />
 
-                    {error && <ErrorMessage>{error}</ErrorMessage>}
+                    {submitError && <ErrorMessage>{submitError}</ErrorMessage>}
 
-                    <Button disabled={loading} type="submit" variant="primary">
-                        {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                    <Button disabled={isSubmitting} type="submit" variant="primary">
+                        {isSubmitting ? "Iniciando sesión..." : "Iniciar Sesión"}
                     </Button>
                 </form>
 
                 <div className={loginFooter()}>
-                    <Link to="/" className="text-blue-600 hover:underline">
+                    <Link to="/register" className="text-blue-600 hover:underline block mb-2">
+                        ¿No tienes cuenta? Regístrate
+                    </Link>
+                    <Link to="/" className="text-gray-500 hover:underline block">
                         Volver al inicio
                     </Link>
                 </div>

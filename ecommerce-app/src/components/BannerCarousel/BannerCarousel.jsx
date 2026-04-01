@@ -71,7 +71,7 @@ export default function BannerCarousel({ banners = [] }) {
     return (
         <div className="relative w-full overflow-hidden rounded-xl">
             {/* Slides */}
-            <div className="relative h-[420px] w-full">
+            <div className="relative h-[320px] md:h-[420px] w-full">
                 {banners.map((banner, index) => {
                     const isActive = index === currentIndex;
 
@@ -83,13 +83,18 @@ export default function BannerCarousel({ banners = [] }) {
                             style={{ backgroundColor: banner.backgroundColor }}
                             aria-hidden={!isActive}
                         >
-                            <img
-                                src={banner.image}
-                                alt={banner.title}
-                                className="absolute inset-0 w-full h-full object-cover"
-                                loading={index === 0 ? "eager" : "lazy"}
-                                fetchPriority={index === 0 ? "high" : "auto"}
-                            />
+                            <picture>
+                                <source media="(max-width: 768px)" srcSet={banner.imageMobile || banner.image} />
+                                <source media="(min-width: 769px)" srcSet={banner.image} />
+                                <img
+                                    src={banner.image}
+                                    alt={banner.title}
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                    fetchPriority={index === 0 ? "high" : "auto"}
+                                    decoding={index === 0 ? "sync" : "async"}
+                                />
+                            </picture>
                             {/* Overlay */}
                             <div className="absolute inset-0 bg-black/40"></div>
 
@@ -191,6 +196,7 @@ BannerCarousel.propTypes = {
             title: PropTypes.string.isRequired,
             subtitle: PropTypes.string,
             image: PropTypes.string.isRequired,
+            imageMobile: PropTypes.string,
             buttonText: PropTypes.string,
             buttonLink: PropTypes.string,
             secondaryButton: PropTypes.string,

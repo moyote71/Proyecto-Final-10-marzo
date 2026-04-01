@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
+import { app } from '../../server.js';
 import Order from '../models/order.js';
 import Product from '../models/product.js';
 import jwt from 'jsonwebtoken';

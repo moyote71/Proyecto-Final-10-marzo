@@ -1,59 +1,33 @@
-import products from '../data/products.json';
-import { http } from './http';
+import { http } from "./http";
 
-let productsCache = null;
-let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+/**
+ * Los servicios ahora son funciones asíncronas puras sin estado.
+ * El caché y la invalidación están manejados por TanStack/React-Query,
+ * previniendo stale data y sobrecarga de estado local / sessionStorage.
+ */
 
 export const fetchProducts = async () => {
-    const now = Date.now();
-    
-    // 1. Intentar Caché en Memoria
-    if (productsCache && (now - cacheTimestamp < CACHE_TTL)) {
-        return productsCache;
-    }
-
-    // 2. Intentar Caché en SessionStorage
-    try {
-        const storedStr = sessionStorage.getItem("productsCache");
-        const storedTime = sessionStorage.getItem("productsCacheTime");
-        
-        if (storedStr && storedTime && (now - Number(storedTime) < CACHE_TTL)) {
-            productsCache = JSON.parse(storedStr);
-            cacheTimestamp = Number(storedTime);
-            return productsCache;
-        }
-    } catch(e) { /* ignore sessionStorage errors */ }
-
-    // 3. Fetch real a la API
-    const data = await http.get("products");
-    const responseArray = data?.data || data || [];
-
-    // Guardar Caché
-    productsCache = responseArray;
-    cacheTimestamp = now;
-    try {
-        sessionStorage.setItem("productsCache", JSON.stringify(responseArray));
-        sessionStorage.setItem("productsCacheTime", now.toString());
-    } catch(e) { /* ignore StorageQuotas */ }
-
-    return responseArray;
+    const data = await http.get("/products");
+    // Extraer del body de axios (data.data) la propiedad .products si existe (paginación)
+    const body = data?.data;
+    return body?.products || body?.data || body || [];
 };
 
 export const searchProducts = async (query) => {
-    const data = await http.get("products/search?q=" + query);
-    return data?.data || data || [];
+    const data = await http.get("/products/search?q=" + query);
+    const body = data?.data;
+    return body?.products || body?.data || body || [];
 };
 
 export const getProductsByCategory = async (categoryId) => {
-    return fetchProducts().then((data) =>
-        data.filter((product) => product.category?._id === categoryId)
-    );
+    const products = await fetchProducts();
+    // Alternativamente, se podría usar la ruta de API nativa: 
+    // const data = await http.get(`/products/category/${categoryId}`);
+    return products.filter((product) => product.category?._id === categoryId || product.category === categoryId);
 };
 
 export async function getProductById(id) {
-    // Simulación de delay y búsqueda en mock data
-    await new Promise((res) => setTimeout(res, 300));
-    const products = await fetchProducts();
-    return products.find((p) => p._id === id);
+    const data = await http.get(`/products/${id}`);
+    const product = data?.data?.data || data?.data || data || null;
+    return product;
 }

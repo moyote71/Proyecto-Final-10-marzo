@@ -1,14 +1,21 @@
-import paymentMethods from "../data/paymentMethods.json";
+import { http } from "./http";
 
-export function getPaymentMethods() {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(paymentMethods || []);
-        }, 600);
-    });
-}
+export const getPaymentMethods = async () => {
+    try {
+        const response = await http.get("/payment-methods/me");
+        return response.data?.data || response.data || [];
+    } catch (error) {
+        console.error("Error fetching payment methods:", error);
+        return [];
+    }
+};
 
-export async function getDefaultPaymentMethods() {
-    const methods = await getPaymentMethods();
-    return methods.find((m) => m.isDefault || m.default || methods[0] || null);
-}
+export const getDefaultPaymentMethods = async () => {
+    try {
+        const response = await http.get("/payment-methods/default");
+        return response.data?.data || response.data || null;
+    } catch (error) {
+        console.error("Error fetching default payment method:", error);
+        return null;
+    }
+};

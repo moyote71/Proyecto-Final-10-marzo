@@ -1,17 +1,21 @@
-import shippingAddress from "../data/shipping-address.json";
+import { http } from "./http";
 
-export function getShippingAddresses() {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(shippingAddress || []);
-        }, 600);
-    });
-}
+export const getShippingAddresses = async () => {
+    try {
+        const response = await http.get("/shipping-address");
+        return response.data?.data || response.data || [];
+    } catch (error) {
+        console.error("Error fetching shipping addresses:", error);
+        return [];
+    }
+};
 
-export async function getDefaultShippingAddress() {
-    const addresses = await getShippingAddresses();
-    return addresses.find(
-        (a) => a.isDefault || a.default || addresses[0] || null
-    );
-}
-
+export const getDefaultShippingAddress = async () => {
+    try {
+        const response = await http.get("/shipping-address/default");
+        return response.data?.data || response.data || null;
+    } catch (error) {
+        console.error("Error fetching default shipping address:", error);
+        return null;
+    }
+};

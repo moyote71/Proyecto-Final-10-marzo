@@ -1,24 +1,31 @@
-import users from "../data/users.json";
+import { http } from "./http";
 
 export const fetchUsers = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(users);
-        }, 1500); // 1.5 segundos de delay
-    });
+    try {
+        const response = await http.get("/users");
+        return response.data?.data || response.data || [];
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return [];
+    }
 };
 
 export const searchUsers = async (query) => {
-    const lowerQuery = query.trim().toLowerCase();
-    return fetchUsers().then((data) =>
-        data.filter(
-            (user) =>
-                user.name.toLowerCase().includes(lowerQuery) ||
-                user.email?.toLowerCase().includes(lowerQuery)
-        )
-    );
+    try {
+        const response = await http.get(`/users/search?q=${query}`);
+        return response.data?.data || response.data || [];
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return [];
+    }
 };
 
 export const getUserById = async (userId) => {
-    return fetchUsers().then((data) => data.find((user) => user._id === userId));
+    try {
+        const response = await http.get(`/users/${userId}`);
+        return response.data?.data || response.data || null;
+    } catch (error) {
+        console.error(`Error fetching user ${userId}:`, error);
+        return null;
+    }
 };
