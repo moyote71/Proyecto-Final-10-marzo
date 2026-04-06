@@ -19,7 +19,6 @@ export default function RegisterForm() {
         handleSubmit,
         isSubmitting,
         submitError,
-        setSubmitError,
     } = useForm({
         initialValues: { name: "", email: "", password: "", confirmPassword: "" },
         validate: (vals) => {
