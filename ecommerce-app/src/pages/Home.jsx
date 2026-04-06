@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useAsync } from "../hooks/useAsync";
 import BannerCarousel from "../components/BannerCarousel";
 import List from "../components/List/List";
 import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
@@ -8,29 +9,15 @@ import { fetchProducts } from "../services/productService";
 import { homeWrapper, section } from "./HomeStyles";
 
 export default function Home() {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const { data: products, loading, error, execute } = useAsync(fetchProducts);
+    const safeProducts = products || [];
 
     useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const productsData = await fetchProducts();
-                console.log(productsData);
-                setProducts(productsData.products);
-            } catch (err) {
-                setError("No se pudieron cargar los productos. Intenta más tarde.");
-                console.error(err)
-                setProducts([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+        execute();
+    }, [execute]);
 
-        loadProducts();
-    }, []);
+    if (loading) return <Loading>Cargando productos...</Loading>;
+    if (error) return <ErrorMessage>{error}</ErrorMessage>;
 
     return (
         <div className={homeWrapper()}>
@@ -41,14 +28,10 @@ export default function Home() {
 
             {/* Productos */}
             <section className={section()}>
-                {loading ? (
-                    <Loading>Cargando productos...</Loading>
-                ) : error ? (
-                    <ErrorMessage>{error}</ErrorMessage>
-                ) : products.length > 0 ? (
+                {safeProducts.length > 0 ? (
                     <List
                         title="Productos recomendados"
-                        products={products}
+                        products={safeProducts}
                         layout="grid"
                     />
                 ) : (

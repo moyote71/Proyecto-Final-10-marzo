@@ -58,13 +58,13 @@ export default function ProductCard({ product, orientation = "vertical" }) {
             {/* Imagen */}
             <Link to={productLink} className="block">
                 <img
-                    src={imagesUrl ? imagesUrl[0] : "/img/products/placeholder.svg"}
+                    src={product.image || (imagesUrl && imagesUrl[0]) || "https://via.placeholder.com/800x600"}
                     alt={name}
                     className={ProductCardStyles.image({ orientation })}
                     loading="lazy"
                     decoding="async"
                     onError={(event) => {
-                        event.target.src = "/img/products/placeholder.svg";
+                        event.target.src = "https://via.placeholder.com/800x600";
                     }}
                 />
             </Link>
