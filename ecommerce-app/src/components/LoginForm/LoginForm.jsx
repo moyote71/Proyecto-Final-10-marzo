@@ -14,7 +14,6 @@ export default function LoginForm() {
         handleSubmit,
         isSubmitting,
         submitError,
-        setSubmitError,
     } = useForm({
         initialValues: { email: "", password: "" },
         onSubmit: async (formValues) => {

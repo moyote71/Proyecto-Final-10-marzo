@@ -29,6 +29,7 @@ export default function Checkout() {
     const user = getCurrentUser();
 
     //calculo financiero
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const subtotal = useMemo(() => getTotalPrice() || 0, [cartItems, getTotalPrice]);
     const TAX_RATE = 0.16;
     const SHIPPING_RATE = 350;

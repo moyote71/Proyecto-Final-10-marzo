@@ -23,9 +23,9 @@ const Register = lazy(() => import("../../pages/Register"));
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
           <Layout>
           <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><Loading>Cargando vista...</Loading></div>}>
             <Routes>
@@ -113,9 +113,9 @@ function App() {
             </Routes>
           </Suspense>
         </Layout>
-      </BrowserRouter>
-    </CartProvider>
-    </AuthProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
