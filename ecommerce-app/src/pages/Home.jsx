@@ -10,14 +10,30 @@ import { homeWrapper, section } from "./HomeStyles";
 
 export default function Home() {
     const { data: products, loading, error, execute } = useAsync(fetchProducts);
-    const safeProducts = products || [];
 
     useEffect(() => {
         execute();
     }, [execute]);
 
+    // 🔧 3. FIX DE RENDER CONDICIONAL
     if (loading) return <Loading>Cargando productos...</Loading>;
     if (error) return <ErrorMessage>{error}</ErrorMessage>;
+
+    // 🔧 2. ASEGURAR QUE useAsync DEVUELVA ARRAY (Fallback seguro)
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    if (!products || safeProducts.length === 0) {
+        return (
+            <div className={homeWrapper()}>
+                <section className={section()}>
+                    <BannerCarousel banners={homeImages} />
+                </section>
+                <section className={section()}>
+                    <ErrorMessage>No hay productos en el catálogo</ErrorMessage>
+                </section>
+            </div>
+        );
+    }
 
     return (
         <div className={homeWrapper()}>
@@ -26,17 +42,13 @@ export default function Home() {
                 <BannerCarousel banners={homeImages} />
             </section>
 
-            {/* Productos */}
+            {/* Productos — 🔧 1. FIX CRÍTICO: Usar safeProducts (que garantiza .length y .map) */}
             <section className={section()}>
-                {safeProducts.length > 0 ? (
-                    <List
-                        title="Productos recomendados"
-                        products={safeProducts}
-                        layout="grid"
-                    />
-                ) : (
-                    <ErrorMessage>No hay productos en el catálogo</ErrorMessage>
-                )}
+                <List
+                    title="Productos recomendados"
+                    products={safeProducts}
+                    layout="grid"
+                />
             </section>
         </div>
     );

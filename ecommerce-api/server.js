@@ -22,7 +22,12 @@ if (process.env.NODE_ENV !== 'test') {
     dbConnection();
 }
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(','),
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:4200",
+    "https://proyecto-final-10-marzo.onrender.com",
+    "https://proyecto-final-10-marzo-qv08.onrender.com"
+  ],
   credentials: true
 }));
 
@@ -78,7 +83,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(process.env.PORT || 8000, () => {
-    console.log(`Server running on port ${process.env.PORT || 8000}`);
+  app.listen(process.env.PORT || 5000, () => {
+    console.log(`Server running on port ${process.env.PORT || 5000}`);
   });
 }

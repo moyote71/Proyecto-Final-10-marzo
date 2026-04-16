@@ -119,10 +119,9 @@ export default function ProductDetails({ productId }) {
                             "https://via.placeholder.com/800x600"
                         }
                         alt={name}
-                        onError={(e) =>
-                            (e.target.src =
-                                "https://via.placeholder.com/800x600")
-                        }
+                        onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/800x600";
+                        }}
                         className={styles.image()}
                     />
                 </div>

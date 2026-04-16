@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
 import Icon from "../components/common/Icon/Icon";
 import Loading from "../components/common/Loading/Loading";
-import { STORAGE_KEYS, readLocalJSON } from "../utils/storageHelpers";
+import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
+import { http } from "../services/http";
+import { getCurrentUser } from "../utils/auth";
 import * as OrdersStyles from "./OrdersStyles";
 
 const formatMoney = (value = 0) =>
@@ -25,26 +27,65 @@ const formatDate = (isoString) => {
     }
 };
 
+/** Normaliza la respuesta del backend a una estructura consistente para la UI */
+const normalizeOrder = (order) => {
+    if (!order) return null;
+    const products = Array.isArray(order.products) ? order.products : [];
+    const items = products.map((p) => ({
+        _id: p.productId?._id || p.productId || "",
+        name: p.productId?.name || "Producto",
+        price: p.price || p.productId?.price || 0,
+        quantity: p.quantity || 1,
+        subtotal: (p.price || 0) * (p.quantity || 1),
+    }));
+
+    const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0);
+
+    return {
+        id: order._id,
+        date: order.createdAt || order.updatedAt,
+        status: order.status || "pending",
+        items,
+        subtotal,
+        shipping: order.shippingCost || 0,
+        tax: 0,
+        total: order.totalPrice || subtotal + (order.shippingCost || 0),
+        shippingAddress: order.shippingAddress || null,
+        paymentMethod: order.paymentMethod || null,
+    };
+};
+
 export default function Orders() {
     const [orders, setOrders] = useState([]);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const loadOrders = () => {
-            const stored = readLocalJSON(STORAGE_KEYS.orders) || [];
-            const sorted = [...stored].sort(
-                (a, b) => new Date(b.date) - new Date(a.date)
-            );
-
-            setOrders(sorted);
-            setSelectedOrderId((cur) => cur ?? sorted[0]?.id ?? null);
-            setLoading(false);
+        const loadOrders = async () => {
+            const user = getCurrentUser();
+            if (!user?._id) {
+                setOrders([]);
+                setLoading(false);
+                return;
+            }
+            try {
+                const response = await http.get(`/orders/user/${user._id}`);
+                const rawOrders = Array.isArray(response.data) ? response.data : response.data?.data || [];
+                const normalized = rawOrders.map(normalizeOrder).filter(Boolean);
+                const sorted = normalized.sort(
+                    (a, b) => new Date(b.date) - new Date(a.date)
+                );
+                setOrders(sorted);
+                setSelectedOrderId((cur) => cur ?? sorted[0]?.id ?? null);
+            } catch (err) {
+                console.error("Error fetching orders:", err);
+                setError(err.message || "Error al cargar pedidos");
+            } finally {
+                setLoading(false);
+            }
         };
-
         loadOrders();
-        window.addEventListener("storage", loadOrders);
-        return () => window.removeEventListener("storage", loadOrders);
     }, []);
 
     const selectedOrder = useMemo(
@@ -59,7 +100,15 @@ export default function Orders() {
     if (loading) {
         return (
             <div className={OrdersStyles.page()}>
-                <Loading message="Cargando pedidos guardados..." />
+                <Loading message="Cargando pedidos..." />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={OrdersStyles.page()}>
+                <ErrorMessage>{error}</ErrorMessage>
             </div>
         );
     }
@@ -68,11 +117,10 @@ export default function Orders() {
         return (
             <div className={OrdersStyles.pageEmpty()}>
                 <Icon name="package" size={48} />
-                <h1 className="text-xl font-semibold">No tienes pedidos guardados</h1>
+                <h1 className="text-xl font-semibold">No tienes pedidos</h1>
 
                 <p className="text-muted max-w-md text-center">
-                    Cada vez que confirmes una compra en el checkout, la orden se guardará
-                    en tu navegador.
+                    Cuando confirmes una compra en el checkout, tu orden aparecerá aquí.
                 </p>
 
                 <Link to="/" className="mt-4">
@@ -92,8 +140,8 @@ export default function Orders() {
 
                     <p className="text-muted">
                         {orders.length === 1
-                            ? "Tienes 1 pedido guardado en este dispositivo"
-                            : `Tienes ${orders.length} pedidos guardados`}
+                            ? "Tienes 1 pedido"
+                            : `Tienes ${orders.length} pedidos`}
                     </p>
                 </div>
 
@@ -126,7 +174,9 @@ export default function Orders() {
                                     onClick={() => setSelectedOrderId(order.id)}
                                 >
                                     <div className="flex justify-between">
-                                        <span className="font-medium">#{order.id}</span>
+                                        <span className="font-medium text-xs truncate max-w-[140px]">
+                                            #{order.id?.slice(-8)}
+                                        </span>
                                         <span
                                             className={OrdersStyles.statusBadge({
                                                 status: statusToken,
@@ -156,7 +206,7 @@ export default function Orders() {
                             <div className={OrdersStyles.detailHeader()}>
                                 <div>
                                     <p className="text-sm text-muted">
-                                        Pedido #{selectedOrder.id}
+                                        Pedido #{selectedOrder.id?.slice(-8)}
                                     </p>
                                     <h2 className="text-xl font-semibold">
                                         {formatMoney(selectedOrder.total)}
@@ -180,10 +230,6 @@ export default function Orders() {
                                     <li>
                                         <span>Subtotal</span>
                                         <strong>{formatMoney(selectedOrder.subtotal)}</strong>
-                                    </li>
-                                    <li>
-                                        <span>IVA</span>
-                                        <strong>{formatMoney(selectedOrder.tax)}</strong>
                                     </li>
                                     <li>
                                         <span>Envío</span>
@@ -249,7 +295,7 @@ export default function Orders() {
                                 <h3>Productos</h3>
 
                                 <ul className={OrdersStyles.itemsList()}>
-                                    {selectedOrder.items.map((item, i) => (
+                                    {(selectedOrder.items || []).map((item, i) => (
                                         <li key={`${selectedOrder.id}-${i}`}>
                                             <div>
                                                 <p className="font-medium">{item.name}</p>
@@ -260,9 +306,7 @@ export default function Orders() {
                                             </div>
 
                                             <strong>
-                                                {formatMoney(
-                                                    item.subtotal || item.price * item.quantity
-                                                )}
+                                                {formatMoney(item.subtotal)}
                                             </strong>
                                         </li>
                                     ))}

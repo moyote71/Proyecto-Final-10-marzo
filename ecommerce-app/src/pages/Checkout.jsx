@@ -253,9 +253,10 @@ export default function Checkout() {
         try {
             const response = await http.post("/orders", orderData);
             
+            const orderId = response.data?._id || response.data?.id;
             setIsOrderFinished(true);
             clearCart();
-            navigate("/order-confirmation", { state: { order: response.data } });
+            navigate(`/order-confirmation${orderId ? `?orderId=${orderId}` : ""}`, { state: { order: response.data } });
         } catch (error) {
             setLocalError(error.message || "Error al crear la orden. Inténtalo más tarde.");
         }

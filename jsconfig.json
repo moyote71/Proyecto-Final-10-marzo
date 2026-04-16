@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "cypress": ["ecommerce-app/node_modules/cypress"]
+    },
+    "types": ["cypress"]
+  },
+  "include": ["cypress/**/*.js", "ecommerce-app/cypress/**/*.js"]
+}
