@@ -87,7 +87,7 @@ export default function ProductDetails({ productId }) {
 
     if (!product) return null;
 
-    const { name, description, price, stock, imagesUrl, category } = product;
+    const { name, description, price, stock, image, imagesUrl, category } = product;
 
     const stockBadge = stock > 0 ? "success" : "error";
     const stockLabel = stock > 0 ? "En stock" : "Agotado";
@@ -114,14 +114,14 @@ export default function ProductDetails({ productId }) {
                 <div className={styles.imageWrapper()}>
                     <img
                         src={
+                            image ||
                             imagesUrl?.[0] ||
-                            "/img/products/placeholder.svg"
+                            "https://via.placeholder.com/800x600"
                         }
                         alt={name}
-                        onError={(e) =>
-                            (e.target.src =
-                                "/img/products/placeholder.svg")
-                        }
+                        onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/800x600";
+                        }}
                         className={styles.image()}
                     />
                 </div>

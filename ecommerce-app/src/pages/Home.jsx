@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useAsync } from "../hooks/useAsync";
 import BannerCarousel from "../components/BannerCarousel";
 import List from "../components/List/List";
 import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
@@ -8,29 +9,31 @@ import { fetchProducts } from "../services/productService";
 import { homeWrapper, section } from "./HomeStyles";
 
 export default function Home() {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const { data: products, loading, error, execute } = useAsync(fetchProducts);
 
     useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const productsData = await fetchProducts();
-                console.log(productsData);
-                setProducts(productsData.products);
-            } catch (err) {
-                setError("No se pudieron cargar los productos. Intenta más tarde.");
-                console.error(err)
-                setProducts([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+        execute();
+    }, [execute]);
 
-        loadProducts();
-    }, []);
+    // 🔧 3. FIX DE RENDER CONDICIONAL
+    if (loading) return <Loading>Cargando productos...</Loading>;
+    if (error) return <ErrorMessage>{error}</ErrorMessage>;
+
+    // 🔧 2. ASEGURAR QUE useAsync DEVUELVA ARRAY (Fallback seguro)
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    if (!products || safeProducts.length === 0) {
+        return (
+            <div className={homeWrapper()}>
+                <section className={section()}>
+                    <BannerCarousel banners={homeImages} />
+                </section>
+                <section className={section()}>
+                    <ErrorMessage>No hay productos en el catálogo</ErrorMessage>
+                </section>
+            </div>
+        );
+    }
 
     return (
         <div className={homeWrapper()}>
@@ -39,21 +42,13 @@ export default function Home() {
                 <BannerCarousel banners={homeImages} />
             </section>
 
-            {/* Productos */}
+            {/* Productos — 🔧 1. FIX CRÍTICO: Usar safeProducts (que garantiza .length y .map) */}
             <section className={section()}>
-                {loading ? (
-                    <Loading>Cargando productos...</Loading>
-                ) : error ? (
-                    <ErrorMessage>{error}</ErrorMessage>
-                ) : products.length > 0 ? (
-                    <List
-                        title="Productos recomendados"
-                        products={products}
-                        layout="grid"
-                    />
-                ) : (
-                    <ErrorMessage>No hay productos en el catálogo</ErrorMessage>
-                )}
+                <List
+                    title="Productos recomendados"
+                    products={safeProducts}
+                    layout="grid"
+                />
             </section>
         </div>
     );

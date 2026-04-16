@@ -1,25 +1,77 @@
-import { useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Icon from "../components/common/Icon/Icon";
+import Loading from "../components/common/Loading/Loading";
+import { http } from "../services/http";
 import OrderConfirmationStyles from "./OrderConfirmationStyles";
 
 export default function OrderConfirmation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { order } = location.state || {};
+  const [searchParams] = useSearchParams();
 
+  const stateOrder = location.state?.order || null;
+  const orderIdFromURL = searchParams.get("orderId");
+
+  const [order, setOrder] = useState(stateOrder);
+  const [loading, setLoading] = useState(!stateOrder && !!orderIdFromURL);
+
+  // Si no hay datos en location.state pero sí un orderId en URL, fetch del backend
   useEffect(() => {
-    if (!order) navigate("/");
-  }, [order, navigate]);
+    if (stateOrder || !orderIdFromURL) return;
 
-  const address = order?.shippingAddress || {};
-  const subtotal = order?.subtotal || 0;
-  const tax = order?.tax || 0;
-  const shipping = order?.shipping || 0;
-  const total = order?.total || 0;
+    const fetchOrder = async () => {
+      try {
+        const response = await http.get(`/orders/${orderIdFromURL}`);
+        const data = response.data?.data || response.data;
+        if (data) {
+          setOrder(data);
+        } else {
+          navigate("/");
+        }
+      } catch {
+        navigate("/");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
+  }, [stateOrder, orderIdFromURL, navigate]);
 
-  const orderDate = order?.date
-    ? new Date(order.date).toLocaleDateString()
+  // Si no hay orden ni orderId, redirigir a home
+  useEffect(() => {
+    if (!stateOrder && !orderIdFromURL && !order) {
+      navigate("/");
+    }
+  }, [stateOrder, orderIdFromURL, order, navigate]);
+
+  if (loading) {
+    return (
+      <div className={OrderConfirmationStyles.container()}>
+        <Loading>Cargando confirmación de orden...</Loading>
+      </div>
+    );
+  }
+
+  if (!order) return null;
+
+  // Normalizar campos — soporta tanto la estructura del Checkout (local) como la del backend (API)
+  const address = order.shippingAddress || {};
+  const items = order.items || (order.products || []).map((p) => ({
+    _id: p.productId?._id || p.productId || "",
+    name: p.productId?.name || "Producto",
+    price: p.price || 0,
+    quantity: p.quantity || 1,
+    subtotal: (p.price || 0) * (p.quantity || 1),
+  }));
+  const subtotal = order.subtotal || items.reduce((s, i) => s + (i.subtotal || i.price * i.quantity), 0);
+  const tax = order.tax || 0;
+  const shipping = order.shipping ?? order.shippingCost ?? 0;
+  const total = order.total || order.totalPrice || subtotal + tax + shipping;
+  const orderId = order.id || order._id || "N/A";
+
+  const orderDate = (order.date || order.createdAt)
+    ? new Date(order.date || order.createdAt).toLocaleDateString()
     : "No disponible";
 
   const formatMoney = (v) =>
@@ -39,7 +91,7 @@ export default function OrderConfirmation() {
         <h1 className={OrderConfirmationStyles.title()}>¡Gracias por tu compra!</h1>
 
         <p className={OrderConfirmationStyles.message()}>
-          Tu pedido <strong>#{order?.id || "N/A"}</strong> ha sido confirmado y está siendo procesado.
+          Tu pedido <strong>#{typeof orderId === "string" && orderId.length > 8 ? orderId.slice(-8) : orderId}</strong> ha sido confirmado y está siendo procesado.
         </p>
 
         {/* --- DETALLES DEL PEDIDO --- */}
@@ -55,12 +107,12 @@ export default function OrderConfirmation() {
             <h3 className="font-semibold text-lg mt-4">Productos</h3>
 
             <ul className={OrderConfirmationStyles.itemsList()}>
-              {(order?.items || []).map((item) => (
-                <li key={item._id} className={OrderConfirmationStyles.item()}>
+              {items.map((item, idx) => (
+                <li key={item._id || idx} className={OrderConfirmationStyles.item()}>
                   <span>
                     {item.name} x {item.quantity} · {formatMoney(item.price)}
                   </span>
-                  <span className="font-semibold">{formatMoney(item.subtotal)}</span>
+                  <span className="font-semibold">{formatMoney(item.subtotal || item.price * item.quantity)}</span>
                 </li>
               ))}
             </ul>
@@ -69,11 +121,13 @@ export default function OrderConfirmation() {
               <p>
                 <strong>Subtotal:</strong> {formatMoney(subtotal)}
               </p>
+              {tax > 0 && (
+                <p>
+                  <strong>IVA:</strong> {formatMoney(tax)}
+                </p>
+              )}
               <p>
-                <strong>IVA:</strong> {formatMoney(tax)}
-              </p>
-              <p>
-                <strong>Envío:</strong> {formatMoney(shipping)}
+                <strong>Envío:</strong> {shipping === 0 ? "Gratis" : formatMoney(shipping)}
               </p>
               <p className="text-lg font-bold">
                 <strong>Total:</strong> {formatMoney(total)}
