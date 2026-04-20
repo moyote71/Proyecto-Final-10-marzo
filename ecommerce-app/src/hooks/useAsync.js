@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
 export function useAsync(asyncFunction) {
-    const [data, setData] = useState(null);
+    const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
