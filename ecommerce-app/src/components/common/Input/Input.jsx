@@ -4,6 +4,7 @@ import { cn } from "../../../utils/cn";
 export default function Input({
     label,
     id,
+    name,
     type = "text",
     value,
     onChange,
@@ -25,6 +26,7 @@ export default function Input({
 
             <input
                 id={inputId}
+                name={name}
                 type={type}
                 value={value}
                 onChange={onChange}
