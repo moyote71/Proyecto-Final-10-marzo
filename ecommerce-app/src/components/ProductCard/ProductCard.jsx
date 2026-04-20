@@ -6,7 +6,7 @@ import Button from "../common/Button";
 import ProductCardStyles from "./ProductCardStyles";
 import { getWishList, addToWishList, removeFromWishList } from "../../services/wishListService";
 import { isAuthenticated } from "../../utils/auth";
-import { formatImageUrl } from "../../utils/formatImageUrl";
+import formatImageUrl from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
@@ -67,7 +67,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                     loading="lazy"
                     decoding="async"
                     onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/800x600";
+                        e.target.src = "https://placehold.co/800x600?text=Producto";
                     }}
                 />
             </Link>

@@ -12,7 +12,7 @@ import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
-import { formatImageUrl } from "../../utils/formatImageUrl";
+import formatImageUrl from "../../utils/formatImageUrl";
 
 import styles from "./ProductDetailsStyles";
 
@@ -119,7 +119,7 @@ export default function ProductDetails({ productId }) {
                         src={productImageUrl}
                         alt={name}
                         onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/800x600";
+                            e.target.src = "https://placehold.co/800x600?text=Producto";
                         }}
                         className={styles.image()}
                     />
