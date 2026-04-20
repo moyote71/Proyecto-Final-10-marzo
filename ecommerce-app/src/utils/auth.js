@@ -23,7 +23,7 @@ export async function login(email, password) {
 export async function register(name, email, password) {
     try {
         // Enviar petición POST al endpoint de registro
-        const response = await http.post('/auth/register', { name, email, password });
+        const response = await http.post('/auth/register', { displayName: name, email, password });
         const { user } = response.data;
 
         if (user) {

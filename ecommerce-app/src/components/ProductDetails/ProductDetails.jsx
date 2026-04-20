@@ -12,6 +12,7 @@ import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
+import { formatImageUrl } from "../../utils/formatImageUrl";
 
 import styles from "./ProductDetailsStyles";
 
@@ -89,19 +90,7 @@ export default function ProductDetails({ productId }) {
 
     const { name, description, price, stock, image, imagesUrl, category } = product;
 
-    const getImageUrl = (url) => {
-        if (!url) return "https://via.placeholder.com/800x600";
-        if (url.includes('localhost:5000') && process.env.REACT_APP_API_BASE_URL) {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
-            return url.replace(/http:\/\/localhost:5000/g, baseUrl);
-        }
-        if (url.startsWith('/uploads') && process.env.REACT_APP_API_BASE_URL) {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
-            return `${baseUrl}${url}`;
-        }
-        return url;
-    };
-    const productImageUrl = getImageUrl(image || imagesUrl?.[0]);
+    const productImageUrl = formatImageUrl(image || imagesUrl?.[0]);
 
     const stockBadge = stock > 0 ? "success" : "error";
     const stockLabel = stock > 0 ? "En stock" : "Agotado";

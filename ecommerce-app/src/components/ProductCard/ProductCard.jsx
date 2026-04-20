@@ -6,6 +6,7 @@ import Button from "../common/Button";
 import ProductCardStyles from "./ProductCardStyles";
 import { getWishList, addToWishList, removeFromWishList } from "../../services/wishListService";
 import { isAuthenticated } from "../../utils/auth";
+import { formatImageUrl } from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
@@ -43,19 +44,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const handleAddToCart = () => addToCart(product, 1);
     const productLink = `/product/${product._id}`;
 
-    const getImageUrl = (url) => {
-        if (!url) return "https://via.placeholder.com/800x600";
-        if (url.includes('localhost:5000') && process.env.REACT_APP_API_BASE_URL) {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
-            return url.replace(/http:\/\/localhost:5000/g, baseUrl);
-        }
-        if (url.startsWith('/uploads') && process.env.REACT_APP_API_BASE_URL) {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
-            return `${baseUrl}${url}`;
-        }
-        return url;
-    };
-    const productImageUrl = getImageUrl(product.image || imagesUrl?.[0]);
+    const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
 
     return (
         <div className={ProductCardStyles.card({ orientation }) + " relative group"}>
