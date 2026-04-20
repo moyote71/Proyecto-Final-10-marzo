@@ -22,12 +22,7 @@ if (process.env.NODE_ENV !== 'test') {
     dbConnection();
 }
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:4200",
-    "https://proyecto-final-10-marzo.onrender.com",
-    "https://proyecto-final-10-marzo-qv08.onrender.com"
-  ],
+  origin: process.env.CORS_ORIGIN,
   credentials: true
 }));
 

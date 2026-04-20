@@ -33,8 +33,11 @@ if (process.env.NODE_ENV !== 'test') {
     app.use(logger);
 }
 
-// Fix CORS bug: use http instead of https for localhost
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000', credentials: true }));
+// Configurar CORS
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,
+  credentials: true
+}));
 
 app.get('/', (req, res) => {
     res.send('WELCOME TO ECOMMERCE API!');

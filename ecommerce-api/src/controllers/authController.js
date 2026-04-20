@@ -133,8 +133,8 @@ async function refreshToken(req, res, next) {
 
       const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
       };
       
       res.cookie("token", newAccessToken, { ...cookieOptions, maxAge: 3600 * 1000 });

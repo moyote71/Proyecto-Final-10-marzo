@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { login as authLogin, logout as authLogout, register as authRegister, getCurrentUser } from "../utils/auth";
+import { http } from "../services/http";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -10,17 +11,26 @@ export function AuthProvider({ children }) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Inicializar estado del usuario desde localStorage al montar
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-        }
-        setLoading(false);
+        const checkAuth = async () => {
+            try {
+                const res = await http.get("/users/profile", {
+                    withCredentials: true
+                });
+                setUser(res.data.user);
+            } catch (error) {
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAuth();
     }, []);
 
     const login = async (email, password) => {
         const result = await authLogin(email, password);
         if (result.success) {
+            console.log("Usuario logueado:", result.user);
             setUser(result.user);
             navigate("/");
             return { success: true };
@@ -53,9 +63,11 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user
     };
 
+    if (loading) return null;
+
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Icon from "../../components/common/Icon/Icon";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getCurrentUser, isAuthenticated, logout } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 import Navigation from "../Navigation/Navigation";
 import { headerStyles } from "./HeaderStyles";
 
@@ -17,24 +17,11 @@ export default function Header() {
     const totalItems = getTotalItems();
     const navigate = useNavigate();
 
-    const [isAuth, setIsAuth] = useState(true);
-    const [user, setUser] = useState(getCurrentUser());
+    const { user, isAuthenticated: isAuth, logout } = useAuth();
 
     const userMenuRef = useRef(null);
     const mobileMenuRef = useRef(null);
     const searchInputRef = useRef(null);
-
-    useEffect(() => {
-        const updateAuthState = () => {
-            setIsAuth(isAuthenticated());
-            setUser(getCurrentUser());
-        };
-        window.addEventListener("storage", updateAuthState);
-        updateAuthState();
-        return () => {
-            window.addEventListener("storage", updateAuthState);
-        };
-    }, []);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -97,11 +84,8 @@ export default function Header() {
     };
     const handleLogout = () => {
         logout();
-        setIsAuth(false);
-        setUser(null);
         setIsUserMenuOpen(false);
         setIsMobileMenuOpen(false);
-        window.location.reload();
     };
 
     const handleUserMenuToggle = () => setIsUserMenuOpen(!isUserMenuOpen);
