@@ -22,7 +22,7 @@ export default function Home() {
     // 🔧 2. ASEGURAR QUE useAsync DEVUELVA ARRAY (Fallback seguro)
     const safeProducts = Array.isArray(products) ? products : [];
 
-    if (!products || safeProducts.length === 0) {
+    if (!safeProducts.length) {
         return (
             <div className={homeWrapper()}>
                 <section className={section()}>
