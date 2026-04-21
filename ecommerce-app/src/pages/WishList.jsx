@@ -1,16 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getWishList, removeFromWishList, moveToCart } from "../services/wishListService";
 import ProductCard from "../components/ProductCard/ProductCard";
-import { isAuthenticated } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
 
 export default function WishList() {
     const queryClient = useQueryClient();
+    const { isAuthenticated } = useAuth();
     
     const { data: wishlist = [], isLoading, error } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
-        enabled: isAuthenticated()
+        enabled: isAuthenticated
     });
 
     const removeMutation = useMutation({
@@ -23,7 +24,7 @@ export default function WishList() {
         onSuccess: () => queryClient.invalidateQueries(["wishlist"])
     });
 
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
         return <div className="p-8 text-center text-gray-600">Debes iniciar sesión para ver tu lista de deseos.</div>;
     }
 

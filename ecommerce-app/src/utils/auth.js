@@ -7,8 +7,7 @@ export async function login(email, password) {
         
         if (user) {
             const userWithLoginDate = { ...user, loginDate: new Date().toISOString() };
-            // El token ya fue guardado en las cookies HttpOnly por el backend
-            localStorage.setItem("userData", JSON.stringify(userWithLoginDate));
+            // JWT takes care of the session. We rely on the hydration endpoint on UI side.
             return { success: true, user: userWithLoginDate };
         }
         return { success: false, error: "Respuesta inválida del servidor" };
@@ -27,10 +26,7 @@ export async function register(name, email, password) {
         const { user } = response.data;
 
         if (user) {
-            // Guardar en localStorage para mantener sesión frontend 
-            // (El JWT se manejará con cookies HttpOnly como en login)
             const userWithLoginDate = { ...user, loginDate: new Date().toISOString() };
-            localStorage.setItem("userData", JSON.stringify(userWithLoginDate));
             return { success: true, user: userWithLoginDate };
         }
         return { success: false, error: "Respuesta inválida del servidor" };
@@ -49,8 +45,6 @@ export async function logout(forceReload = true) {
     } catch (e) {
         console.error("Logout error", e);
     } finally {
-        localStorage.removeItem("userData");
-        // Forzar recarga completa para limpiar memoria si es necesario
         if (forceReload) {
             window.location.href = "/login";
         }

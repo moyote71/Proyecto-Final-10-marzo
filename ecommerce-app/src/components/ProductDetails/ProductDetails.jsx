@@ -7,7 +7,7 @@ import categoriesData from "../../data/categories.json";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
 import { getProductById } from "../../services/productService";
 import { getProductReviews, addReview } from "../../services/reviewService";
-import { isAuthenticated } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
@@ -17,6 +17,7 @@ import formatImageUrl from "../../utils/formatImageUrl";
 import styles from "./ProductDetailsStyles";
 
 export default function ProductDetails({ productId }) {
+    const { isAuthenticated } = useAuth();
     const { addToCart } = useCart();
     
     // Custom Hook for decoupled async data fetching
