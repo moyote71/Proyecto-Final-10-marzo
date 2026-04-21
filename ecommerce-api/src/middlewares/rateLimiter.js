@@ -5,8 +5,8 @@ const skipTests = (req, res) => process.env.NODE_ENV === "test";
 
 // Rate limiter para autenticación (login/register)
 export const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // Máximo 5 intentos por ventana
+    windowMs: 1 * 60 * 1000, 
+    max: 100,
     message: {
         message: "Too many authentication attempts, please try again after 15 minutes",
     },

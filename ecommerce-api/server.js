@@ -21,13 +21,9 @@ export const app = express();
 if (process.env.NODE_ENV !== 'test') {
     dbConnection();
 }
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:4200",
-    "https://proyecto-final-10-marzo.onrender.com",
-    "https://proyecto-final-10-marzo-qv08.onrender.com"
-  ],
+  origin: allowedOrigins,
   credentials: true
 }));
 

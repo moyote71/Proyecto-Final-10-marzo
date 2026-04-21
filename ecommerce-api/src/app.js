@@ -1,13 +1,12 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import routes from './src/routes/index.js';
 import dbConnection from './src/config/database.js';
 import logger from './src/middlewares/logger.js';
 import errorHandler from './src/middlewares/errorHandler.js';
 import setupGlobalErrorHandlers from './src/middlewares/globalErrorHandler.js';
-
-dotenv.config();
 
 // Solo ejecutar handlers globales si no estamos en test
 if (process.env.NODE_ENV !== 'test') {
@@ -27,14 +26,19 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Solo usar logger y rate limiting si no estamos en test
 if (process.env.NODE_ENV !== 'test') {
     app.use(logger);
 }
 
-// Fix CORS bug: use http instead of https for localhost
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000', credentials: true }));
+// Configurar CORS
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 app.get('/', (req, res) => {
     res.send('WELCOME TO ECOMMERCE API!');

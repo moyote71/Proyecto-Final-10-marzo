@@ -29,6 +29,8 @@ const checkUserExist = async (email) => {
 };
 
 async function register(req, res, next) {
+  console.log("=== REGISTER ENDPOINT HIT ===");
+  console.log("Body:", req.body);
   try {
     const { displayName, email, password } = req.body;
     const userExist = await checkUserExist(email);
@@ -51,6 +53,8 @@ async function register(req, res, next) {
 }
 
 async function login(req, res, next) {
+  console.log("=== LOGIN ENDPOINT HIT ===");
+  console.log("Email attempting login:", req.body?.email);
   try {
     const { email, password } = req.body;
     const userExist = await checkUserExist(email);
@@ -76,7 +80,7 @@ async function login(req, res, next) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     };
 
     res.cookie("token", token, { ...cookieOptions, maxAge: 3600 * 1000 });
@@ -134,7 +138,7 @@ async function refreshToken(req, res, next) {
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       };
       
       res.cookie("token", newAccessToken, { ...cookieOptions, maxAge: 3600 * 1000 });
