@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import routes from './src/routes/index.js';
 import dbConnection from './src/config/database.js';
 import logger from './src/middlewares/logger.js';
@@ -27,6 +28,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Solo usar logger y rate limiting si no estamos en test
 if (process.env.NODE_ENV !== 'test') {
@@ -34,8 +36,9 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Configurar CORS
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: allowedOrigins,
   credentials: true
 }));
 

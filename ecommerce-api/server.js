@@ -21,8 +21,9 @@ export const app = express();
 if (process.env.NODE_ENV !== 'test') {
     dbConnection();
 }
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: allowedOrigins,
   credentials: true
 }));
 
