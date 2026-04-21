@@ -153,12 +153,21 @@ async function refreshToken(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    res.clearCookie("token");
-    res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    };
+
+    res.clearCookie("token", cookieOptions);
+    res.clearCookie("refreshToken", {
+      ...cookieOptions,
+      path: "/api/auth/refresh",
+    });
+
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     next(error);
   }
 }
-
 export { checkEmail, login, register, refreshToken, logout };

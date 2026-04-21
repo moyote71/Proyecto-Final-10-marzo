@@ -5,6 +5,7 @@ const authMiddleware = (req, res, next) => {
 
   console.log("=== AUTH MIDDLEWARE ===");
   console.log("Path:", req.path);
+  console.log("Cookies recibidas:", req.headers.cookie);
   console.log("Token exists?", !!token);
 
   if (!token) {

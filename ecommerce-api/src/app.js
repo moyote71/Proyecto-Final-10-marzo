@@ -34,11 +34,9 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Configurar CORS
-const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [];
 
 app.get('/', (req, res) => {
     res.send('WELCOME TO ECOMMERCE API!');
