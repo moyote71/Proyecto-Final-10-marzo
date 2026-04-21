@@ -5,12 +5,12 @@ import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ProductCardStyles from "./ProductCardStyles";
 import { getWishList, addToWishList, removeFromWishList } from "../../services/wishListService";
-import { isAuthenticated } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 import formatImageUrl from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
-
+    const { isAuthenticated } = useAuth();
     // ✅ Todos los hooks DEBEN llamarse antes de cualquier return condicional
     const queryClient = useQueryClient();
     const { data: wishlist = [] } = useQuery({

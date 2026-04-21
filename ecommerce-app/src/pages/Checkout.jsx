@@ -18,7 +18,7 @@ import {
 } from "../services/shippingService";
 import * as styles from "./CheckoutStyles";
 import { http } from "../services/http";
-import { getCurrentUser } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 
 const AddressForm = lazy(() => import("../components/Checkout/Address/AddressForm"));
 const PaymentForm = lazy(() => import("../components/Checkout/Payment/PaymentForm"));
@@ -26,7 +26,7 @@ const PaymentForm = lazy(() => import("../components/Checkout/Payment/PaymentFor
 export default function Checkout() {
     const navigate = useNavigate();
     const { cartItems, getTotalPrice, clearCart } = useCart();
-    const user = getCurrentUser();
+    const { user } = useAuth();
 
     //calculo financiero
     // eslint-disable-next-line react-hooks/exhaustive-deps

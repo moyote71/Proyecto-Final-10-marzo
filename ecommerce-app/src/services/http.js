@@ -11,6 +11,10 @@ http.interceptors.request.use(config => {
 http.interceptors.response.use(
     (res) => res,
     (err) => {
+        if (err.response?.status === 401) {
+            console.log("Sesión expirada");
+            window.location.href = "/login";
+        }
         const message = err.response?.data?.message || err.message || 'Error de red';
         return Promise.reject(new Error(message));
     }
