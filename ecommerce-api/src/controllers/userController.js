@@ -3,6 +3,8 @@ import User from "../models/user.js";
 
 // Obtener perfil del usuario autenticado
 const getUserProfile = async (req, res, next) => {
+  console.log("=== GET USER PROFILE HIT ===");
+  console.log("User from token:", req.user);
   try {
     const userId = req.user.userId; // Asumiendo que tienes middleware de autenticación
 

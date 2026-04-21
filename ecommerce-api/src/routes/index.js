@@ -24,6 +24,6 @@ router.use(productRoutes);
 router.use(reviewRoutes);
 router.use(shippingAddressRoutes);
 router.use(userRoutes);
-router.use(wishListRoutes);
+router.use("/wishlist", wishListRoutes);
 
 export default router;

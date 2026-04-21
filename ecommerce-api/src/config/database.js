@@ -1,24 +1,16 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const dbConnection = async () => {
   try {
-    const dbURI = process.env.MONGODB_URI;
-    const dbName = process.env.MONGODB_DB;
-
-    const connectionString = dbName ? `${dbURI}/${dbName}` : dbURI;
-
-    await mongoose.connect(connectionString, {
-      // If you use MongoDB < 8 you have to use this:
-      //useNewUrlParser:true,
-      //useUnifiedTopology:true
+    await mongoose.connect(process.env.MONGODB_URI, {
+      dbName: "ecommerce-db",
     });
 
-    console.log(`MongoDB is connected`);
+    console.log("✅ MongoDB connected");
+    console.log("📦 DB:", mongoose.connection.name);
+
   } catch (error) {
-    console.log(error);
+    console.log("❌ Error Mongo:", error);
     process.exit(1);
   }
 };

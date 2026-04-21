@@ -49,9 +49,12 @@ export function AuthProvider({ children }) {
     };
 
     const logout = async () => {
+        try {
+            await http.post("/auth/logout");
+        } catch (e) {
+            console.error(e);
+        }
         setUser(null);
-        await authLogout(false); // Pasamos un flag para no forzar reload
-        navigate("/login");
     };
 
     const value = {

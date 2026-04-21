@@ -8,8 +8,6 @@ import logger from './src/middlewares/logger.js';
 import errorHandler from './src/middlewares/errorHandler.js';
 import setupGlobalErrorHandlers from './src/middlewares/globalErrorHandler.js';
 
-dotenv.config();
-
 // Solo ejecutar handlers globales si no estamos en test
 if (process.env.NODE_ENV !== 'test') {
     setupGlobalErrorHandlers();
