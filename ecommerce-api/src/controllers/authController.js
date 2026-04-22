@@ -53,6 +53,7 @@ async function register(req, res, next) {
 }
 
 async function login(req, res, next) {
+  console.log("LOGIN CONTROLLER HIT");
   console.log("=== LOGIN ENDPOINT HIT ===");
   console.log("Email attempting login:", req.body?.email);
   try {

@@ -38,6 +38,21 @@ const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
   : [];
 
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (ej. Postman) o si el origin está en la lista permitida
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Fundamental para Render: confiar en sus proxies para permitir cookies SameSite=None; Secure
+app.set("trust proxy", 1);
+
 app.get('/', (req, res) => {
     res.send('WELCOME TO ECOMMERCE API!');
 });
