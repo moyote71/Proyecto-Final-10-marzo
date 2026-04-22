@@ -1,26 +1,25 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL 
+  || "https://proyecto-final-10-marzo-qv08.onrender.com/api";
+
+console.log("🚀 API_BASE FINAL:", API_BASE);
 
 export const http = axios.create({
   baseURL: API_BASE,
-  withCredentials: true, // 🔥 CRÍTICO
+  withCredentials: true,
 });
 
-http.interceptors.request.use(config => {
-    return config;
-});
-
+// ❌ SIN interceptor que modifique la URL
 http.interceptors.response.use(
-    (res) => res,
-    (err) => {
-        console.error("HTTP ERROR:", err.response?.data);
+  (res) => res,
+  (err) => {
+    console.error("HTTP ERROR:", err.response?.data || err.message);
 
-        if (err.response?.status === 401) {
-            console.log("Sesión expirada");
-            window.location.href = "/login";
-        }
-        const message = err.response?.data?.message || err.message || 'Error de red';
-        return Promise.reject(new Error(message));
+    if (err.response?.status === 401) {
+      window.location.href = "/login";
     }
+
+    return Promise.reject(err);
+  }
 );
