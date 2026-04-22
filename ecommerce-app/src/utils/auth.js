@@ -3,14 +3,13 @@ import { http } from "../services/http";
 export async function login(email, password) {
     try {
         const response = await http.post('/auth/login', { email, password });
-        const { user } = response.data;
         
-        if (user) {
-            const userWithLoginDate = { ...user, loginDate: new Date().toISOString() };
-            // JWT takes care of the session. We rely on the hydration endpoint on UI side.
-            return { success: true, user: userWithLoginDate };
+        if (!response.data || !response.data.user) {
+            throw new Error("Respuesta inválida del servidor");
         }
-        return { success: false, error: "Respuesta inválida del servidor" };
+
+        const userWithLoginDate = { ...response.data.user, loginDate: new Date().toISOString() };
+        return { success: true, user: userWithLoginDate };
     } catch (error) {
         return {
             success: false,
