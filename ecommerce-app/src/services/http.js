@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL 
-  || "https://proyecto-final-10-marzo-qv08.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_URL;
+
+if (!API_BASE) {
+  console.error("❌ VITE_API_URL NO está definido en producción");
+}
 
 console.log("🚀 API_BASE FINAL:", API_BASE);
 
@@ -10,7 +13,6 @@ export const http = axios.create({
   withCredentials: true,
 });
 
-// ❌ SIN interceptor que modifique la URL
 http.interceptors.response.use(
   (res) => res,
   (err) => {

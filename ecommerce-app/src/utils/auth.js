@@ -2,6 +2,7 @@ import { http } from "../services/http";
 
 export async function login(email, password) {
     try {
+        console.log("LOGIN URL:", http.defaults.baseURL + "/auth/login");
         const response = await http.post('/auth/login', { email, password });
         
         if (!response.data || !response.data.user) {
