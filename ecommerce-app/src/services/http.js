@@ -18,14 +18,7 @@ http.interceptors.response.use(
   (err) => {
     console.error("HTTP ERROR:", err.response?.data || err.message);
 
-    if (err.response?.status === 401) {
-      const currentPath = window.location.pathname;
-
-      if (currentPath !== "/login") {
-        //window.location.href = "/login";
-      }
-    }
-
+    // ❌ NO REDIRIGIR GLOBALMENTE
     return Promise.reject(err);
   }
 );
