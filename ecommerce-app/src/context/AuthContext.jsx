@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { login as authLogin, logout as authLogout, register as authRegister, getCurrentUser } from "../utils/auth";
+import { login as authLogin, logout as authLogout, register as authRegister } from "../utils/auth";
 import { http } from "../services/http";
 import { useNavigate } from "react-router-dom";
 
