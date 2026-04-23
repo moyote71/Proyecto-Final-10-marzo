@@ -66,8 +66,10 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user
     };
 
-    if (loading) return null;
-
+    if (loading) {
+  return null;
+}
+    
     return (
         <AuthContext.Provider value={value}>
             {children}

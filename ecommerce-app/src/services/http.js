@@ -18,10 +18,7 @@ http.interceptors.response.use(
   (err) => {
     console.error("HTTP ERROR:", err.response?.data || err.message);
 
-    if (err.response?.status === 401) {
-      window.location.href = "/login";
-    }
-
+    // ❌ NO REDIRIGIR GLOBALMENTE
     return Promise.reject(err);
   }
 );
