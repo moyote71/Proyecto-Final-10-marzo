@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
     };
 
     if (loading) {
-    return <div>Cargando...</div>;
+  return null;
 }
     
     return (
