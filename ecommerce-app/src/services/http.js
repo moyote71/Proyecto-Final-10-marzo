@@ -19,7 +19,11 @@ http.interceptors.response.use(
     console.error("HTTP ERROR:", err.response?.data || err.message);
 
     if (err.response?.status === 401) {
-      window.location.href = "/login";
+      const currentPath = window.location.pathname;
+
+      if (currentPath !== "/login") {
+        //window.location.href = "/login";
+      }
     }
 
     return Promise.reject(err);
