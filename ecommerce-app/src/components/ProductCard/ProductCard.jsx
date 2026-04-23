@@ -47,7 +47,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
 
     return (
-        <div className={ProductCardStyles.card({ orientation }) + " relative group"}>
+        <div className={ProductCardStyles.card({ orientation: orientation }) + " relative group"}>
             { isAuthenticated && (
                 <button 
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMutation.mutate(); }} 
