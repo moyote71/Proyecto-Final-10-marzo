@@ -10,20 +10,34 @@ import formatImageUrl from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
-    const { isAuthenticated } = useAuth();
-    // ✅ Todos los hooks DEBEN llamarse antes de cualquier return condicional
+
+    // ✅ CORRECTO: es boolean, NO función
+    const { isAuthenticated, loading } = useAuth();
+
     const queryClient = useQueryClient();
+
+    // ✅ Evita ejecutar antes de que auth cargue
     const { data: wishlist = [] } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
-        enabled: isAuthenticated,
+        enabled: isAuthenticated && !loading,
     });
 
-    const inWishList = wishlist.some(item => (item.product?._id || item._id) === product?._id);
+    // ✅ PROTECCIÓN extra contra undefined
+    const inWishList = wishlist?.some(
+        item => (item.product?._id || item._id) === product?._id
+    );
+
     const toggleMutation = useMutation({
-        mutationFn: () => inWishList ? removeFromWishList(product?._id) : addToWishList(product?._id),
-        onSuccess: () => queryClient.invalidateQueries(["wishlist"])
+        mutationFn: () =>
+            inWishList
+                ? removeFromWishList(product?._id)
+                : addToWishList(product?._id),
+        onSuccess: () => queryClient.invalidateQueries(["wishlist"]),
     });
+
+    // ✅ evita render prematuro
+    if (loading) return null;
 
     if (!product) {
         return (
@@ -41,23 +55,31 @@ export default function ProductCard({ product, orientation = "vertical" }) {
             : { text: "Agotado", variant: "error" };
 
     const hasDiscount = product.discount && product.discount > 0;
+
     const handleAddToCart = () => addToCart(product, 1);
+
     const productLink = `/product/${product._id}`;
 
     const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
 
     return (
-        <div className={ProductCardStyles.card({ orientation: orientation }) + " relative group"}>
-            { isAuthenticated && (
-                <button 
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMutation.mutate(); }} 
-                  className="absolute top-2 right-2 z-10 text-2xl hover:scale-110 transition-transform bg-white/50 rounded-full w-8 h-8 flex items-center justify-center p-0 cursor-pointer"
-                  title={inWishList ? "Quitar de favoritos" : "Añadir a favoritos"}
-                  disabled={toggleMutation.isPending}
+        <div className={ProductCardStyles.card({ orientation }) + " relative group"}>
+            {/* ❤️ Wishlist */}
+            {isAuthenticated && (
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleMutation.mutate();
+                    }}
+                    className="absolute top-2 right-2 z-10 text-2xl hover:scale-110 transition-transform bg-white/50 rounded-full w-8 h-8 flex items-center justify-center p-0 cursor-pointer"
+                    title={inWishList ? "Quitar de favoritos" : "Añadir a favoritos"}
+                    disabled={toggleMutation.isPending}
                 >
                     {inWishList ? "❤️" : "🤍"}
                 </button>
             )}
+
             {/* Imagen */}
             <Link to={productLink} className="block">
                 <img
@@ -92,15 +114,12 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                     ${price}
                 </div>
 
-                {/* Badges + Botón */}
+                {/* Footer */}
                 <div className={ProductCardStyles.footer()}>
                     <div className="flex gap-2">
                         <Badge text={stockBadge.text} variant={stockBadge.variant} />
                         {hasDiscount && (
-                            <Badge
-                                text={`-${product.discount}%`}
-                                variant="warning"
-                            />
+                            <Badge text={`-${product.discount}%`} variant="warning" />
                         )}
                     </div>
 
