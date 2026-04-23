@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { isAuthenticated, getCurrentUser } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 import { http } from "../services/http";
 
 const fetchUsers = async () => {
@@ -9,7 +9,7 @@ const fetchUsers = async () => {
 };
 
 export default function AdminDashboard() {
-    const user = getCurrentUser();
+    const { user, isAuthenticated } = useAuth();
 
     const { data: users = [], isLoading, error } = useQuery({
         queryKey: ["admin_users"],
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
         enabled: user?.role === "admin"
     });
 
-    if (!isAuthenticated() || user?.role !== "admin") {
+    if (!isAuthenticated || user?.role !== "admin") {
         return <Navigate to="/" replace />;
     }
 

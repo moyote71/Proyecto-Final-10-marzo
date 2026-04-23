@@ -5,7 +5,7 @@ import Icon from "../components/common/Icon/Icon";
 import Loading from "../components/common/Loading/Loading";
 import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
 import { http } from "../services/http";
-import { getCurrentUser } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 import * as OrdersStyles from "./OrdersStyles";
 
 const formatMoney = (value = 0) =>
@@ -56,6 +56,7 @@ const normalizeOrder = (order) => {
 };
 
 export default function Orders() {
+    const { user } = useAuth();
     const [orders, setOrders] = useState([]);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -63,7 +64,6 @@ export default function Orders() {
 
     useEffect(() => {
         const loadOrders = async () => {
-            const user = getCurrentUser();
             if (!user?._id) {
                 setOrders([]);
                 setLoading(false);

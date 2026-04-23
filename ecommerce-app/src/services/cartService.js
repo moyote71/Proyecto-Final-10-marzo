@@ -1,16 +1,8 @@
 import { http } from "./http";
-import { getCurrentUser } from "../utils/auth";
-
-// Asumimos que podemos recuperar al userId localmente de la sesión
-const getUserId = () => {
-    const user = getCurrentUser();
-    return user ? user._id : null;
-};
 
 // Obtener o crear carrito para el usuario
-export const fetchCart = async () => {
+export const fetchCart = async (userId) => {
     try {
-        const userId = getUserId();
         if (!userId) return { products: [] };
         
         const response = await http.get(`/cart/user/${userId}`);
@@ -22,10 +14,8 @@ export const fetchCart = async () => {
     }
 };
 
-export const addToCartAPI = async (productId, quantity) => {
-    const user = getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
-    const userId = user._id;
+export const addToCartAPI = async (userId, productId, quantity) => {
+    if (!userId) throw new Error("User not authenticated");
     const response = await http.post("/cart/add-product", {
         userId,
         productId,
@@ -34,10 +24,8 @@ export const addToCartAPI = async (productId, quantity) => {
     return response.data;
 };
 
-export const updateCartItemAPI = async (productId, quantity) => {
-    const user = getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
-    const userId = user._id;
+export const updateCartItemAPI = async (userId, productId, quantity) => {
+    if (!userId) throw new Error("User not authenticated");
     const response = await http.put("/cart/update-item", {
         userId,
         productId,
@@ -46,20 +34,16 @@ export const updateCartItemAPI = async (productId, quantity) => {
     return response.data;
 };
 
-export const removeFromCartAPI = async (productId) => {
-    const user = getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
-    const userId = user._id;
+export const removeFromCartAPI = async (userId, productId) => {
+    if (!userId) throw new Error("User not authenticated");
     const response = await http.delete(`/cart/remove-item/${productId}`, {
         data: { userId }
     });
     return response.data;
 };
 
-export const clearCartAPI = async () => {
-    const user = getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
-    const userId = user._id;
+export const clearCartAPI = async (userId) => {
+    if (!userId) throw new Error("User not authenticated");
     const response = await http.post("/cart/clear", { userId });
     return response.data;
 };

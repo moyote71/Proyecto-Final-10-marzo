@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
 import { fetchCart, addToCartAPI, updateCartItemAPI, removeFromCartAPI, clearCartAPI } from "../services/cartService";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -76,13 +77,14 @@ function cartReducer(state, action) {
 
 export function CartProvider({ children }) {
     const [state, dispatch] = useReducer(cartReducer, initialState);
+    const { user } = useAuth();
 
     // Cargar el carrito desde la API en el primer montaje
     useEffect(() => {
         const loadCart = async () => {
             dispatch({ type: ACTIONS.FETCH_START });
             try {
-                const cart = await fetchCart();
+                const cart = await fetchCart(user?._id);
                 // Normalizar estructura de la base de datos a lo que usa la UI frontend
                 if (cart && cart.products) {
                     const normalizedItems = cart.products.map(p => ({
@@ -100,7 +102,7 @@ export function CartProvider({ children }) {
             }
         };
         loadCart();
-    }, []);
+    }, [user]);
 
     const addToCart = async (product, quantity = 1) => {
         // Optimistic UI update
@@ -108,7 +110,7 @@ export function CartProvider({ children }) {
 
         // API Call
         try {
-            await addToCartAPI(product._id, quantity);
+            await addToCartAPI(user?._id, product._id, quantity);
         } catch (error) {
             console.error("Error al añadir al carrito en BD", error);
         }
@@ -120,7 +122,7 @@ export function CartProvider({ children }) {
         
         // API Call
         try {
-            await removeFromCartAPI(productId);
+            await removeFromCartAPI(user?._id, productId);
         } catch (error) {
             console.error("Error al eliminar del carrito en BD", error);
         }
@@ -133,9 +135,9 @@ export function CartProvider({ children }) {
         // API Call
         try {
             if (newQuantity <= 0) {
-                await removeFromCartAPI(productId);
+                await removeFromCartAPI(user?._id, productId);
             } else {
-                await updateCartItemAPI(productId, newQuantity);
+                await updateCartItemAPI(user?._id, productId, newQuantity);
             }
         } catch (error) {
             console.error("Error al actualizar cantidad en BD", error);
@@ -145,7 +147,7 @@ export function CartProvider({ children }) {
     const clearCart = async () => {
         dispatch({ type: ACTIONS.CLEAR_CART });
         try {
-            await clearCartAPI();
+            await clearCartAPI(user?._id);
         } catch (error) {
             console.error("Error limpiando carrito en BD", error);
         }

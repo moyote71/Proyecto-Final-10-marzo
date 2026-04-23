@@ -3,7 +3,7 @@ import axios from "axios";
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
 if (!API_BASE) {
-  console.error("❌ VITE_API_URL NO está definido en producción");
+  console.error("❌ REACT_APP_API_BASE_URL NO está definido");
 }
 
 console.log("🚀 API_BASE FINAL:", API_BASE);

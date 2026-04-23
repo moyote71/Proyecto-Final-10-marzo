@@ -1,4 +1,4 @@
-import { getCurrentUser } from "../../utils/auth";
+
 import Button from "../common/Button";
 import ProfileCardStyles from "./ProfileCardStyles";
 
@@ -23,7 +23,7 @@ const ROLE_ACTIONS = {
 };
 
 export default function ProfileCard({ user }) {
-    const currentUser = user || getCurrentUser();
+    const currentUser = user;
     const role = currentUser.role || "guest";
     const actions = ROLE_ACTIONS[role] || [];
 
