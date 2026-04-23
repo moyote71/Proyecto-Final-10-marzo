@@ -16,7 +16,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const { data: wishlist = [] } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
-        enabled: isAuthenticated(),
+        enabled: isAuthenticated,
     });
 
     const inWishList = wishlist.some(item => (item.product?._id || item._id) === product?._id);
@@ -48,7 +48,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
 
     return (
         <div className={ProductCardStyles.card({ orientation }) + " relative group"}>
-            { isAuthenticated() && (
+            { isAuthenticated && (
                 <button 
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMutation.mutate(); }} 
                   className="absolute top-2 right-2 z-10 text-2xl hover:scale-110 transition-transform bg-white/50 rounded-full w-8 h-8 flex items-center justify-center p-0 cursor-pointer"
