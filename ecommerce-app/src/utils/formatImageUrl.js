@@ -1,19 +1,30 @@
 const formatImageUrl = (url) => {
   const base = process.env.REACT_APP_API_BASE_URL?.replace("/api", "");
 
-  if (!url || url.trim() === "") {
+  // 🔥 Si no hay URL válida, fallback seguro
+  if (!url || typeof url !== "string" || url.trim() === "") {
     return "https://placehold.co/800x600?text=Producto";
   }
 
-  if (url.includes("localhost:5000")) {
-    return url.replace("http://localhost:5000", base);
+  const cleanUrl = url.trim();
+
+  // 🔥 Si ya es URL absoluta, no tocarla
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
   }
 
-  if (url.startsWith("/uploads")) {
-    return `${base}${url}`;
+  // 🔥 Si viene de uploads (backend típico)
+  if (cleanUrl.startsWith("/uploads")) {
+    return `${base}${cleanUrl}`;
   }
 
-  return url;
+  // 🔥 Si viene sin slash inicial
+  if (cleanUrl.startsWith("uploads")) {
+    return `${base}/${cleanUrl}`;
+  }
+
+  // 🔥 fallback general
+  return `${base}/${cleanUrl}`;
 };
 
 export default formatImageUrl;
