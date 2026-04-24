@@ -13,8 +13,11 @@ export default function Header() {
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const { isDarkMode, toggleTheme } = useTheme();
-    const { getTotalItems } = useCart();
-    const totalItems = getTotalItems();
+    const { cartItems } = useCart();
+    const totalItems = cartItems.reduce(
+        (acc, item) => acc + (item.quantity || 0),
+        0
+    );
     const navigate = useNavigate();
 
     const { user, isAuthenticated: isAuth, logout } = useAuth();

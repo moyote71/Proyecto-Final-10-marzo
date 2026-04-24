@@ -10,34 +10,56 @@ import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
+/* =========================
+   ACTIONS
+========================= */
 export const ACTIONS = {
     FETCH_START: "FETCH_START",
     FETCH_SUCCESS: "FETCH_SUCCESS",
     FETCH_ERROR: "FETCH_ERROR",
-    ADD_ITEM: "ADD_ITEM",
-    REMOVE_ITEM: "REMOVE_ITEM",
-    UPDATE_QUANTITY: "UPDATE_QUANTITY",
+
+    ADD_ITEM_OPTIMISTIC: "ADD_ITEM_OPTIMISTIC",
+    REMOVE_ITEM_OPTIMISTIC: "REMOVE_ITEM_OPTIMISTIC",
+    UPDATE_QUANTITY_OPTIMISTIC: "UPDATE_QUANTITY_OPTIMISTIC",
     CLEAR_CART: "CLEAR_CART",
+
+    REVERT_CART: "REVERT_CART",
 };
 
+/* =========================
+   STATE
+========================= */
 const initialState = {
     cartItems: [],
     loading: true,
     error: null,
 };
 
+/* =========================
+   REDUCER (robusto)
+========================= */
 function cartReducer(state, action) {
     switch (action.type) {
         case ACTIONS.FETCH_START:
-            return { ...state, loading: true };
+            return { ...state, loading: true, error: null };
 
         case ACTIONS.FETCH_SUCCESS:
-            return { ...state, loading: false, cartItems: action.payload };
+            return {
+                ...state,
+                loading: false,
+                cartItems: action.payload,
+                error: null,
+            };
 
         case ACTIONS.FETCH_ERROR:
-            return { ...state, loading: false, error: action.payload };
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
 
-        case ACTIONS.ADD_ITEM: {
+        /* ---------- ADD ---------- */
+        case ACTIONS.ADD_ITEM_OPTIMISTIC: {
             const { product, quantity } = action.payload;
 
             const exists = state.cartItems.find(
@@ -49,7 +71,10 @@ function cartReducer(state, action) {
                     ...state,
                     cartItems: state.cartItems.map((i) =>
                         i._id === product._id
-                            ? { ...i, quantity: i.quantity + quantity }
+                            ? {
+                                  ...i,
+                                  quantity: i.quantity + quantity,
+                              }
                             : i
                     ),
                 };
@@ -64,7 +89,8 @@ function cartReducer(state, action) {
             };
         }
 
-        case ACTIONS.REMOVE_ITEM:
+        /* ---------- REMOVE ---------- */
+        case ACTIONS.REMOVE_ITEM_OPTIMISTIC:
             return {
                 ...state,
                 cartItems: state.cartItems.filter(
@@ -72,28 +98,51 @@ function cartReducer(state, action) {
                 ),
             };
 
-        case ACTIONS.UPDATE_QUANTITY:
+        /* ---------- UPDATE ---------- */
+        case ACTIONS.UPDATE_QUANTITY_OPTIMISTIC:
             return {
                 ...state,
-                cartItems: state.cartItems.map((i) =>
-                    i._id === action.payload.productId
-                        ? { ...i, quantity: action.payload.quantity }
-                        : i
-                ),
+                cartItems: state.cartItems
+                    .map((i) =>
+                        i._id === action.payload.productId
+                            ? {
+                                  ...i,
+                                  quantity: action.payload.quantity,
+                              }
+                            : i
+                    )
+                    .filter((i) => i.quantity > 0),
             };
 
+        /* ---------- CLEAR ---------- */
         case ACTIONS.CLEAR_CART:
-            return { ...state, cartItems: [] };
+            return {
+                ...state,
+                cartItems: [],
+            };
+
+        /* ---------- REVERT (fallback seguridad) ---------- */
+        case ACTIONS.REVERT_CART:
+            return {
+                ...state,
+                cartItems: action.payload,
+            };
 
         default:
             return state;
     }
 }
 
+/* =========================
+   PROVIDER
+========================= */
 export function CartProvider({ children }) {
     const [state, dispatch] = useReducer(cartReducer, initialState);
     const { user } = useAuth();
 
+    /* =========================
+       LOAD CART
+    ========================= */
     useEffect(() => {
         if (!user?._id) {
             dispatch({
@@ -113,6 +162,7 @@ export function CartProvider({ children }) {
 
                 const normalized = products.map((p) => {
                     const product = p.product || {};
+
                     return {
                         ...product,
                         quantity: p.quantity,
@@ -135,64 +185,124 @@ export function CartProvider({ children }) {
         loadCart();
     }, [user]);
 
+    /* =========================
+       ADD TO CART
+    ========================= */
     const addToCart = async (product, quantity = 1) => {
         dispatch({
-            type: ACTIONS.ADD_ITEM,
+            type: ACTIONS.ADD_ITEM_OPTIMISTIC,
             payload: { product, quantity },
         });
 
         if (!user?._id) return;
 
-        await addToCartAPI(user._id, product._id, quantity);
+        try {
+            await addToCartAPI(user._id, product._id, quantity);
+        } catch (err) {
+            console.error("Add to cart failed:", err);
+        }
     };
 
+    /* =========================
+       REMOVE
+    ========================= */
     const removeFromCart = async (productId) => {
-        dispatch({ type: ACTIONS.REMOVE_ITEM, payload: productId });
+        const backup = state.cartItems;
+
+        dispatch({
+            type: ACTIONS.REMOVE_ITEM_OPTIMISTIC,
+            payload: productId,
+        });
 
         if (!user?._id) return;
 
-        await removeFromCartAPI(user._id, productId);
+        try {
+            await removeFromCartAPI(user._id, productId);
+        } catch (err) {
+            dispatch({
+                type: ACTIONS.REVERT_CART,
+                payload: backup,
+            });
+        }
     };
 
+    /* =========================
+       UPDATE
+    ========================= */
     const updateQuantity = async (productId, quantity) => {
+        const backup = state.cartItems;
+
         dispatch({
-            type: ACTIONS.UPDATE_QUANTITY,
+            type: ACTIONS.UPDATE_QUANTITY_OPTIMISTIC,
             payload: { productId, quantity },
         });
 
         if (!user?._id) return;
 
-        if (quantity <= 0) {
-            await removeFromCartAPI(user._id, productId);
-        } else {
-            await updateCartItemAPI(user._id, productId, quantity);
+        try {
+            if (quantity <= 0) {
+                await removeFromCartAPI(user._id, productId);
+            } else {
+                await updateCartItemAPI(
+                    user._id,
+                    productId,
+                    quantity
+                );
+            }
+        } catch (err) {
+            dispatch({
+                type: ACTIONS.REVERT_CART,
+                payload: backup,
+            });
         }
     };
 
+    /* =========================
+       CLEAR
+    ========================= */
     const clearCart = async () => {
+        const backup = state.cartItems;
+
         dispatch({ type: ACTIONS.CLEAR_CART });
 
         if (!user?._id) return;
 
-        await clearCartAPI(user._id);
+        try {
+            await clearCartAPI(user._id);
+        } catch (err) {
+            dispatch({
+                type: ACTIONS.REVERT_CART,
+                payload: backup,
+            });
+        }
     };
 
+    /* =========================
+       TOTAL
+    ========================= */
     const getTotalPrice = () =>
         state.cartItems.reduce(
             (t, i) => t + (i.price || 0) * i.quantity,
             0
         );
 
+    const getTotalItems = () =>
+        state.cartItems.reduce((t, i) => t + i.quantity, 0);
+
     return (
         <CartContext.Provider
             value={{
                 cartItems: state.cartItems,
                 loading: state.loading,
+                error: state.error,
+
                 addToCart,
                 removeFromCart,
                 updateQuantity,
                 clearCart,
+
                 getTotalPrice,
+                getTotalItems,
             }}
         >
             {children}
