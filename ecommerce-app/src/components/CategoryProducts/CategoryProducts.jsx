@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
-import { getCategoryBySlug } from "../../services/categoryService";
-import { getProductsByCategoryAndChildren } from "../../services/categoryService";
+import { getCategoryBySlug, getProductsByCategoryAndChildren } from "../../services/categoryService";
 import ProductCard from "../ProductCard/ProductCard";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
@@ -15,7 +14,11 @@ export default function CategoryProducts({ slug }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!slug) return;
+        if (!slug || slug === "undefined") {
+            setError("Slug inválido");
+            setLoading(false);
+            return;
+        }
 
         const load = async () => {
             try {
@@ -56,17 +59,23 @@ export default function CategoryProducts({ slug }) {
 
     return (
         <div className={S.root}>
-            <BreadCrumb items={[
-                { label: "Inicio", to: "/" },
-                { label: category.name }
-            ]} />
+            <BreadCrumb
+                items={[
+                    { label: "Inicio", to: "/" },
+                    { label: category.name },
+                ]}
+            />
 
             <h1>{category.name}</h1>
 
             <div className={S.grid}>
-                {(products || []).map((p) => (
-                    <ProductCard key={p._id} product={p} />
-                ))}
+                {products.length > 0 ? (
+                    products.map((p) => (
+                        <ProductCard key={p._id} product={p} />
+                    ))
+                ) : (
+                    <p>No hay productos en esta categoría</p>
+                )}
             </div>
         </div>
     );

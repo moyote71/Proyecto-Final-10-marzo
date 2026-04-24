@@ -76,10 +76,11 @@ export default function ProductDetails({ productId }) {
 
     // 🔥 FIX CRÍTICO: evitar undefined en rutas
     const categorySlug =
-        resolvedCategory?._id ||
-        resolvedCategory?.slug ||
-        product?.category?._id ||
-        null;
+    resolvedCategory?.slug ||
+    resolvedCategory?._id ||
+    product?.category?.slug ||
+    product?.category?._id ||
+    null;
 
     const handleAddToCart = () => {
         if (product) addToCart(product, 1);
@@ -118,9 +119,9 @@ export default function ProductDetails({ productId }) {
         category,
     } = product;
 
-    const productImageUrl = formatImageUrl(
-        image || imagesUrl?.[0]
-    );
+    const productImageUrl =
+    formatImageUrl(image || imagesUrl?.[0]) ||
+    "https://placehold.co/800x600?text=Sin+Imagen";
 
     const stockBadge = stock > 0 ? "success" : "error";
     const stockLabel = stock > 0 ? "En stock" : "Agotado";
