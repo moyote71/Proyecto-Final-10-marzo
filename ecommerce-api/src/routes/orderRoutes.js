@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   cancelOrder,
   createOrder,
@@ -6,7 +7,6 @@ import {
   getOrderById,
   getOrders,
   getOrdersByUser,
-  updateOrder,
   updateOrderStatus,
   updatePaymentStatus,
 } from "../controllers/orderController.js";
@@ -28,22 +28,18 @@ const router = express.Router();
 /* =========================
    ADMIN - ALL ORDERS
 ========================= */
-router.get("/orders", authMiddleware, isAdmin, getOrders);
+router.get("/", authMiddleware, isAdmin, getOrders);
 
 /* =========================
-   USER - MY ORDERS
-   🔥 FIX: NO userId param, usa token
+   USER ORDERS
 ========================= */
-router.get("/orders/me", authMiddleware, (req, res, next) => {
-  req.params.userId = req.user.userId;
-  next();
-}, getOrdersByUser);
+router.get("/me", authMiddleware, getOrdersByUser);
 
 /* =========================
-   GET ORDER BY ID
+   GET BY ID
 ========================= */
 router.get(
-  "/orders/:id",
+  "/:id",
   authMiddleware,
   [mongoIdValidation("id", "Order ID")],
   validate,
@@ -52,10 +48,9 @@ router.get(
 
 /* =========================
    CREATE ORDER
-   🔥 IMPORTANTE: user viene del token
 ========================= */
 router.post(
-  "/orders",
+  "/",
   authMiddleware,
   [
     bodyMongoIdValidation("shippingAddress", "Shipping address"),
@@ -67,22 +62,10 @@ router.post(
 );
 
 /* =========================
-   CANCEL ORDER (ADMIN ONLY)
-========================= */
-router.patch(
-  "/orders/:id/cancel",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID")],
-  validate,
-  cancelOrder
-);
-
-/* =========================
    STATUS UPDATE
 ========================= */
 router.patch(
-  "/orders/:id/status",
+  "/:id/status",
   authMiddleware,
   isAdmin,
   [
@@ -97,7 +80,7 @@ router.patch(
    PAYMENT STATUS
 ========================= */
 router.patch(
-  "/orders/:id/payment-status",
+  "/:id/payment-status",
   authMiddleware,
   isAdmin,
   [
@@ -109,27 +92,22 @@ router.patch(
 );
 
 /* =========================
-   UPDATE ORDER (ADMIN)
+   CANCEL ORDER
 ========================= */
-router.put(
-  "/orders/:id",
+router.patch(
+  "/:id/cancel",
   authMiddleware,
   isAdmin,
-  [
-    mongoIdValidation("id", "Order ID"),
-    orderStatusValidation(true),
-    paymentStatusValidation(true),
-    shippingCostValidation(),
-  ],
+  [mongoIdValidation("id", "Order ID")],
   validate,
-  updateOrder
+  cancelOrder
 );
 
 /* =========================
-   DELETE ORDER (ADMIN)
+   DELETE ORDER
 ========================= */
 router.delete(
-  "/orders/:id",
+  "/:id",
   authMiddleware,
   isAdmin,
   [mongoIdValidation("id", "Order ID")],

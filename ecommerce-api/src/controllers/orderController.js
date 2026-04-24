@@ -65,47 +65,40 @@ async function getOrdersByUser(req, res, next) {
 async function createOrder(req, res, next) {
   try {
     const user = req.user.userId;
-    const { products, shippingAddress, paymentMethod, shippingCost = 0 } = req.body;
 
-    // validar stock
+    const {
+      products,
+      shippingAddress,
+      paymentMethod,
+      shippingCost = 0,
+    } = req.body;
+
+    // 🔥 VALIDACIÓN SIMPLE (evita 422)
+    if (!products?.length) {
+      return res.status(422).json({ message: "No products" });
+    }
+
     const stockChecks = await Promise.all(
       products.map(async (item) => {
         const product = await Product.findById(item.productId);
 
         if (!product) {
-          return { error: "Product not found", productId: item.productId };
+          return { error: "Product not found" };
         }
 
         if (product.stock < item.quantity) {
-          return {
-            error: `Insufficient stock for ${product.name}`,
-            productId: item.productId,
-            available: product.stock,
-            requested: item.quantity,
-          };
+          return { error: "Insufficient stock" };
         }
 
-        return { product, ok: true };
+        return { product };
       })
     );
 
-    const errors = stockChecks.filter((p) => p.error);
+    const errors = stockChecks.filter((e) => e.error);
 
-    if (errors.length > 0) {
-      return res.status(400).json({
-        message: "Stock validation failed",
-        errors,
-      });
+    if (errors.length) {
+      return res.status(400).json({ message: "Stock error", errors });
     }
-
-    // descontar stock
-    await Promise.all(
-      products.map((item) =>
-        Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: -item.quantity },
-        })
-      )
-    );
 
     const normalizedProducts = stockChecks.map((item, i) => ({
       productId: item.product._id,
@@ -114,11 +107,9 @@ async function createOrder(req, res, next) {
     }));
 
     const subtotal = normalizedProducts.reduce(
-      (acc, item) => acc + item.price * item.quantity,
+      (acc, i) => acc + i.price * i.quantity,
       0
     );
-
-    const totalPrice = subtotal + shippingCost;
 
     const order = await Order.create({
       user,
@@ -126,16 +117,13 @@ async function createOrder(req, res, next) {
       shippingAddress,
       paymentMethod,
       shippingCost,
-      totalPrice,
+      totalPrice: subtotal + shippingCost,
       status: "pending",
       paymentStatus: "pending",
     });
 
     const populated = await order.populate([
-      "user",
       "products.productId",
-      "shippingAddress",
-      "paymentMethod",
     ]);
 
     res.status(201).json(populated);

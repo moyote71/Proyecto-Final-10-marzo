@@ -1,106 +1,48 @@
 import ShippingAddress from "../models/shippingAddress.js";
 
 /* =========================
-   GET ALL (ADMIN)
+   GET BY USER (FIXED)
 ========================= */
 export async function getShippingAddresses(req, res, next) {
-    try {
-        const addresses = await ShippingAddress.find().populate("user");
-        res.json(addresses);
-    } catch (error) {
-        next(error);
-    }
+  try {
+    const addresses = await ShippingAddress.find({
+      user: req.user.userId,
+    });
+
+    res.json(addresses);
+  } catch (error) {
+    next(error);
+  }
 }
 
 /* =========================
-   GET BY USER (LOGGED USER)
-========================= */
-export async function getShippingAddressesByUser(req, res, next) {
-    try {
-        const userId = req.user._id;
-
-        const addresses = await ShippingAddress.find({ user: userId });
-
-        res.json(addresses);
-    } catch (error) {
-        next(error);
-    }
-}
-
-/* =========================
-   GET DEFAULT ADDRESS
+   DEFAULT (FIXED)
 ========================= */
 export async function getDefaultShippingAddress(req, res, next) {
-    try {
-        const userId = req.user._id;
+  try {
+    const address = await ShippingAddress.findOne({
+      user: req.user.userId,
+      isDefault: true,
+    });
 
-        const address = await ShippingAddress.findOne({
-            user: userId,
-            isDefault: true,
-        });
-
-        res.json(address || null);
-    } catch (error) {
-        next(error);
-    }
+    res.json(address || null);
+  } catch (error) {
+    next(error);
+  }
 }
 
 /* =========================
-   CREATE ADDRESS
+   CREATE (FIXED)
 ========================= */
 export async function createShippingAddress(req, res, next) {
-    try {
-        const userId = req.user._id;
+  try {
+    const newAddress = await ShippingAddress.create({
+      ...req.body,
+      user: req.user.userId,
+    });
 
-        const newAddress = await ShippingAddress.create({
-            ...req.body,
-            user: userId,
-        });
-
-        res.status(201).json(newAddress);
-    } catch (error) {
-        next(error);
-    }
-}
-
-/* =========================
-   UPDATE ADDRESS
-========================= */
-export async function updateShippingAddress(req, res, next) {
-    try {
-        const { id } = req.params;
-
-        const updated = await ShippingAddress.findByIdAndUpdate(
-            id,
-            req.body,
-            { new: true }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ message: "Address not found" });
-        }
-
-        res.json(updated);
-    } catch (error) {
-        next(error);
-    }
-}
-
-/* =========================
-   DELETE ADDRESS
-========================= */
-export async function deleteShippingAddress(req, res, next) {
-    try {
-        const { id } = req.params;
-
-        const deleted = await ShippingAddress.findByIdAndDelete(id);
-
-        if (!deleted) {
-            return res.status(404).json({ message: "Address not found" });
-        }
-
-        res.json({ message: "Address deleted successfully" });
-    } catch (error) {
-        next(error);
-    }
+    res.status(201).json(newAddress);
+  } catch (error) {
+    next(error);
+  }
 }
