@@ -91,8 +91,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                                         className={navStyles.categoryGroup}
                                     >
                                         <Link
-                                            to={`/categories/${category.slug}`}                                             className={navStyles.mainCategoryLink}
-                                        >
+                                            to={`/categories/${subcat.slug}`}>
                                             {category.name}
                                             {subcategories.length > 0 && (
                                                 <Icon name="chevronRight" size={12} />

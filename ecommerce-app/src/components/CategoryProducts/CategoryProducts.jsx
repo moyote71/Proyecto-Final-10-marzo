@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
-import { getCategoryBySlug, getProductsByCategoryAndChildren } from "../../services/categoryService";
+import {
+    getCategoryBySlug,
+    getProductsByCategoryAndChildren,
+} from "../../services/categoryService";
 import ProductCard from "../ProductCard/ProductCard";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
@@ -16,33 +19,33 @@ export default function CategoryProducts() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
+    setLoading(true);
+    setError(null);
 
-        const loadCategoryAndProducts = async () => {
-            try {
-                const categoryData = await getCategoryBySlug(slug);
+    const loadCategoryAndProducts = async () => {
+        try {
+            const categoryData = await getCategoryBySlug(categoryId);
 
-                if (!categoryData) {
-                    setError("Categoría no encontrada");
-                    return;
-                }
-
-                const productsData = await getProductsByCategoryAndChildren(
-                    categoryData._id
-                );
-
-                setCategory(categoryData);
-                setProducts(productsData);
-            } catch (err) {
-                setError("Error al cargar la categoría o productos");
-            } finally {
-                setLoading(false);
+            if (!categoryData) {
+                setError("Categoría no encontrada");
+                return;
             }
-        };
 
-        loadCategoryAndProducts();
-    }, [slug]);
+            const productsData = await getProductsByCategoryAndChildren(
+                categoryData._id
+            );
+
+            setCategory(categoryData);
+            setProducts(productsData);
+        } catch (err) {
+            setError("Error al cargar la categoría o productos");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    loadCategoryAndProducts();
+}, [categoryId]);
 
     if (loading) {
         return (
