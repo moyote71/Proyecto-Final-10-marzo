@@ -20,12 +20,12 @@ import {
 } from "../services/shippingService";
 
 import {
-    getPaymentMethods,
-    createPaymentMethod,
-    updatePaymentMethod,
-    deletePaymentMethod as deletePaymentAPI,
-    getDefaultPaymentMethods,
-} from "../services/paymentService";
+    getShippingAddresses,
+    getDefaultShippingAddress,
+    createShippingAddress,
+    updateShippingAddress,
+    deleteShippingAddress,
+} from "../services/shippingService";
 
 import { http } from "../services/http";
 

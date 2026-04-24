@@ -1,225 +1,109 @@
 import ShippingAddress from "../models/shippingAddress.js";
 
-// Crear una nueva dirección de envío
-const createShippingAddress = async (req, res, next) => {
-  try {
-    const { name, address, city, state, postalCode, country, phone, isDefault, addressType } =
-      req.body;
-    const user = req.user.userId; // Asumiendo que tienes middleware de autenticación
+/* =========================
+   GET ALL USER ADDRESSES
+========================= */
+export const getShippingAddresses = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
 
-    // Si esta dirección se marca como default, desmarcar las demás
-    if (isDefault) {
-      await ShippingAddress.updateMany({ user }, { isDefault: false });
+        const addresses = await ShippingAddress.find({ user: userId });
+
+        res.json(addresses);
+    } catch (error) {
+        next(error);
     }
-
-    const newAddress = new ShippingAddress({
-      user,
-      name,
-      address,
-      city,
-      state,
-      postalCode,
-      country: country || "México",
-      phone,
-      isDefault: isDefault || false,
-      addressType: addressType || "home",
-    });
-
-    await newAddress.save();
-
-    res.status(201).json({
-      message: "Shipping address created successfully",
-      address: newAddress,
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
-// Obtener todas las direcciones del usuario
-const getUserAddresses = async (req, res, next) => {
-  try {
-    const userId = req.user.userId;
+/* =========================
+   GET DEFAULT ADDRESS
+========================= */
+export const getDefaultShippingAddress = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
 
-    const addresses = await ShippingAddress.find({ user: userId }).sort({ isDefault: -1, _id: -1 }); // Default primero, luego más recientes
+        const address = await ShippingAddress.findOne({
+            user: userId,
+            isDefault: true,
+        });
 
-    res.status(200).json({
-      message: "Addresses retrieved successfully",
-      count: addresses.length,
-      addresses,
-    });
-  } catch (error) {
-    next(error);
-  }
+        if (!address) {
+            return res.status(404).json({ message: "No default address" });
+        }
+
+        res.json(address);
+    } catch (error) {
+        next(error);
+    }
 };
 
-// Obtener una dirección específica
-const getAddressById = async (req, res, next) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.user.userId;
+/* =========================
+   CREATE ADDRESS
+========================= */
+export const createShippingAddress = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
 
-    const address = await ShippingAddress.findOne({ _id: addressId, user: userId });
+        const newAddress = await ShippingAddress.create({
+            ...req.body,
+            user: userId,
+        });
 
-    if (!address) {
-      return res.status(404).json({ message: "Address not found" });
+        res.status(201).json(newAddress);
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json({
-      message: "Address retrieved successfully",
-      address,
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
-// Obtener la dirección por defecto del usuario
-const getDefaultAddress = async (req, res, next) => {
-  try {
-    const userId = req.user.userId;
+/* =========================
+   UPDATE ADDRESS
+========================= */
+export const updateShippingAddress = async (req, res, next) => {
+    try {
+        const { id } = req.params;
 
-    const defaultAddress = await ShippingAddress.findOne({ user: userId, isDefault: true });
+        const updated = await ShippingAddress.findByIdAndUpdate(
+            id,
+            req.body,
+            { new: true }
+        );
 
-    if (!defaultAddress) {
-      return res.status(404).json({ message: "No default address found" });
+        if (!updated) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        /* Si se marca como default */
+        if (req.body.isDefault) {
+            await ShippingAddress.updateMany(
+                {
+                    user: updated.user,
+                    _id: { $ne: updated._id },
+                },
+                { isDefault: false }
+            );
+        }
+
+        res.json(updated);
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json({
-      message: "Default address retrieved successfully",
-      address: defaultAddress,
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
-// Actualizar una dirección
-const updateShippingAddress = async (req, res, next) => {
-  try {
-    const { addressId } = req.params;
-    const { name, address, city, state, postalCode, country, phone, isDefault, addressType } =
-      req.body;
-    const userId = req.user.userId;
+/* =========================
+   DELETE ADDRESS
+========================= */
+export const deleteShippingAddress = async (req, res, next) => {
+    try {
+        const { id } = req.params;
 
-    // Validar que al menos un campo esté presente
-    if (
-      !name &&
-      !address &&
-      !city &&
-      !state &&
-      !postalCode &&
-      !country &&
-      !phone &&
-      isDefault === undefined &&
-      !addressType
-    ) {
-      return res.status(400).json({
-        message: "At least one field must be provided to update",
-      });
+        const deleted = await ShippingAddress.findByIdAndDelete(id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        res.json({ message: "Address deleted" });
+    } catch (error) {
+        next(error);
     }
-
-    const shippingAddress = await ShippingAddress.findOne({
-      _id: addressId,
-      user: userId,
-    });
-
-    if (!shippingAddress) {
-      return res.status(404).json({ message: "Address not found" });
-    }
-
-    // Si esta dirección se marca como default, desmarcar las demás
-    if (isDefault && !shippingAddress.isDefault) {
-      await ShippingAddress.updateMany(
-        { user: userId, _id: { $ne: addressId } },
-        { isDefault: false }
-      );
-    }
-
-    // Actualizar campos solo si están presentes
-    if (name !== undefined) shippingAddress.name = name;
-    if (address !== undefined) shippingAddress.address = address;
-    if (city !== undefined) shippingAddress.city = city;
-    if (state !== undefined) shippingAddress.state = state;
-    if (postalCode !== undefined) shippingAddress.postalCode = postalCode;
-    if (country !== undefined) shippingAddress.country = country;
-    if (phone !== undefined) shippingAddress.phone = phone;
-    if (isDefault !== undefined) shippingAddress.isDefault = isDefault;
-    if (addressType !== undefined) shippingAddress.addressType = addressType;
-
-    await shippingAddress.save();
-
-    res.status(200).json({
-      message: "Address updated successfully",
-      address: shippingAddress,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Marcar dirección como default
-const setDefaultAddress = async (req, res, next) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.user.userId;
-
-    const address = await ShippingAddress.findOne({
-      _id: addressId,
-      user: userId,
-    });
-
-    if (!address) {
-      return res.status(404).json({ message: "Address not found" });
-    }
-
-    // Desmarcar todas las direcciones como default
-    await ShippingAddress.updateMany({ user: userId }, { isDefault: false });
-
-    // Marcar la dirección actual como default
-    address.isDefault = true;
-    await address.save();
-
-    res.status(200).json({
-      message: "Default address updated successfully",
-      address,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Eliminar una dirección
-const deleteShippingAddress = async (req, res, next) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.user.userId;
-
-    const address = await ShippingAddress.findOne({
-      _id: addressId,
-      user: userId,
-    });
-
-    if (!address) {
-      return res.status(404).json({ message: "Address not found" });
-    }
-
-    await ShippingAddress.findByIdAndDelete(addressId);
-
-    res.status(200).json({
-      message: "Address deleted successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export {
-  createShippingAddress,
-  deleteShippingAddress,
-  getAddressById,
-  getDefaultAddress,
-  getUserAddresses,
-  setDefaultAddress,
-  updateShippingAddress,
 };
