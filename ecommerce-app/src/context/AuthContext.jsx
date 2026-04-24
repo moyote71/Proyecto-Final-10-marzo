@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch {
+            } catch (error) {
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -38,8 +38,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch (error) {
-                console.error("Error obteniendo perfil:", error);
+            } catch {
                 setUser(null);
             }
 
@@ -60,8 +59,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch (error) {
-                console.error("Error obteniendo perfil:", error);
+            } catch {
                 setUser(null);
             }
 
@@ -76,7 +74,7 @@ export function AuthProvider({ children }) {
         try {
             await http.post("/auth/logout", {}, { withCredentials: true });
         } catch (e) {
-            console.error("Logout error:", e);
+            console.error(e);
         } finally {
             setUser(null);
             navigate("/login");
@@ -89,7 +87,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user, // 👈 BOOLEAN CORRECTO
     };
 
     if (loading) {
@@ -105,10 +103,8 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-
     if (!context) {
         throw new Error("useAuth debe estar dentro de AuthProvider");
     }
-
     return context;
 }

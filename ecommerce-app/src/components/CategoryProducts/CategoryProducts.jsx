@@ -17,11 +17,10 @@ export default function CategoryProducts({ slug }) {
     useEffect(() => {
         if (!slug) return;
 
-        setLoading(true);
-        setError(null);
-
-        const loadData = async () => {
+        const load = async () => {
             try {
+                setLoading(true);
+
                 const categoryData = await getCategoryBySlug(slug);
 
                 if (!categoryData) {
@@ -34,34 +33,24 @@ export default function CategoryProducts({ slug }) {
                 );
 
                 setCategory(categoryData);
-                setProducts(productsData);
+                setProducts(productsData || []);
             } catch (err) {
-                setError("Error al cargar la categoría o productos");
+                setError("Error cargando categoría");
             } finally {
                 setLoading(false);
             }
         };
 
-        loadData();
+        load();
     }, [slug]);
 
-    if (loading) {
-        return (
-            <div className={S.root}>
-                <Loading message="Cargando categoría y productos..." />
-            </div>
-        );
-    }
+    if (loading) return <Loading message="Cargando..." />;
 
     if (error || !category) {
         return (
-            <div className={S.root}>
-                <ErrorMessage message={error || "Categoría no encontrada"}>
-                    <p className={S.muted}>
-                        Vuelve al <Link to="/" className="text-blue-600 underline">inicio</Link>
-                    </p>
-                </ErrorMessage>
-            </div>
+            <ErrorMessage message={error || "Categoría no encontrada"}>
+                <Link to="/">Volver al inicio</Link>
+            </ErrorMessage>
         );
     }
 
@@ -72,22 +61,12 @@ export default function CategoryProducts({ slug }) {
                 { label: category.name }
             ]} />
 
-            <div className={S.container}>
-                <h1 className={S.title}>{category.name}</h1>
+            <h1>{category.name}</h1>
 
-                {(products || []).length > 0 ? (
-                    <div className={S.grid}>
-                        {products.map((product) => (
-                            <ProductCard
-                                key={product._id}
-                                product={product}
-                                orientation="vertical"
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <p>No hay productos en esta categoría</p>
-                )}
+            <div className={S.grid}>
+                {(products || []).map((p) => (
+                    <ProductCard key={p._id} product={p} />
+                ))}
             </div>
         </div>
     );
