@@ -2,13 +2,25 @@ import Button from "../../common/Button";
 import * as styles from "./AddressItemStyles";
 
 const AddressItem = ({ address, isSelected, onSelect, onEdit, onDelete }) => {
-    // Normalizar para mostrar datos tanto de backend como de fakes anteriores
-    const name = address.name || "Sin nombre";
-    const line1 = address.address || address.address_line || address.address1 || "Sin dirección";
-    const city = address.city || "";
-    const state = address.state || "";
-    const cp = address.postalCode || "";
-    const isDefault = address.isDefault || address.default || false;
+    // Evitar crash si address viene undefined
+    const safeAddress = address || {};
+
+    // Normalizar para backend + datos antiguos
+    const name = safeAddress.name || "Sin nombre";
+
+    const line1 =
+        safeAddress.address ||
+        safeAddress["address line"] ||
+        safeAddress.address_line ||
+        safeAddress.address1 ||
+        "Sin dirección";
+
+    const city = safeAddress.city || "";
+    const state = safeAddress.state || "";
+    const cp = safeAddress.postalCode || "";
+
+    const isDefault =
+        safeAddress.isDefault || safeAddress.default || false;
 
     return (
         <div className={styles.container(isSelected, isDefault)}>
@@ -18,33 +30,43 @@ const AddressItem = ({ address, isSelected, onSelect, onEdit, onDelete }) => {
                 <p className={styles.text}>{line1}</p>
 
                 <p className={styles.text}>
-                    {city}{state ? `, ${state}` : ""} {cp}
+                    {city}
+                    {state ? `, ${state}` : ""} {cp}
                 </p>
 
                 {isDefault && (
-                    <span className={styles.defaultBadge}>Predeterminada</span>
+                    <span className={styles.defaultBadge}>
+                        Predeterminada
+                    </span>
                 )}
             </div>
 
             <div className={styles.actions}>
                 <Button
-                    onClick={() => onSelect(address)}
+                    onClick={() => onSelect?.(safeAddress)}
                     disabled={isSelected}
                 >
                     {isSelected ? "Seleccionada" : "Seleccionar"}
                 </Button>
 
-                <Button variant="secondary" onClick={() => onEdit(address)}>
+                <Button
+                    variant="secondary"
+                    onClick={() => onEdit?.(safeAddress)}
+                >
                     Editar
                 </Button>
 
-                <Button variant="danger" onClick={() => onDelete(address._id || address.id)}>
+                <Button
+                    variant="danger"
+                    onClick={() =>
+                        onDelete?.(safeAddress._id || safeAddress.id)
+                    }
+                >
                     Eliminar
                 </Button>
             </div>
         </div>
     );
 };
-
 
 export default AddressItem;
