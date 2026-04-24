@@ -17,8 +17,11 @@ const router = express.Router();
 // AUTH
 router.use("/auth", authRoutes);
 
-// USER
+// USERS
 router.use("/users", userRoutes);
+
+// PRODUCTS
+router.use("/products", productRoutes);
 
 // CART
 router.use("/cart", cartRoutes);
@@ -29,20 +32,17 @@ router.use("/categories", categoryRoutes);
 // NOTIFICATIONS
 router.use("/notifications", notificationRoutes);
 
-// PRODUCTS
-router.use("/products", productRoutes);
-
-// REVIEWS
-router.use("/reviews", reviewRoutes);
+// ORDERS
+router.use("/orders", orderRoutes);
 
 // PAYMENT METHODS
 router.use("/payment-methods", paymentMethodRoutes);
 
-// SHIPPING ADDRESS (🔥 IMPORTANTE FIX)
-router.use("/shipping-address", shippingAddressRoutes);
+// REVIEWS
+router.use("/reviews", reviewRoutes);
 
-// ORDERS (🔥 TE FALTABA EXPUESTO)
-router.use("/orders", orderRoutes);
+// SHIPPING
+router.use("/shipping-address", shippingAddressRoutes);
 
 // WISHLIST
 router.use("/wishlist", wishListRoutes);
