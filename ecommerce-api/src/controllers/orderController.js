@@ -1,6 +1,9 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 
+/* =========================
+   GET ALL ORDERS (ADMIN)
+========================= */
 async function getOrders(req, res, next) {
   try {
     const orders = await Order.find()
@@ -8,39 +11,47 @@ async function getOrders(req, res, next) {
       .populate("products.productId")
       .populate("shippingAddress")
       .populate("paymentMethod")
-      .sort({ status: 1 });
+      .sort({ createdAt: -1 });
+
     res.json(orders);
   } catch (error) {
     next(error);
   }
 }
 
+/* =========================
+   GET ORDER BY ID
+========================= */
 async function getOrderById(req, res, next) {
   try {
-    const id = req.params.id;
-    const order = await Order.findById(id)
+    const order = await Order.findById(req.params.id)
       .populate("user")
       .populate("products.productId")
       .populate("shippingAddress")
       .populate("paymentMethod");
+
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
     res.json(order);
   } catch (error) {
     next(error);
   }
 }
 
+/* =========================
+   GET MY ORDERS (USER)
+========================= */
 async function getOrdersByUser(req, res, next) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.userId;
+
     const orders = await Order.find({ user: userId })
-      .populate("user")
       .populate("products.productId")
       .populate("shippingAddress")
       .populate("paymentMethod")
-      .sort({ status: 1 });
+      .sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error) {
@@ -48,91 +59,68 @@ async function getOrdersByUser(req, res, next) {
   }
 }
 
+/* =========================
+   CREATE ORDER (FIXED)
+========================= */
 async function createOrder(req, res, next) {
   try {
-    const { user, products, shippingAddress, paymentMethod, shippingCost = 0 } = req.body;
+    const user = req.user.userId;
+    const { products, shippingAddress, paymentMethod, shippingCost = 0 } = req.body;
 
-    // Verificar stock de todos los productos ANTES de crear la orden
+    // validar stock
     const stockChecks = await Promise.all(
       products.map(async (item) => {
         const product = await Product.findById(item.productId);
+
         if (!product) {
-          return { productId: item.productId, error: "Product not found" };
+          return { error: "Product not found", productId: item.productId };
         }
+
         if (product.stock < item.quantity) {
           return {
+            error: `Insufficient stock for ${product.name}`,
             productId: item.productId,
-            productName: product.name,
-            error: `Insufficient stock. Available: ${product.stock}, Requested: ${item.quantity}`,
             available: product.stock,
             requested: item.quantity,
           };
         }
-        return { productId: item.productId, product, ok: true };
+
+        return { product, ok: true };
       })
     );
 
-    // Verificar si hubo algún error de stock
-    const errors = stockChecks.filter((check) => check.error);
+    const errors = stockChecks.filter((p) => p.error);
+
     if (errors.length > 0) {
       return res.status(400).json({
-        message: "Cannot create order due to stock issues",
-        errors: errors.map((e) => ({
-          productId: e.productId,
-          productName: e.productName,
-          message: e.error,
-          available: e.available,
-          requested: e.requested,
-        })),
+        message: "Stock validation failed",
+        errors,
       });
     }
 
-    // Reducir stock de cada producto de forma atómica
-    const stockUpdates = await Promise.all(
-      stockChecks.map(async (check, index) => {
-        const item = products[index];
-        return Product.findByIdAndUpdate(
-          check.productId,
-          { $inc: { stock: -item.quantity } },
-          { new: true }
-        );
-      })
+    // descontar stock
+    await Promise.all(
+      products.map((item) =>
+        Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: -item.quantity },
+        })
+      )
     );
 
-    // Verificar que todas las actualizaciones fueron exitosas
-    if (stockUpdates.some((update) => !update)) {
-      // Si alguna actualización falló, revertir cambios
-      await Promise.all(
-        stockChecks.map(async (check, index) => {
-          if (stockUpdates[index]) {
-            const item = products.find(
-              (p) => p.productId.toString() === check.productId.toString()
-            );
-            return Product.findByIdAndUpdate(check.productId, {
-              $inc: { stock: item.quantity },
-            });
-          }
-        })
-      );
-      return res.status(500).json({
-        message: "Failed to update product stock. Order was not created.",
-      });
-    }
-
-    const normalizedProducts = stockChecks.map((check, index) => ({
-      productId: check.product._id,
-      quantity: products[index].quantity,
-      price: check.product.price,
+    const normalizedProducts = stockChecks.map((item, i) => ({
+      productId: item.product._id,
+      quantity: products[i].quantity,
+      price: item.product.price,
     }));
 
-    // Calcular precio total con precios del servidor
     const subtotal = normalizedProducts.reduce(
-      (total, item) => total + item.price * item.quantity,
+      (acc, item) => acc + item.price * item.quantity,
       0
     );
+
     const totalPrice = subtotal + shippingCost;
 
-    const newOrder = await Order.create({
+    const order = await Order.create({
       user,
       products: normalizedProducts,
       shippingAddress,
@@ -143,109 +131,40 @@ async function createOrder(req, res, next) {
       paymentStatus: "pending",
     });
 
-    await newOrder.populate("user");
-    await newOrder.populate("products.productId");
-    await newOrder.populate("shippingAddress");
-    await newOrder.populate("paymentMethod");
+    const populated = await order.populate([
+      "user",
+      "products.productId",
+      "shippingAddress",
+      "paymentMethod",
+    ]);
 
-    res.status(201).json(newOrder);
+    res.status(201).json(populated);
   } catch (error) {
     next(error);
   }
 }
 
+/* =========================
+   UPDATE ORDER
+========================= */
 async function updateOrder(req, res, next) {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
+    const allowed = ["status", "paymentStatus", "shippingCost"];
+    const update = {};
 
-    // Solo permitir actualizar ciertos campos
-    const allowedFields = ["status", "paymentStatus", "shippingCost"];
-    const filteredUpdate = {};
-
-    for (const field of allowedFields) {
-      if (updateData[field] !== undefined) {
-        filteredUpdate[field] = updateData[field];
-      }
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
     }
 
-    // Validar que al menos un campo sea proporcionado
-    if (Object.keys(filteredUpdate).length === 0) {
+    if (Object.keys(update).length === 0) {
       return res.status(400).json({
-        message: "At least one field must be provided for update",
+        message: "No valid fields provided",
       });
     }
 
-    // Si se actualiza shippingCost, recalcular totalPrice
-    if (filteredUpdate.shippingCost !== undefined) {
-      const order = await Order.findById(id);
-      if (order) {
-        const subtotal = order.products.reduce(
-          (total, item) => total + item.price * item.quantity,
-          0
-        );
-        filteredUpdate.totalPrice = subtotal + filteredUpdate.shippingCost;
-      }
-    }
-
-    const updatedOrder = await Order.findByIdAndUpdate(id, filteredUpdate, {
-      new: true,
-    })
-      .populate("user")
-      .populate("products.productId")
-      .populate("shippingAddress")
-      .populate("paymentMethod");
-
-    if (updatedOrder) {
-      return res.status(200).json(updatedOrder);
-    } else {
-      return res.status(404).json({ message: "Order not found" });
-    }
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function cancelOrder(req, res, next) {
-  try {
-    const { id } = req.params;
-
-    const order = await Order.findById(id).populate("products.productId");
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    // Solo permitir cancelar si el estado lo permite
-    if (order.status === "delivered" || order.status === "cancelled") {
-      return res.status(400).json({
-        message: "Cannot cancel order with status: " + order.status,
-      });
-    }
-
-    // Restaurar el stock de los productos
-    const stockRestorations = await Promise.all(
-      order.products.map(async (item) => {
-        return Product.findByIdAndUpdate(
-          item.productId._id,
-          { $inc: { stock: item.quantity } },
-          { new: true }
-        );
-      })
-    );
-
-    // Verificar que todas las restauraciones fueron exitosas
-    if (stockRestorations.some((update) => !update)) {
-      return res.status(500).json({
-        message: "Failed to restore product stock. Order status not changed.",
-      });
-    }
-
-    const updatedOrder = await Order.findByIdAndUpdate(
-      id,
-      {
-        status: "cancelled",
-        paymentStatus: order.paymentStatus === "paid" ? "refunded" : "failed",
-      },
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      update,
       { new: true }
     )
       .populate("user")
@@ -253,31 +172,66 @@ async function cancelOrder(req, res, next) {
       .populate("shippingAddress")
       .populate("paymentMethod");
 
-    res.status(200).json({
-      message: "Order cancelled successfully. Stock has been restored.",
-      order: updatedOrder,
-    });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json(order);
   } catch (error) {
     next(error);
   }
 }
 
-async function updateOrderStatus(req, res, next) {
+/* =========================
+   CANCEL ORDER
+========================= */
+async function cancelOrder(req, res, next) {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
 
-    const updatedOrder = await Order.findByIdAndUpdate(id, { status }, { new: true })
-      .populate("user")
-      .populate("products.productId")
-      .populate("shippingAddress")
-      .populate("paymentMethod");
-
-    if (updatedOrder) {
-      return res.status(200).json(updatedOrder);
-    } else {
+    if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
+    if (order.status === "delivered" || order.status === "cancelled") {
+      return res.status(400).json({
+        message: "Order cannot be cancelled",
+      });
+    }
+
+    // restaurar stock
+    await Promise.all(
+      order.products.map((item) =>
+        Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: item.quantity },
+        })
+      )
+    );
+
+    order.status = "cancelled";
+    order.paymentStatus =
+      order.paymentStatus === "paid" ? "refunded" : "failed";
+
+    await order.save();
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   STATUS UPDATES
+========================= */
+async function updateOrderStatus(req, res, next) {
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
+    );
+
+    res.json(order);
   } catch (error) {
     next(error);
   }
@@ -285,42 +239,37 @@ async function updateOrderStatus(req, res, next) {
 
 async function updatePaymentStatus(req, res, next) {
   try {
-    const { id } = req.params;
-    const { paymentStatus } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus: req.body.paymentStatus },
+      { new: true }
+    );
 
-    const updatedOrder = await Order.findByIdAndUpdate(id, { paymentStatus }, { new: true })
-      .populate("user")
-      .populate("products.productId")
-      .populate("shippingAddress")
-      .populate("paymentMethod");
-
-    if (updatedOrder) {
-      return res.status(200).json(updatedOrder);
-    } else {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    res.json(order);
   } catch (error) {
     next(error);
   }
 }
 
+/* =========================
+   DELETE ORDER
+========================= */
 async function deleteOrder(req, res, next) {
   try {
-    const { id } = req.params;
+    const order = await Order.findById(req.params.id);
 
-    const order = await Order.findById(id);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Solo permitir eliminar órdenes canceladas
     if (order.status !== "cancelled") {
       return res.status(400).json({
         message: "Only cancelled orders can be deleted",
       });
     }
 
-    await Order.findByIdAndDelete(id);
+    await Order.findByIdAndDelete(req.params.id);
+
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -328,14 +277,13 @@ async function deleteOrder(req, res, next) {
 }
 
 export {
-    cancelOrder,
-    createOrder,
-    deleteOrder,
-    getOrderById,
-    getOrders,
-    getOrdersByUser,
-    updateOrder,
-    updateOrderStatus,
-    updatePaymentStatus
+  getOrders,
+  getOrderById,
+  getOrdersByUser,
+  createOrder,
+  updateOrder,
+  cancelOrder,
+  updateOrderStatus,
+  updatePaymentStatus,
+  deleteOrder,
 };
-

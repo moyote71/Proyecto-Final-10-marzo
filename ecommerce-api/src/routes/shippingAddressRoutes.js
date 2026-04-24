@@ -1,5 +1,6 @@
 import express from "express";
-import { body, param } from "express-validator";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import validate from "../middlewares/validation.js";
 import {
   createShippingAddress,
   deleteShippingAddress,
@@ -9,8 +10,7 @@ import {
   setDefaultAddress,
   updateShippingAddress,
 } from "../controllers/shippingAddressController.js";
-import authMiddleware from "../middlewares/authMiddleware.js"; // Middleware de autenticación
-import validate from "../middlewares/validation.js";
+
 import {
   nameValidation,
   addressLineValidation,
@@ -32,7 +32,6 @@ import {
 
 const router = express.Router();
 
-// Validaciones comunes para crear/actualizar dirección
 const addressValidations = [
   nameValidation(),
   addressLineValidation(),
@@ -45,7 +44,7 @@ const addressValidations = [
   addressTypeValidation(),
 ];
 
-// Crear una nueva dirección (requiere autenticación)
+// CREATE
 router.post(
   "/shipping-address",
   authMiddleware,
@@ -54,13 +53,13 @@ router.post(
   createShippingAddress
 );
 
-// Obtener todas las direcciones del usuario
+// GET ALL
 router.get("/shipping-address", authMiddleware, getUserAddresses);
 
-// Obtener la dirección por defecto
+// GET DEFAULT
 router.get("/shipping-address/default", authMiddleware, getDefaultAddress);
 
-// Obtener una dirección específica (requiere autenticación)
+// GET BY ID
 router.get(
   "/shipping-address/:addressId",
   authMiddleware,
@@ -69,7 +68,7 @@ router.get(
   getAddressById
 );
 
-// Actualizar una dirección (requiere autenticación)
+// UPDATE
 router.put(
   "/shipping-address/:addressId",
   authMiddleware,
@@ -89,7 +88,7 @@ router.put(
   updateShippingAddress
 );
 
-// Marcar dirección como default (requiere autenticación)
+// SET DEFAULT
 router.patch(
   "/shipping-address/:addressId/default",
   authMiddleware,
@@ -98,7 +97,7 @@ router.patch(
   setDefaultAddress
 );
 
-// Eliminar una dirección (requiere autenticación)
+// DELETE
 router.delete(
   "/shipping-address/:addressId",
   authMiddleware,

@@ -1,44 +1,41 @@
 import { http } from "./http";
 
+const extract = (res) => res?.data?.data ?? res?.data ?? null;
+
 export const getPaymentMethods = async () => {
     try {
-        const response = await http.get("/payment-methods/me");
-        const raw = response.data;
-        // Normalización consistente
-        if (Array.isArray(raw)) return raw;
-        if (Array.isArray(raw?.data)) return raw.data;
-        return [];
-    } catch (error) {
-        console.error("Error fetching payment methods:", error);
+        const res = await http.get("/payment-methods/me");
+        const data = extract(res);
+        return Array.isArray(data) ? data : [];
+    } catch (err) {
+        console.error(err);
         return [];
     }
 };
 
-export const getDefaultPaymentMethods = async () => {
+export const getDefaultPaymentMethod = async () => {
     try {
-        const response = await http.get("/payment-methods/default");
-        return response.data?.data || response.data || null;
-    } catch (error) {
-        // 404 = no hay método por defecto
-        if (error.response?.status !== 404) {
-            console.error("Error fetching default payment method:", error);
+        const res = await http.get("/payment-methods/default");
+        return extract(res);
+    } catch (err) {
+        if (err.response?.status !== 404) {
+            console.error(err);
         }
         return null;
     }
 };
 
-export const createPaymentMethod = async (paymentData) => {
-    // El backend espera 'type', 'cardNumber', 'cardHolderName', 'expiryDate', 'cvv'
-    const response = await http.post("/payment-methods", paymentData);
-    return response.data?.data || response.data;
+export const createPaymentMethod = async (data) => {
+    const res = await http.post("/payment-methods", data);
+    return extract(res);
 };
 
-export const updatePaymentMethod = async (paymentId, paymentData) => {
-    const response = await http.put(`/payment-methods/${paymentId}`, paymentData);
-    return response.data?.data || response.data;
+export const updatePaymentMethod = async (id, data) => {
+    const res = await http.put(`/payment-methods/${id}`, data);
+    return extract(res);
 };
 
-export const deletePaymentMethod = async (paymentId) => {
-    const response = await http.delete(`/payment-methods/${paymentId}`);
-    return response.data;
+export const deletePaymentMethod = async (id) => {
+    const res = await http.delete(`/payment-methods/${id}`);
+    return extract(res);
 };

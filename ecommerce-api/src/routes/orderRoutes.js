@@ -1,5 +1,4 @@
 import express from "express";
-import { body, param } from "express-validator";
 import {
   cancelOrder,
   createOrder,
@@ -11,34 +10,38 @@ import {
   updateOrderStatus,
   updatePaymentStatus,
 } from "../controllers/orderController.js";
+
 import authMiddleware from "../middlewares/authMiddleware.js";
 import isAdmin from "../middlewares/isAdminMiddleware.js";
 import validate from "../middlewares/validation.js";
+
 import {
-  bodyMongoIdValidation,
-  quantityValidation,
-  priceValidation,
-  shippingCostValidation,
+  mongoIdValidation,
   orderStatusValidation,
   paymentStatusValidation,
-  mongoIdValidation,
+  shippingCostValidation,
+  bodyMongoIdValidation,
 } from "../middlewares/validators.js";
 
 const router = express.Router();
 
-// Obtener todas las órdenes (admin)
+/* =========================
+   ADMIN - ALL ORDERS
+========================= */
 router.get("/orders", authMiddleware, isAdmin, getOrders);
 
-// Obtener órdenes por usuario
-router.get(
-  "/orders/user/:userId",
-  authMiddleware,
-  [mongoIdValidation("userId", "User ID")],
-  validate,
-  getOrdersByUser
-);
+/* =========================
+   USER - MY ORDERS
+   🔥 FIX: NO userId param, usa token
+========================= */
+router.get("/orders/me", authMiddleware, (req, res, next) => {
+  req.params.userId = req.user.userId;
+  next();
+}, getOrdersByUser);
 
-// Obtener orden por ID
+/* =========================
+   GET ORDER BY ID
+========================= */
 router.get(
   "/orders/:id",
   authMiddleware,
@@ -47,20 +50,14 @@ router.get(
   getOrderById
 );
 
-// Crear nueva orden
+/* =========================
+   CREATE ORDER
+   🔥 IMPORTANTE: user viene del token
+========================= */
 router.post(
   "/orders",
   authMiddleware,
   [
-    bodyMongoIdValidation("user", "User"),
-    body("products")
-      .notEmpty()
-      .withMessage("Products are required")
-      .isArray({ min: 1 })
-      .withMessage("Products must be a non-empty array"),
-    bodyMongoIdValidation("products.*.productId", "Product ID"),
-    quantityValidation("products.*.quantity"),
-    priceValidation("products.*.price"),
     bodyMongoIdValidation("shippingAddress", "Shipping address"),
     bodyMongoIdValidation("paymentMethod", "Payment method"),
     shippingCostValidation(),
@@ -69,7 +66,9 @@ router.post(
   createOrder
 );
 
-// Cancelar orden (función especial)
+/* =========================
+   CANCEL ORDER (ADMIN ONLY)
+========================= */
 router.patch(
   "/orders/:id/cancel",
   authMiddleware,
@@ -79,27 +78,39 @@ router.patch(
   cancelOrder
 );
 
-// Actualizar solo el estado de la orden
+/* =========================
+   STATUS UPDATE
+========================= */
 router.patch(
   "/orders/:id/status",
   authMiddleware,
   isAdmin,
-  [mongoIdValidation("id", "Order ID"), orderStatusValidation()],
+  [
+    mongoIdValidation("id", "Order ID"),
+    orderStatusValidation(),
+  ],
   validate,
   updateOrderStatus
 );
 
-// Actualizar solo el estado de pago
+/* =========================
+   PAYMENT STATUS
+========================= */
 router.patch(
   "/orders/:id/payment-status",
   authMiddleware,
   isAdmin,
-  [mongoIdValidation("id", "Order ID"), paymentStatusValidation()],
+  [
+    mongoIdValidation("id", "Order ID"),
+    paymentStatusValidation(),
+  ],
   validate,
   updatePaymentStatus
 );
 
-// Actualizar orden completa
+/* =========================
+   UPDATE ORDER (ADMIN)
+========================= */
 router.put(
   "/orders/:id",
   authMiddleware,
@@ -114,7 +125,9 @@ router.put(
   updateOrder
 );
 
-// Eliminar orden (solo si está cancelada)
+/* =========================
+   DELETE ORDER (ADMIN)
+========================= */
 router.delete(
   "/orders/:id",
   authMiddleware,
