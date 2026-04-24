@@ -1,5 +1,4 @@
 import express from "express";
-import { body, param, query } from "express-validator";
 import {
   createCategory,
   deleteCategory,
@@ -8,9 +7,11 @@ import {
   searchCategory,
   updateCategory,
 } from "../controllers/categoryController.js";
+
 import authMiddleware from "../middlewares/authMiddleware.js";
 import isAdmin from "../middlewares/isAdminMiddleware.js";
 import validate from "../middlewares/validation.js";
+
 import {
   mongoIdValidation,
   paginationValidation,
@@ -26,8 +27,11 @@ import {
 
 const router = express.Router();
 
+/* =========================
+   SEARCH (DEBE IR PRIMERO)
+========================= */
 router.get(
-  "/categories/search",
+  "/search",
   [
     searchQueryValidation(),
     queryMongoIdValidation("parentCategory", "parent category ID"),
@@ -38,10 +42,27 @@ router.get(
   validate,
   searchCategory
 );
-router.get("/categories", getCategories);
-router.get("/categories/:id", [mongoIdValidation("id", "Category ID")], validate, getCategoryById);
+
+/* =========================
+   GET ALL CATEGORIES
+========================= */
+router.get("/", getCategories);
+
+/* =========================
+   GET CATEGORY BY ID
+========================= */
+router.get(
+  "/:id",
+  [mongoIdValidation("id", "Category ID")],
+  validate,
+  getCategoryById
+);
+
+/* =========================
+   CREATE CATEGORY
+========================= */
 router.post(
-  "/categories",
+  "/",
   authMiddleware,
   isAdmin,
   [
@@ -53,8 +74,12 @@ router.post(
   validate,
   createCategory
 );
+
+/* =========================
+   UPDATE CATEGORY
+========================= */
 router.put(
-  "/categories/:id",
+  "/:id",
   authMiddleware,
   isAdmin,
   [
@@ -67,8 +92,12 @@ router.put(
   validate,
   updateCategory
 );
+
+/* =========================
+   DELETE CATEGORY
+========================= */
 router.delete(
-  "/categories/:id",
+  "/:id",
   authMiddleware,
   isAdmin,
   [mongoIdValidation("id", "Category ID")],
