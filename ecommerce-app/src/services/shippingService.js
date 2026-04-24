@@ -5,8 +5,8 @@ import { http } from "./http";
 ========================= */
 export const getShippingAddresses = async () => {
     try {
-        const res = await http.get("/shipping-addresses/me");
-        return res.data?.data || res.data || [];
+        const res = await http.get("/shipping-addresses");
+        return res.data || [];
     } catch (error) {
         console.error("Error fetching addresses:", error);
         return [];
@@ -19,7 +19,7 @@ export const getShippingAddresses = async () => {
 export const getDefaultShippingAddress = async () => {
     try {
         const res = await http.get("/shipping-addresses/default");
-        return res.data?.data || res.data || null;
+        return res.data || null;
     } catch (error) {
         if (error.response?.status !== 404) {
             console.error("Error fetching default address:", error);
@@ -33,7 +33,7 @@ export const getDefaultShippingAddress = async () => {
 ========================= */
 export const createShippingAddress = async (data) => {
     const res = await http.post("/shipping-addresses", data);
-    return res.data?.data || res.data;
+    return res.data;
 };
 
 /* =========================
@@ -41,7 +41,7 @@ export const createShippingAddress = async (data) => {
 ========================= */
 export const updateShippingAddress = async (id, data) => {
     const res = await http.put(`/shipping-addresses/${id}`, data);
-    return res.data?.data || res.data;
+    return res.data;
 };
 
 /* =========================

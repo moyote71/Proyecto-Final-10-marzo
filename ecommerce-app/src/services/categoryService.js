@@ -1,67 +1,122 @@
 import { http } from "./http";
 import { fetchProducts } from "./productService";
 
+/* =========================
+   GET ALL CATEGORIES
+========================= */
 export const fetchCategories = async () => {
     const response = await http.get("/categories");
     return response.data?.data || response.data || [];
 };
 
+/* =========================
+   SEARCH
+========================= */
 export const searchCategories = async (query) => {
     const response = await http.get(`/categories/search?q=${query}`);
     return response.data?.data || response.data || [];
 };
 
+/* =========================
+   GET BY ID (LEGACY)
+========================= */
 export const getCategoryById = async (categoryId) => {
     const response = await http.get(`/categories/${categoryId}`);
     return response.data?.data || response.data || null;
 };
 
-// Obtener todas las categorías hijas de una categoría padre
+/* =========================
+   GET BY SLUG (NUEVO)
+========================= */
+export const getCategoryBySlug = async (slug) => {
+    const response = await http.get(`/categories/slug/${slug}`);
+    return response.data;
+};
+
+/* =========================
+   CHILD CATEGORIES
+========================= */
 export const getChildCategories = async (parentCategoryId) => {
     const categories = await fetchCategories();
-    return categories.filter((cat) => cat.parentCategory?._id === parentCategoryId || cat.parentCategory === parentCategoryId);
+
+    return categories.filter((cat) => {
+        const parentId =
+            typeof cat.parentCategory === "object"
+                ? cat.parentCategory?._id
+                : cat.parentCategory;
+
+        return parentId === parentCategoryId;
+    });
 };
 
-// Obtener productos por categoría específica
+/* =========================
+   PRODUCTS BY CATEGORY
+========================= */
 export const getProductsByCategory = async (categoryId) => {
     const allProducts = await fetchProducts();
-    return allProducts.filter((product) => product.category?._id === categoryId || product.category === categoryId);
+
+    return allProducts.filter((product) => {
+        const prodCatId =
+            typeof product.category === "object"
+                ? product.category?._id
+                : product.category;
+
+        return prodCatId === categoryId;
+    });
 };
 
-// Obtener productos de una categoría incluyendo sus subcategorías
+/* =========================
+   PRODUCTS BY CATEGORY + CHILDREN
+========================= */
 export const getProductsByCategoryAndChildren = async (categoryId) => {
     const allProducts = await fetchProducts();
     const allCategories = await fetchCategories();
 
-    // Encontrar la categoría
-    const category = allCategories.find((cat) => cat._id === categoryId);
+    const category = allCategories.find(
+        (cat) => cat._id === categoryId
+    );
+
     if (!category) return [];
 
-    // Si es una categoría padre (parentCategory is null o no tiene)
-    if (!category.parentCategory) {
-        // Obtener IDs de todas las categorías hijas
+    const isParent = !category.parentCategory;
+
+    if (isParent) {
         const childCategoryIds = allCategories
-            .filter((cat) => cat.parentCategory?._id === categoryId || cat.parentCategory === categoryId)
+            .filter((cat) => {
+                const parentId =
+                    typeof cat.parentCategory === "object"
+                        ? cat.parentCategory?._id
+                        : cat.parentCategory;
+
+                return parentId === categoryId;
+            })
             .map((cat) => cat._id);
 
-        // Incluir el ID de la categoría padre también
         const allCategoryIds = [categoryId, ...childCategoryIds];
 
-        // Retornar productos de la categoría padre y sus hijas
         return allProducts.filter((product) => {
-            const prodCatId = product.category?._id || product.category;
+            const prodCatId =
+                typeof product.category === "object"
+                    ? product.category?._id
+                    : product.category;
+
             return allCategoryIds.includes(prodCatId);
         });
     }
 
-    // Si es una categoría hija, solo retornar sus productos
     return allProducts.filter((product) => {
-         const prodCatId = product.category?._id || product.category;
-         return prodCatId === categoryId;
+        const prodCatId =
+            typeof product.category === "object"
+                ? product.category?._id
+                : product.category;
+
+        return prodCatId === categoryId;
     });
 };
 
-// Obtener categorías principales (sin padre)
+/* =========================
+   PARENT CATEGORIES
+========================= */
 export const getParentCategories = async () => {
     const categories = await fetchCategories();
     return categories.filter((cat) => !cat.parentCategory);
