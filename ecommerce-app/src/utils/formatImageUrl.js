@@ -1,26 +1,9 @@
-const formatImageUrl = (url) => {
-  const base = process.env.REACT_APP_API_BASE_URL?.replace("/api", "");
+const API_URL = import.meta.env.VITE_API_URL;
 
-  const fallback = "https://placehold.co/800x600?text=Producto";
+export default function formatImageUrl(path) {
+    if (!path) return "https://placehold.co/800x600?text=Producto";
 
-  if (!url || typeof url !== "string") return fallback;
+    if (path.startsWith("http")) return path;
 
-  const clean = url.trim();
-
-  // ya es completa
-  if (clean.startsWith("http")) return clean;
-
-  // uploads correcto
-  if (clean.startsWith("/uploads")) {
-    return `${base}${clean}`;
-  }
-
-  if (clean.startsWith("uploads")) {
-    return `${base}/${clean}`;
-  }
-
-  // fallback seguro
-  return `${base}/${clean}`;
-};
-
-export default formatImageUrl;
+    return `${API_URL}${path}`;
+}

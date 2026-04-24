@@ -10,6 +10,8 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const isAuthenticated = !!user;
+
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -18,10 +20,13 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch (err) {
-                // 🔥 IMPORTANTE: NO CRASH NI REDIRECCIÓN
-                setUser(null);
-                console.warn("No autenticado");
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    setUser(null);
+                } else {
+                    console.error("Error inesperado auth:", error);
+                    setUser(null);
+                }
             } finally {
                 setLoading(false);
             }
@@ -32,25 +37,6 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password) => {
         const result = await authLogin(email, password);
-
-        if (result.success) {
-                    try {
-        const res = await api.get("/users/profile");
-        setUser(res.data);
-        setIsAuthenticated(true);
-        } catch (err) {
-        console.log("No autenticado, pero no redirigir");
-        setUser(null);
-        setIsAuthenticated(false);
-
-        // 🚫 IMPORTANTE: NO redirigir aquí
-        }
-
-        return result;
-    };
-
-    const register = async (name, email, password) => {
-        const result = await authRegister(name, email, password);
 
         if (result.success) {
             try {
@@ -70,13 +56,36 @@ export function AuthProvider({ children }) {
         return result;
     };
 
+    const register = async (name, email, password) => {
+        const result = await authRegister(name, email, password);
+
+        if (result.success) {
+            try {
+                const res = await http.get("/users/profile", {
+                    withCredentials: true,
+                });
+
+                setUser(res?.data?.user || null);
+                navigate("/");
+                return { success: true };
+            } catch (err) {
+                setUser(null);
+                return { success: false };
+            }
+        }
+
+        return result;
+    };
+
     const logout = async () => {
         try {
             await http.post("/auth/logout", {}, { withCredentials: true });
-        } catch {}
-
-        setUser(null);
-        navigate("/login");
+        } catch (e) {
+            console.error("Logout error:", e);
+        } finally {
+            setUser(null);
+            navigate("/login");
+        }
     };
 
     const value = {
@@ -85,10 +94,12 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: !!user, // 🔥 OK
+        isAuthenticated,
     };
 
-    if (loading) return <div className="p-4 text-center">Cargando...</div>;
+    if (loading) {
+        return <div className="p-4 text-center">Cargando...</div>;
+    }
 
     return (
         <AuthContext.Provider value={value}>
@@ -99,6 +110,10 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth debe estar dentro de AuthProvider");
+
+    if (!context) {
+        throw new Error("useAuth debe estar dentro de AuthProvider");
+    }
+
     return context;
 }
