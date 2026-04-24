@@ -103,7 +103,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                                                 {subcategories.map((subcat) => (
                                                     <Link
                                                         key={subcat._id}
-                                                        to={`/category/${subcat._id}`}
+                                                        to={`/categories/${subcat.slug}`}
                                                         className={navStyles.subCategoryLink}
                                                     >
                                                         {subcat.name}

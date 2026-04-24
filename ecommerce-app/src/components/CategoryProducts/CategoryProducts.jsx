@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
 import {
     getCategoryBySlug,
@@ -11,7 +11,7 @@ import Loading from "../common/Loading/Loading";
 import { categoryProductsStyles as S } from "./CategoryProductsStyles";
 
 export default function CategoryProducts() {
-    const { slug } = useParams();
+    const { slug } = useParams(); // 🔥 AHORA ES SLUG
 
     const [category, setCategory] = useState(null);
     const [products, setProducts] = useState([]);
@@ -19,33 +19,33 @@ export default function CategoryProducts() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-    setLoading(true);
-    setError(null);
+        setLoading(true);
+        setError(null);
 
-    const loadCategoryAndProducts = async () => {
-        try {
-            const categoryData = await getCategoryBySlug(categoryId);
+        const loadCategoryAndProducts = async () => {
+            try {
+                const categoryData = await getCategoryBySlug(slug);
 
-            if (!categoryData) {
-                setError("Categoría no encontrada");
-                return;
+                if (!categoryData) {
+                    setError("Categoría no encontrada");
+                    return;
+                }
+
+                const productsData = await getProductsByCategoryAndChildren(
+                    categoryData._id
+                );
+
+                setCategory(categoryData);
+                setProducts(productsData);
+            } catch (err) {
+                setError("Error al cargar la categoría o productos");
+            } finally {
+                setLoading(false);
             }
+        };
 
-            const productsData = await getProductsByCategoryAndChildren(
-                categoryData._id
-            );
-
-            setCategory(categoryData);
-            setProducts(productsData);
-        } catch (err) {
-            setError("Error al cargar la categoría o productos");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    loadCategoryAndProducts();
-}, [categoryId]);
+        loadCategoryAndProducts();
+    }, [slug]);
 
     if (loading) {
         return (
@@ -60,11 +60,7 @@ export default function CategoryProducts() {
             <div className={S.root}>
                 <ErrorMessage message={error || "Categoría no encontrada"}>
                     <p className={S.muted}>
-                        Vuelve al{" "}
-                        <Link to="/" className="text-blue-600 underline">
-                            inicio
-                        </Link>{" "}
-                        o explora nuestras categorías destacadas.
+                        Vuelve al <Link to="/" className="text-blue-600 underline">inicio</Link>
                     </p>
                 </ErrorMessage>
             </div>
@@ -73,45 +69,30 @@ export default function CategoryProducts() {
 
     return (
         <div className={S.root}>
-            <BreadCrumb
-                items={[
-                    { label: "Inicio", to: "/" },
-                    { label: category.name },
-                ]}
-            />
+            <BreadCrumb items={[{ label: "Inicio", to: "/" }, { label: category.name }]} />
 
             <div className={S.container}>
                 <div className={S.header}>
-                    <div>
-                        <h1 className={S.title}>
-                            {category.parentCategory
-                                ? `${category.parentCategory.name}: ${category.name}`
-                                : category.name}
-                        </h1>
+                    <h1 className={S.title}>
+                        {category.name}
+                    </h1>
 
-                        {category.description && (
-                            <p className={S.muted}>{category.description}</p>
-                        )}
-                    </div>
+                    {category.description && (
+                        <p className={S.muted}>{category.description}</p>
+                    )}
                 </div>
 
-                {products.length > 0 ? (
+                {(products || []).length > 0 ? (
                     <div className={S.grid}>
                         {products.map((product) => (
                             <ProductCard
                                 key={product._id}
                                 product={product}
-                                orientation="vertical"
-                                className="shadow-sm hover:shadow-md transition-all"
                             />
                         ))}
                     </div>
                 ) : (
-                    <ErrorMessage message="No se encontraron productos">
-                        <p className={S.muted}>
-                            No hay productos disponibles en esta categoría por el momento.
-                        </p>
-                    </ErrorMessage>
+                    <ErrorMessage message="No se encontraron productos" />
                 )}
             </div>
         </div>
