@@ -30,6 +30,8 @@ import {
     stockValidation
 } from "../middlewares/validators.js";
 
+console.log("🛍️ PRODUCT ROUTES LOADED");
+
 const router = express.Router();
 
 /**

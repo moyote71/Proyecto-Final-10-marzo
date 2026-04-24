@@ -14,37 +14,24 @@ import wishListRoutes from "./wishListRoutes.js";
 
 const router = express.Router();
 
-// AUTH
+/* =========================
+   DEBUG (CLAVE PARA RENDER)
+========================= */
+console.log("📦 ROUTES INDEX LOADED");
+
+/* =========================
+   ROUTES
+========================= */
 router.use("/auth", authRoutes);
-
-// USER
 router.use("/users", userRoutes);
-
-// CART
-router.use("/cart", cartRoutes);
-
-// CATEGORIES
-router.use("/categories", categoryRoutes);
-
-// NOTIFICATIONS
-router.use("/notifications", notificationRoutes);
-
-// PRODUCTS
 router.use("/products", productRoutes);
-
-// REVIEWS
-router.use("/reviews", reviewRoutes);
-
-// PAYMENT METHODS
-router.use("/payment-methods", paymentMethodRoutes);
-
-// SHIPPING ADDRESS (🔥 IMPORTANTE FIX)
-router.use("/shipping-address", shippingAddressRoutes);
-
-// ORDERS (🔥 TE FALTABA EXPUESTO)
+router.use("/cart", cartRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/notifications", notificationRoutes);
 router.use("/orders", orderRoutes);
-
-// WISHLIST
+router.use("/payment-methods", paymentMethodRoutes);
+router.use("/reviews", reviewRoutes);
+router.use("/shipping-address", shippingAddressRoutes);
 router.use("/wishlist", wishListRoutes);
 
 export default router;

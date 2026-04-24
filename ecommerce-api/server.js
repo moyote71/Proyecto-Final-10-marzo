@@ -1,86 +1,84 @@
-import cors from 'cors'
-import cookieParser from 'cookie-parser';
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express from "express";
-import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './src/docs/swaggerDef.js';
 import mongoose from "mongoose";
+
 import dbConnection from "./src/config/database.js";
 import errorHandler from "./src/middlewares/errorHandler.js";
-import setupGlobalErrorHandlers from "./src/middlewares/globalErrorHandler.js";
 import logger from "./src/middlewares/logger.js";
 import { apiLimiter } from "./src/middlewares/rateLimiter.js";
 import routes from "./src/routes/index.js";
 
 dotenv.config();
 
-// Configurar manejadores globales ANTES de crear la app
-setupGlobalErrorHandlers();
+const app = express();
 
-export const app = express();
-
+/* =========================
+   TRUST PROXY (RENDER FIX)
+========================= */
 app.set("trust proxy", 1);
 
-if (process.env.NODE_ENV !== 'test') {
-    dbConnection();
+/* =========================
+   DB
+========================= */
+if (process.env.NODE_ENV !== "test") {
+  dbConnection();
 }
 
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : [];
+/* =========================
+   CORS (SIMPLIFICADO Y SEGURO)
+========================= */
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(",") || "*",
+    credentials: true,
+  })
+);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
-
-// Middlewares en el orden correcto
+/* =========================
+   MIDDLEWARES
+========================= */
 app.use(express.json());
 app.use(cookieParser());
 app.use(logger);
-
-// Rate limiting global para toda la API
 app.use("/api", apiLimiter);
 
-// Health check endpoint
-app.get("/health", async (req, res) => {
-  const healthcheck = {
-    uptime: process.uptime(),
-    status: "OK",
-    timestamp: Date.now(),
-    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
-  };
-  try {
-    res.status(200).json(healthcheck);
-  } catch (error) {
-    healthcheck.status = "ERROR";
-    res.status(503).json(healthcheck);
-  }
-});
-
-// Ruta raíz
-app.get("/", (req, res) => {
+/* =========================
+   HEALTH
+========================= */
+app.get("/health", (req, res) => {
   res.json({
-    message: "E-commerce API",
-    version: "1.0.0",
-    endpoints: {
-      health: "/health",
-      api: "/api",
-    },
+    status: "OK",
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });
 });
 
-// Swagger Documentation Endpoint
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+/* =========================
+   ROOT
+========================= */
+app.get("/", (req, res) => {
+  res.json({
+    message: "E-commerce API",
+    status: "running",
+  });
+});
 
+/* =========================
+   DEBUG CRÍTICO
+========================= */
+console.log("🔥 ROUTES LOADING...");
+
+/* =========================
+   API ROUTES
+========================= */
 app.use("/api", routes);
 
+console.log("✅ ROUTES REGISTERED");
+
+/* =========================
+   404 HANDLER
+========================= */
 app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
@@ -88,11 +86,18 @@ app.use((req, res) => {
     url: req.originalUrl,
   });
 });
-// El errorHandler debe ir AL FINAL, después de todas las rutas
+
+/* =========================
+   ERROR HANDLER
+========================= */
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(process.env.PORT || 5000, () => {
-    console.log(`Server running on port ${process.env.PORT || 5000}`);
-  });
-}
+/* =========================
+   START SERVER
+========================= */
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📦 API ready at /api`);
+});
