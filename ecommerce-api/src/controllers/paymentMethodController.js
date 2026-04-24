@@ -15,6 +15,27 @@ export const getPaymentMethodsByUser = async (req, res, next) => {
   }
 };
 
+
+export const deactivatePaymentMethod = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await PaymentMethod.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Payment method not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
 /* =========================
    GET DEFAULT
 ========================= */
@@ -128,3 +149,4 @@ export const setDefaultPaymentMethod = async (req, res, next) => {
     next(error);
   }
 };
+
