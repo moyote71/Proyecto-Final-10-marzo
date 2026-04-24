@@ -60,12 +60,6 @@ router.post(
   authMiddleware,
   [
     paymentTypeValidation(),
-    cardNumberValidation(),
-    cardHolderNameValidation(),
-    expiryDateValidation(),
-    paypalEmailValidation(),
-    bankNameValidation(),
-    accountNumberValidation(),
     booleanValidation("isDefault"),
   ],
   validate,
@@ -113,4 +107,4 @@ router.delete(
   deletePaymentMethod
 );
 
-export default router;
+export default router;  

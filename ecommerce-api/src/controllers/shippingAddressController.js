@@ -13,11 +13,11 @@ export async function getShippingAddresses(req, res, next) {
 }
 
 /* =========================
-   GET BY USER (LOGGED USER)
+   GET BY USER
 ========================= */
 export async function getShippingAddressesByUser(req, res, next) {
     try {
-        const userId = req.user._id;
+        const userId = req.user.userId;
 
         const addresses = await ShippingAddress.find({ user: userId });
 
@@ -28,11 +28,11 @@ export async function getShippingAddressesByUser(req, res, next) {
 }
 
 /* =========================
-   GET DEFAULT ADDRESS
+   DEFAULT ADDRESS
 ========================= */
 export async function getDefaultShippingAddress(req, res, next) {
     try {
-        const userId = req.user._id;
+        const userId = req.user.userId;
 
         const address = await ShippingAddress.findOne({
             user: userId,
@@ -46,11 +46,11 @@ export async function getDefaultShippingAddress(req, res, next) {
 }
 
 /* =========================
-   CREATE ADDRESS
+   CREATE
 ========================= */
 export async function createShippingAddress(req, res, next) {
     try {
-        const userId = req.user._id;
+        const userId = req.user.userId;
 
         const newAddress = await ShippingAddress.create({
             ...req.body,
@@ -64,7 +64,7 @@ export async function createShippingAddress(req, res, next) {
 }
 
 /* =========================
-   UPDATE ADDRESS
+   UPDATE
 ========================= */
 export async function updateShippingAddress(req, res, next) {
     try {
@@ -87,7 +87,7 @@ export async function updateShippingAddress(req, res, next) {
 }
 
 /* =========================
-   DELETE ADDRESS
+   DELETE
 ========================= */
 export async function deleteShippingAddress(req, res, next) {
     try {

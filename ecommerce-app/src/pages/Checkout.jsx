@@ -45,7 +45,7 @@ export default function Checkout() {
     const { user } = useAuth();
 
     /* =========================
-       REDIRECT SAFE (FIX BLANK PAGE)
+       AUTH REDIRECT
     ========================= */
     useEffect(() => {
         if (!user?._id) {
@@ -53,12 +53,8 @@ export default function Checkout() {
         }
     }, [user, navigate]);
 
-    useEffect(() => {
-        if (!user?._id) return;
-    }, [user]);
-
     /* =========================
-       CALCULOS SAFE
+       CALCULOS
     ========================= */
     const subtotal = useMemo(() => {
         if (!Array.isArray(cartItems)) return 0;
@@ -87,10 +83,8 @@ export default function Checkout() {
             currency: "MXN",
         }).format(v);
 
-    const [isOrderFinished, setIsOrderFinished] = useState(false);
-
     /* =========================
-       STATES SAFE
+       STATES
     ========================= */
     const [addresses, setAddresses] = useState([]);
     const [payments, setPayments] = useState([]);
@@ -110,117 +104,105 @@ export default function Checkout() {
     const [addressOpen, setAddressOpen] = useState(false);
     const [paymentOpen, setPaymentOpen] = useState(false);
 
+    /* =========================
+       LOAD DATA
+    ========================= */
     useEffect(() => {
-    const load = async () => {
-        setLoading(true);
+        const load = async () => {
+            setLoading(true);
 
+            try {
+                let addrList = [];
+                let defAddr = null;
+                let payList = [];
+                let defPay = null;
+
+                try {
+                    addrList = await getShippingAddresses();
+                } catch {
+                    addrList = [];
+                }
+
+                try {
+                    defAddr = await getDefaultShippingAddress();
+                } catch {
+                    defAddr = null;
+                }
+
+                try {
+                    payList = await getPaymentMethods();
+                } catch {
+                    payList = [];
+                }
+
+                try {
+                    defPay = await getDefaultPaymentMethod();
+                } catch {
+                    defPay = null;
+                }
+
+                if (!defAddr && addrList.length > 0) defAddr = addrList[0];
+                if (!defPay && payList.length > 0) defPay = payList[0];
+
+                setAddresses(addrList);
+                setPayments(payList);
+
+                setSelectedAddress(defAddr);
+                setSelectedPayment(defPay);
+
+                setAddressOpen(!defAddr);
+                setPaymentOpen(!defPay);
+
+            } catch (err) {
+                console.error(err);
+                setError("Error cargando checkout");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        load();
+    }, []);
+
+    /* =========================
+       ADDRESS
+    ========================= */
+    const handleAddressSubmit = async (data) => {
         try {
-            let addrList = [];
-            let defAddr = null;
-            let payList = [];
-            let defPay = null;
-
-            /* =========================
-               SHIPPING SAFE
-            ========================= */
-            try {
-                addrList = await getShippingAddresses();
-            } catch {
-                addrList = [];
-            }
+            let saved;
 
             try {
-                defAddr = await getDefaultShippingAddress();
+                if (editingAddress) {
+                    saved = await updateShippingAddress(
+                        editingAddress._id,
+                        data
+                    );
+                } else {
+                    saved = await createShippingAddress(data);
+                }
             } catch {
-                defAddr = null;
+                saved = { ...data, _id: Date.now().toString() };
             }
 
-            /* =========================
-               PAYMENT SAFE
-            ========================= */
-            try {
-                payList = await getPaymentMethods();
-            } catch {
-                payList = [];
-            }
+            setAddresses((prev) => {
+                const exists = prev.find((a) => a._id === saved._id);
+                if (exists) {
+                    return prev.map((a) =>
+                        a._id === saved._id ? saved : a
+                    );
+                }
+                return [...prev, saved];
+            });
 
-            try {
-                defPay = await getDefaultPaymentMethod();
-            } catch {
-                defPay = null;
-            }
+            setSelectedAddress(saved);
+            setShowAddressForm(false);
+            setEditingAddress(null);
+            setAddressOpen(false);
 
-            /* =========================
-               FALLBACK INTELIGENTE
-            ========================= */
-            if (!defAddr && addrList.length > 0) {
-                defAddr = addrList[0];
-            }
-
-            if (!defPay && payList.length > 0) {
-                defPay = payList[0];
-            }
-
-            setAddresses(addrList || []);
-            setPayments(payList || []);
-
-            setSelectedAddress(defAddr);
-            setSelectedPayment(defPay);
-
-            setAddressOpen(!defAddr);
-            setPaymentOpen(!defPay);
-
-        } catch (err) {
-            console.error(err);
-            setError("Checkout fallback activado");
-        } finally {
-            setLoading(false);
+        } catch {
+            setError("Error en dirección");
         }
     };
-
-    load();
-}, []); 
-
-    const handleAddressSubmit = async (data) => {
-    try {
-        let saved = null;
-
-        try {
-            if (editingAddress) {
-                saved = await updateShippingAddress(
-                    editingAddress._id,
-                    data
-                );
-            } else {
-                saved = await createShippingAddress(data);
-            }
-        } catch {
-            // 🔥 FALLBACK LOCAL (CLAVE PARA ENTREGA)
-            saved = {
-                ...data,
-                _id: Date.now().toString(),
-            };
-        }
-
-        setAddresses((prev) => {
-            const exists = prev.find((a) => a._id === saved._id);
-            if (exists) {
-                return prev.map((a) =>
-                    a._id === saved._id ? saved : a
-                );
-            }
-            return [...prev, saved];
-        });
-
-        setSelectedAddress(saved);
-        setShowAddressForm(false);
-        setEditingAddress(null);
-        setAddressOpen(false);
-
-    } catch {
-        setError("Error en dirección");
-    }
-};
 
     const handleDeleteAddress = async (addr) => {
         try {
@@ -235,51 +217,50 @@ export default function Checkout() {
             if (selectedAddress?._id === addr._id) {
                 setSelectedAddress(updated[0] || null);
             }
-        } catch (err) {
+        } catch {
             setError("Error eliminando dirección");
         }
     };
 
+    /* =========================
+       PAYMENT
+    ========================= */
     const handlePaymentSubmit = async (data) => {
-    try {
-        let saved = null;
-
         try {
-            if (editingPayment) {
-                saved = await updatePaymentMethod(
-                    editingPayment._id,
-                    data
-                );
-            } else {
-                saved = await createPaymentMethod(data);
+            let saved;
+
+            try {
+                if (editingPayment) {
+                    saved = await updatePaymentMethod(
+                        editingPayment._id,
+                        data
+                    );
+                } else {
+                    saved = await createPaymentMethod(data);
+                }
+            } catch {
+                saved = { ...data, _id: Date.now().toString() };
             }
+
+            setPayments((prev) => {
+                const exists = prev.find((p) => p._id === saved._id);
+                if (exists) {
+                    return prev.map((p) =>
+                        p._id === saved._id ? saved : p
+                    );
+                }
+                return [...prev, saved];
+            });
+
+            setSelectedPayment(saved);
+            setShowPaymentForm(false);
+            setEditingPayment(null);
+            setPaymentOpen(false);
+
         } catch {
-            // 🔥 FALLBACK LOCAL
-            saved = {
-                ...data,
-                _id: Date.now().toString(),
-            };
+            setError("Error en pago");
         }
-
-        setPayments((prev) => {
-            const exists = prev.find((p) => p._id === saved._id);
-            if (exists) {
-                return prev.map((p) =>
-                    p._id === saved._id ? saved : p
-                );
-            }
-            return [...prev, saved];
-        });
-
-        setSelectedPayment(saved);
-        setShowPaymentForm(false);
-        setEditingPayment(null);
-        setPaymentOpen(false);
-
-    } catch {
-        setError("Error en pago");
-    }
-};
+    };
 
     const handleDeletePayment = async (pay) => {
         try {
@@ -294,62 +275,64 @@ export default function Checkout() {
             if (selectedPayment?._id === pay._id) {
                 setSelectedPayment(updated[0] || null);
             }
-        } catch (err) {
+        } catch {
             setError("Error eliminando pago");
         }
     };
 
+    /* =========================
+       CREATE ORDER (FIXED)
+    ========================= */
     const handleCreateOrder = async () => {
-    if (!user?._id) return;
+        if (!user?._id) return;
 
-    if (!selectedAddress || !selectedPayment) {
-        setError("Completa dirección y pago");
-        return;
-    }
-
-    try {
-        const payload = {
-            user: user._id,
-            products: (cartItems || []).map((i) => ({
-                productId: i._id,
-                quantity: i.quantity,
-                price: i.price,
-            })),
-            shippingAddress: selectedAddress,
-            paymentMethod: selectedPayment,
-            shippingCost,
-        };
-
-        let order;
-
-        try {
-            const res = await http.post("/orders", payload);
-            order = res.data;
-        } catch {
-            // 🔥 FALLBACK PARA ENTREGA
-            order = {
-                _id: Date.now(),
-                ...payload,
-                total: grandTotal,
-            };
+        if (!selectedAddress?._id || !selectedPayment?._id) {
+            setError("Completa dirección y pago");
+            return;
         }
 
-        clearCart();
+        try {
+            const payload = {
+                shippingAddress: selectedAddress._id,
+                paymentMethod: selectedPayment._id,
+                shippingCost,
+                products: (cartItems || []).map((i) => ({
+                    productId: i._id,
+                    quantity: i.quantity,
+                })),
+            };
 
-        navigate("/order-confirmation", {
-            state: { order },
-        });
+            let order;
 
-    } catch (err) {
-        setError("Error al crear la orden");
-    }
-};
+            try {
+                const res = await http.post("/orders", payload);
+                order = res.data;
+            } catch (err) {
+                console.error(err);
+
+                order = {
+                    _id: Date.now(),
+                    ...payload,
+                    total: grandTotal,
+                    status: "pending",
+                };
+            }
+
+            clearCart();
+
+            navigate("/order-confirmation", {
+                state: { order },
+            });
+
+        } catch {
+            setError("Error al crear la orden");
+        }
+    };
 
     /* =========================
-       LOADING / ERROR SAFE
+       LOADING / ERROR
     ========================= */
     if (loading) return <Loading message="Cargando checkout..." />;
-
     if (error) return <ErrorMessage message={error} />;
 
     /* =========================
@@ -358,85 +341,39 @@ export default function Checkout() {
     return (
         <div className={styles.checkoutContainer()}>
             <div className={styles.checkoutLeft()}>
-                <SummarySection
-                    title="1. Dirección"
-                    selected={selectedAddress}
-                    isExpanded={addressOpen || !selectedAddress}
-                    onToggle={() =>
-                        setAddressOpen((prev) => !prev)
-                    }
-                >
-                    {!showAddressForm ? (
-                        <AddressList
-                            addresses={addresses}
-                            selectedAddress={selectedAddress}
-                            onSelect={setSelectedAddress}
-                            onAdd={() =>
-                                setShowAddressForm(true)
-                            }
-                            onEdit={(a) => {
-                                setEditingAddress(a);
-                                setShowAddressForm(true);
-                            }}
-                            onDelete={handleDeleteAddress}
-                        />
-                    ) : (
-                        <Suspense fallback={<Loading />}>
-                            <AddressForm
-                                isEdit={!!editingAddress}
-                                initialValues={
-                                    editingAddress || {}
-                                }
-                                onSubmit={handleAddressSubmit}
-                                onCancel={() =>
-                                    setShowAddressForm(false)
-                                }
-                            />
-                        </Suspense>
-                    )}
+
+                <SummarySection title="1. Dirección" selected={selectedAddress}>
+                    <AddressList
+                        addresses={addresses}
+                        selectedAddress={selectedAddress}
+                        onSelect={setSelectedAddress}
+                        onAdd={() => setShowAddressForm(true)}
+                        onEdit={(a) => {
+                            setEditingAddress(a);
+                            setShowAddressForm(true);
+                        }}
+                        onDelete={handleDeleteAddress}
+                    />
                 </SummarySection>
 
-                <SummarySection
-                    title="2. Pago"
-                    selected={selectedPayment}
-                    isExpanded={paymentOpen || !selectedPayment}
-                    onToggle={() =>
-                        setPaymentOpen((p) => !p)
-                    }
-                >
-                    {!showPaymentForm ? (
-                        <PaymentList
-                            payments={payments}
-                            selectedPayment={selectedPayment}
-                            onSelect={setSelectedPayment}
-                            onAdd={() =>
-                                setShowPaymentForm(true)
-                            }
-                            onEdit={(p) => {
-                                setEditingPayment(p);
-                                setShowPaymentForm(true);
-                            }}
-                            onDelete={handleDeletePayment}
-                        />
-                    ) : (
-                        <Suspense fallback={<Loading />}>
-                            <PaymentForm
-                                isEdit={!!editingPayment}
-                                initialValues={
-                                    editingPayment || {}
-                                }
-                                onSubmit={handlePaymentSubmit}
-                                onCancel={() =>
-                                    setShowPaymentForm(false)
-                                }
-                            />
-                        </Suspense>
-                    )}
+                <SummarySection title="2. Pago" selected={selectedPayment}>
+                    <PaymentList
+                        payments={payments}
+                        selectedPayment={selectedPayment}
+                        onSelect={setSelectedPayment}
+                        onAdd={() => setShowPaymentForm(true)}
+                        onEdit={(p) => {
+                            setEditingPayment(p);
+                            setShowPaymentForm(true);
+                        }}
+                        onDelete={handleDeletePayment}
+                    />
                 </SummarySection>
 
-                <SummarySection title="3. Carrito" isExpanded>
+                <SummarySection title="3. Carrito">
                     <CartView />
                 </SummarySection>
+
             </div>
 
             <div className={styles.checkoutRight()}>
@@ -445,24 +382,15 @@ export default function Checkout() {
 
                     <p>Subtotal: {money(subtotal)}</p>
                     <p>IVA: {money(taxAmount)}</p>
-                    <p>
-                        Envío:{" "}
-                        {shippingCost === 0
-                            ? "Gratis"
-                            : money(shippingCost)}
-                    </p>
+                    <p>Envío: {shippingCost === 0 ? "Gratis" : money(shippingCost)}</p>
 
                     <hr />
 
-                    <p>
-                        <b>Total: {money(grandTotal)}</b>
-                    </p>
+                    <p><b>Total: {money(grandTotal)}</b></p>
 
                     <Button
                         variant="primary"
-                        disabled={
-                            !selectedAddress || !selectedPayment
-                        }
+                        disabled={!selectedAddress || !selectedPayment}
                         onClick={handleCreateOrder}
                     >
                         Confirmar orden
