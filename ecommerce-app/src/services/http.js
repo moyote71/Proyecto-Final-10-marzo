@@ -13,14 +13,11 @@ export const http = axios.create({
   withCredentials: true, // ✅ necesario para cookies
 });
 
-// ✅ interceptor limpio
 http.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      // ⚠️ normal si no hay sesión
-      console.warn("No autenticado");
-    } else {
+    // ❌ NO mostrar 401 como error
+    if (err.response?.status !== 401) {
       console.error("HTTP ERROR:", err.response?.data || err.message);
     }
 
