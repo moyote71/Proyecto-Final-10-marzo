@@ -48,6 +48,22 @@ router.get(
 ========================= */
 router.get("/", getCategories);
 
+router.get("/slug/:slug", async (req, res, next) => {
+  try {
+    const category = await Category.findOne({
+      slug: req.params.slug,
+    }).populate("parentCategory");
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.json(category);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /* =========================
    GET CATEGORY BY ID
 ========================= */

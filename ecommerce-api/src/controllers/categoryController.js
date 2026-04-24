@@ -1,5 +1,14 @@
 import Category from "../models/category.js";
 
+const slugify = (text) =>
+  text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+
 async function getCategories(req, res, next) {
   try {
     const categories = await Category.find().populate("parentCategory").sort({ name: 1 });
@@ -22,12 +31,15 @@ async function getCategoryById(req, res, next) {
 async function createCategory(req, res, next) {
   try {
     const { name, description, parentCategory, imageURL } = req.body;
+
     const newCategory = new Category({
       name,
+      slug: slugify(name), // 🔥 NUEVO
       description,
       parentCategory: parentCategory || null,
       imageURL: imageURL || null,
     });
+
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
@@ -39,30 +51,27 @@ async function updateCategory(req, res, next) {
     const { name, description, parentCategory, imageURL } = req.body;
     const idCategory = req.params.id;
 
-    // Validar que al menos un campo sea proporcionado
-    if (
-      name === undefined &&
-      description === undefined &&
-      parentCategory === undefined &&
-      imageURL === undefined
-    ) {
-      return res.status(400).json({
-        message: "At least one field must be provided for update",
-      });
+    const updateData = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+      updateData.slug = slugify(name); // 🔥 actualiza slug
     }
 
-    // Construir objeto de actualización con campos proporcionados
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (parentCategory !== undefined) updateData.parentCategory = parentCategory;
     if (imageURL !== undefined) updateData.imageURL = imageURL;
 
-    const updatedCategory = await Category.findByIdAndUpdate(idCategory, updateData, { new: true });
+    const updatedCategory = await Category.findByIdAndUpdate(
+      idCategory,
+      updateData,
+      { new: true }
+    );
 
     if (!updatedCategory) {
       return res.status(404).json({ message: "Category not found" });
     }
+
     res.status(200).json(updatedCategory);
   } catch (error) {
     next(error);
