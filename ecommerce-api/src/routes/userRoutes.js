@@ -39,10 +39,12 @@ import {
   orderValidation,
 } from "../middlewares/validators.js";
 
+console.log("👤 USER ROUTES LOADED");
+
 const router = express.Router();
 
 /* =========================
-   PROFILE (USER LOGGED IN)
+   PROFILE (AUTH USER)
 ========================= */
 router.get("/profile", authMiddleware, getUserProfile);
 
@@ -60,7 +62,7 @@ router.put(
 );
 
 /* =========================
-   USERS (ADMIN)
+   USERS (ADMIN ONLY)
 ========================= */
 router.get(
   "/",
@@ -156,7 +158,9 @@ router.put(
   "/change-password",
   authMiddleware,
   [
-    body("currentPassword").notEmpty().withMessage("Current password is required"),
+    body("currentPassword")
+      .notEmpty()
+      .withMessage("Current password is required"),
     newPasswordValidation(),
     confirmPasswordValidation(),
   ],

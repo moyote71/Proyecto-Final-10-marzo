@@ -10,6 +10,8 @@ import logger from "./src/middlewares/logger.js";
 import { apiLimiter } from "./src/middlewares/rateLimiter.js";
 import routes from "./src/routes/index.js";
 
+console.log("🚀 SERVER BOOTING...");
+
 dotenv.config();
 
 const app = express();
