@@ -1,7 +1,7 @@
 import ShippingAddress from "../models/shippingAddress.js";
 
 /* =========================
-   GET BY USER (FIXED)
+   GET USER ADDRESSES
 ========================= */
 export async function getShippingAddresses(req, res, next) {
   try {
@@ -16,7 +16,7 @@ export async function getShippingAddresses(req, res, next) {
 }
 
 /* =========================
-   DEFAULT (FIXED)
+   DEFAULT
 ========================= */
 export async function getDefaultShippingAddress(req, res, next) {
   try {
@@ -32,16 +32,46 @@ export async function getDefaultShippingAddress(req, res, next) {
 }
 
 /* =========================
-   CREATE (FIXED)
+   CREATE
 ========================= */
 export async function createShippingAddress(req, res, next) {
   try {
-    const newAddress = await ShippingAddress.create({
+    const address = await ShippingAddress.create({
       ...req.body,
       user: req.user.userId,
     });
 
-    res.status(201).json(newAddress);
+    res.status(201).json(address);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   UPDATE
+========================= */
+export async function updateShippingAddress(req, res, next) {
+  try {
+    const updated = await ShippingAddress.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   DELETE
+========================= */
+export async function deleteShippingAddress(req, res, next) {
+  try {
+    await ShippingAddress.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Deleted" });
   } catch (error) {
     next(error);
   }

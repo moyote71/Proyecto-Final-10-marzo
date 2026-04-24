@@ -1,9 +1,9 @@
 import PaymentMethod from "../models/paymentMethod.js";
 
 /* =========================
-   GET METHODS BY USER
+   GET USER PAYMENT METHODS
 ========================= */
-export const getPaymentMethodsByUser = async (req, res, next) => {
+export async function getPaymentMethodsByUser(req, res, next) {
   try {
     const userId = req.user.userId;
 
@@ -13,38 +13,15 @@ export const getPaymentMethodsByUser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-
-export const deactivatePaymentMethod = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const updated = await PaymentMethod.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: "Payment method not found" });
-    }
-
-    res.json(updated);
-  } catch (error) {
-    next(error);
-  }
-};
+}
 
 /* =========================
    GET DEFAULT
 ========================= */
-export const getDefaultPaymentMethod = async (req, res, next) => {
+export async function getDefaultPaymentMethod(req, res, next) {
   try {
-    const userId = req.user.userId;
-
     const method = await PaymentMethod.findOne({
-      user: userId,
+      user: req.user.userId,
       isDefault: true,
     });
 
@@ -52,101 +29,61 @@ export const getDefaultPaymentMethod = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-/* =========================
-   GET ALL (ADMIN)
-========================= */
-export const getPaymentMethods = async (req, res, next) => {
-  try {
-    const methods = await PaymentMethod.find().populate("user");
-    res.json(methods);
-  } catch (error) {
-    next(error);
-  }
-};
+}
 
 /* =========================
    CREATE
 ========================= */
-export const createPaymentMethod = async (req, res, next) => {
+export async function createPaymentMethod(req, res, next) {
   try {
-    const userId = req.user.userId;
-
-    const newMethod = await PaymentMethod.create({
+    const method = await PaymentMethod.create({
       ...req.body,
-      user: userId,
+      user: req.user.userId,
     });
 
-    res.status(201).json(newMethod);
+    res.status(201).json(method);
   } catch (error) {
     next(error);
   }
-};
+}
 
 /* =========================
    UPDATE
 ========================= */
-export const updatePaymentMethod = async (req, res, next) => {
+export async function updatePaymentMethod(req, res, next) {
   try {
-    const { id } = req.params;
-
     const updated = await PaymentMethod.findByIdAndUpdate(
-      id,
+      req.params.id,
       req.body,
       { new: true }
     );
 
-    if (!updated) {
-      return res.status(404).json({ message: "Payment method not found" });
-    }
-
     res.json(updated);
   } catch (error) {
     next(error);
   }
-};
+}
 
 /* =========================
    DELETE
 ========================= */
-export const deletePaymentMethod = async (req, res, next) => {
+export async function deletePaymentMethod(req, res, next) {
   try {
-    const { id } = req.params;
+    await PaymentMethod.findByIdAndDelete(req.params.id);
 
-    const deleted = await PaymentMethod.findByIdAndDelete(id);
-
-    if (!deleted) {
-      return res.status(404).json({ message: "Payment method not found" });
-    }
-
-    res.json({ message: "Deleted successfully" });
+    res.json({ message: "Deleted" });
   } catch (error) {
     next(error);
   }
-};
+}
 
 /* =========================
-   SET DEFAULT
+   EXPORTS LIMPIOS
 ========================= */
-export const setDefaultPaymentMethod = async (req, res, next) => {
-  try {
-    const userId = req.user.userId;
-
-    await PaymentMethod.updateMany(
-      { user: userId },
-      { isDefault: false }
-    );
-
-    const updated = await PaymentMethod.findByIdAndUpdate(
-      req.params.id,
-      { isDefault: true },
-      { new: true }
-    );
-
-    res.json(updated);
-  } catch (error) {
-    next(error);
-  }
+export {
+  getPaymentMethodsByUser,
+  getDefaultPaymentMethod,
+  createPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod,
 };
-
