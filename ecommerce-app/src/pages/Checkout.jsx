@@ -11,10 +11,16 @@ import { useCart } from "../context/CartContext";
 import {
     getDefaultPaymentMethods,
     getPaymentMethods,
+    createPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod as deletePaymentMethodAPI,
 } from "../services/paymentService";
 import {
     getDefaultShippingAddress,
     getShippingAddresses,
+    createShippingAddress,
+    updateShippingAddress,
+    deleteShippingAddress as deleteShippingAddressAPI,
 } from "../services/shippingService";
 import * as styles from "./CheckoutStyles";
 import { http } from "../services/http";
@@ -128,36 +134,44 @@ export default function Checkout() {
         setAddressSectionOpen(true);
     };
 
-    const handleAddressDelete = (addr) => {
-        const updated = addresses.filter((a) => a._id !== addr._id);
-        if (selectedAddress?._id === addr._id) {
-            setSelectedAddress(updated[0] || null);
+    const handleAddressDelete = async (addr) => {
+        try {
+            await deleteShippingAddressAPI(addr._id);
+            const updated = addresses.filter((a) => a._id !== addr._id);
+            if (selectedAddress?._id === addr._id) {
+                setSelectedAddress(updated[0] || null);
+            }
+            setAddresses(updated);
+        } catch (error) {
+            setLocalError("Error al eliminar dirección");
         }
-        setAddresses(updated);
     };
 
-    const handleAddressSubmit = (data) => {
-        let updated;
-        let newSelected = selectedAddress;
+    const handleAddressSubmit = async (data) => {
+        try {
+            setLocalError(null);
+            let saved;
+            let updated;
 
-        if (editingAddress) {
-            updated = addresses.map((a) =>
-                a._id === editingAddress._id ? { ...a, ...data } : a
-            );
-            if (selectedAddress?._id === editingAddress._id) {
-                newSelected = updated.find((a) => a._id === editingAddress._id);
+            if (editingAddress) {
+                saved = await updateShippingAddress(editingAddress._id, data);
+                updated = addresses.map((a) =>
+                    a._id === editingAddress._id ? saved : a
+                );
+            } else {
+                saved = await createShippingAddress(data);
+                updated = [...addresses, saved];
             }
-        } else {
-            const newAddr = { _id: Date.now().toString(), ...data };
-            updated = [...addresses, newAddr];
-            newSelected = newAddr;
-        }
 
-        setAddresses(updated);
-        setSelectedAddress(newSelected);
-        setShowAddressForm(false);
-        setEditingAddress(null);
-        setAddressSectionOpen(false);
+            setAddresses(updated);
+            setSelectedAddress(saved);
+            setShowAddressForm(false);
+            setEditingAddress(null);
+            setAddressSectionOpen(false);
+        } catch (error) {
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "Error al guardar dirección";
+            setLocalError(msg);
+        }
     };
 
     const handleCancelAddress = () => {
@@ -192,36 +206,44 @@ export default function Checkout() {
         setPaymentSectionOpen(true);
     };
 
-    const handlePaymentDelete = (pay) => {
-        const updated = payments.filter((p) => p._id !== pay._id);
-        if (selectedPayment?._id === pay._id) {
-            setSelectedPayment(updated[0] || null);
+    const handlePaymentDelete = async (pay) => {
+        try {
+            await deletePaymentMethodAPI(pay._id);
+            const updated = payments.filter((p) => p._id !== pay._id);
+            if (selectedPayment?._id === pay._id) {
+                setSelectedPayment(updated[0] || null);
+            }
+            setPayments(updated);
+        } catch (error) {
+            setLocalError("Error al eliminar método de pago");
         }
-        setPayments(updated);
     };
 
-    const handlePaymentSubmit = (data) => {
-        let updated;
-        let newSelected = selectedPayment;
+    const handlePaymentSubmit = async (data) => {
+        try {
+            setLocalError(null);
+            let saved;
+            let updated;
 
-        if (editingPayment) {
-            updated = payments.map((p) =>
-                p._id === editingPayment._id ? { ...p, ...data } : p
-            );
-            if (selectedPayment?._id === editingPayment._id) {
-                newSelected = updated.find((p) => p._id === editingPayment._id);
+            if (editingPayment) {
+                saved = await updatePaymentMethod(editingPayment._id, data);
+                updated = payments.map((p) =>
+                    p._id === editingPayment._id ? saved : p
+                );
+            } else {
+                saved = await createPaymentMethod(data);
+                updated = [...payments, saved];
             }
-        } else {
-            const newPay = { _id: Date.now().toString(), ...data };
-            updated = [...payments, newPay];
-            newSelected = newPay;
-        }
 
-        setPayments(updated);
-        setSelectedPayment(newSelected);
-        setShowPaymentForm(false);
-        setEditingPayment(null);
-        setPaymentSectionOpen(false);
+            setPayments(updated);
+            setSelectedPayment(saved);
+            setShowPaymentForm(false);
+            setEditingPayment(null);
+            setPaymentSectionOpen(false);
+        } catch (error) {
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "Error al guardar método de pago";
+            setLocalError(msg);
+        }
     };
 
     const handleCancelPayment = () => {
@@ -277,9 +299,9 @@ export default function Checkout() {
                         selectedAddress && (
                             <div>
                                 <p>{selectedAddress.name}</p>
-                                <p>{selectedAddress.address1}</p>
+                                <p>{selectedAddress.address}</p>
                                 <p>
-                                    {selectedAddress.city}, {selectedAddress.postalCode}
+                                    {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
                                 </p>
                             </div>
                         )

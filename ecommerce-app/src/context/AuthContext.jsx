@@ -14,7 +14,9 @@ export function AuthProvider({ children }) {
         const checkAuth = async () => {
             try {
                 // ✅ SOLO intentar si hay cookies (sesión previa)
-                const res = await http.get("/users/profile");
+                const res = await http.get("/users/profile", {
+                     withCredentials: true,
+                });
                 setUser(res.data.user);
             } catch (error) {
                 // ✅ NO logs innecesarios ni romper flujo
@@ -28,22 +30,43 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = async (email, password) => {
-        const result = await authLogin(email, password);
+    const result = await authLogin(email, password);
 
-        if (result.success) {
-            setUser(result.user);
-            navigate("/");
-            return { success: true };
+    if (result.success) {
+        try {
+            // 🔥 pedir usuario REAL ya autenticado con cookie
+            const res = await http.get("/users/profile", {
+                withCredentials: true,
+            });
+
+            setUser(res.data.user);
+        } catch (error) {
+            console.error("Error obteniendo perfil:", error);
+            setUser(null);
         }
 
-        return result;
-    };
+        navigate("/");
+        return { success: true };
+    }
 
-    const register = async (name, email, password) => {
+    return result;
+};
+
+        const register = async (name, email, password) => {
         const result = await authRegister(name, email, password);
 
         if (result.success) {
-            setUser(result.user);
+            try {
+                const res = await http.get("/users/profile", {
+                    withCredentials: true,
+                });
+
+                setUser(res.data.user);
+            } catch (error) {
+                console.error("Error obteniendo perfil:", error);
+                setUser(null);
+            }
+
             navigate("/");
             return { success: true };
         }
@@ -53,7 +76,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            await http.post("/auth/logout");
+                await http.post("/auth/logout", {}, { withCredentials: true });
         } catch (e) {
             console.error(e);
         }

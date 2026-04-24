@@ -1,8 +1,21 @@
 import { http } from "./http";
 
+/**
+ * TODAS las funciones normalizan la respuesta del backend.
+ * getWishList() SIEMPRE retorna un array limpio [].
+ */
+
 export const getWishList = async () => {
     const response = await http.get("/wishlist");
-    return response.data?.data || response.data || [];
+    const raw = response.data;
+
+    // Normalizar: el backend puede responder como:
+    //   { wishlist: [...] }  |  { data: [...] }  |  [...]  |  { items: [...] }
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.wishlist)) return raw.wishlist;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.items)) return raw.items;
+    return [];
 };
 
 export const checkProductInWishList = async (productId) => {

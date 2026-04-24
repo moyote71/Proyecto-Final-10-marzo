@@ -79,12 +79,18 @@ export function CartProvider({ children }) {
     const [state, dispatch] = useReducer(cartReducer, initialState);
     const { user } = useAuth();
 
-    // Cargar el carrito desde la API en el primer montaje
+    // Cargar el carrito desde la API cuando hay usuario autenticado
     useEffect(() => {
+        // Sin usuario = carrito vacío, sin llamada API
+        if (!user?._id) {
+            dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: [] });
+            return;
+        }
+
         const loadCart = async () => {
             dispatch({ type: ACTIONS.FETCH_START });
             try {
-                const cart = await fetchCart(user?._id);
+                const cart = await fetchCart(user._id);
                 // Normalizar estructura de la base de datos a lo que usa la UI frontend
                 if (cart && cart.products) {
                     const normalizedItems = cart.products.map(p => ({
@@ -108,9 +114,10 @@ export function CartProvider({ children }) {
         // Optimistic UI update
         dispatch({ type: ACTIONS.ADD_ITEM, payload: { product, quantity } });
 
-        // API Call
+        // API Call — solo si hay sesión
+        if (!user?._id) return;
         try {
-            await addToCartAPI(user?._id, product._id, quantity);
+            await addToCartAPI(user._id, product._id, quantity);
         } catch (error) {
             console.error("Error al añadir al carrito en BD", error);
         }
@@ -120,9 +127,10 @@ export function CartProvider({ children }) {
         // Optimistic UI
         dispatch({ type: ACTIONS.REMOVE_ITEM, payload: productId });
         
-        // API Call
+        // API Call — solo si hay sesión
+        if (!user?._id) return;
         try {
-            await removeFromCartAPI(user?._id, productId);
+            await removeFromCartAPI(user._id, productId);
         } catch (error) {
             console.error("Error al eliminar del carrito en BD", error);
         }
@@ -132,12 +140,13 @@ export function CartProvider({ children }) {
         // Optimistic UI
         dispatch({ type: ACTIONS.UPDATE_QUANTITY, payload: { productId, quantity: newQuantity } });
 
-        // API Call
+        // API Call — solo si hay sesión
+        if (!user?._id) return;
         try {
             if (newQuantity <= 0) {
-                await removeFromCartAPI(user?._id, productId);
+                await removeFromCartAPI(user._id, productId);
             } else {
-                await updateCartItemAPI(user?._id, productId, newQuantity);
+                await updateCartItemAPI(user._id, productId, newQuantity);
             }
         } catch (error) {
             console.error("Error al actualizar cantidad en BD", error);
@@ -146,8 +155,9 @@ export function CartProvider({ children }) {
 
     const clearCart = async () => {
         dispatch({ type: ACTIONS.CLEAR_CART });
+        if (!user?._id) return;
         try {
-            await clearCartAPI(user?._id);
+            await clearCartAPI(user._id);
         } catch (error) {
             console.error("Error limpiando carrito en BD", error);
         }
