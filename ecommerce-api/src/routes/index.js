@@ -14,37 +14,37 @@ import wishListRoutes from "./wishListRoutes.js";
 
 const router = express.Router();
 
-// AUTH
+// 🔐 AUTH
 router.use("/auth", authRoutes);
 
-// USERS
+// 👤 USERS (IMPORTANTE para /users/profile)
 router.use("/users", userRoutes);
 
-// PRODUCTS
+// 🛍 PRODUCTS (CRÍTICO)
 router.use("/products", productRoutes);
 
-// CART
+// 🛒 CART
 router.use("/cart", cartRoutes);
 
-// CATEGORIES
+// 📦 CATEGORIES
 router.use("/categories", categoryRoutes);
 
-// NOTIFICATIONS
+// 🔔 NOTIFICATIONS
 router.use("/notifications", notificationRoutes);
 
-// ORDERS
+// 📦 ORDERS
 router.use("/orders", orderRoutes);
 
-// PAYMENTS
+// 💳 PAYMENTS
 router.use("/payment-methods", paymentMethodRoutes);
 
-// REVIEWS
+// ⭐ REVIEWS
 router.use("/reviews", reviewRoutes);
 
-// SHIPPING ADDRESS
+// 📍 SHIPPING
 router.use("/shipping-address", shippingAddressRoutes);
 
-// WISHLIST
+// ❤️ WISHLIST
 router.use("/wishlist", wishListRoutes);
 
 export default router;
