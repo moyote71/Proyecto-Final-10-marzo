@@ -54,10 +54,8 @@ export default function Checkout() {
     }, [user, navigate]);
 
     useEffect(() => {
-        if (Array.isArray(cartItems) && cartItems.length === 0) {
-            navigate("/cart");
-        }
-    }, [cartItems, navigate]);
+        if (!user?._id) return;
+    }, [user]);
 
     /* =========================
        CALCULOS SAFE

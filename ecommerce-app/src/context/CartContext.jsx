@@ -158,9 +158,8 @@ export function CartProvider({ children }) {
             try {
                 const cart = await fetchCart(user._id);
 
-                const products = Array.isArray(cart?.products)
-                    ? cart.products
-                    : [];
+                const products = cart?.products ?? [];
+
                 const normalized = products.map((p) => {
                     const product = p.product || {};
 
