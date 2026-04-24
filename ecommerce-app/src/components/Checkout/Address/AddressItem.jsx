@@ -4,7 +4,7 @@ import * as styles from "./AddressItemStyles";
 const AddressItem = ({ address, isSelected, onSelect, onEdit, onDelete }) => {
     // Normalizar para mostrar datos tanto de backend como de fakes anteriores
     const name = address.name || "Sin nombre";
-    const line1 = address.address || address.address line || address.address1 || "Sin dirección";
+    const line1 = address.address || address.address_line || address.address1 || "Sin dirección";
     const city = address.city || "";
     const state = address.state || "";
     const cp = address.postalCode || "";
