@@ -93,7 +93,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                 {/* 🔥 CATEGORY SAFE (NO undefined URL) */}
                 {product?.category && (
                     <Link
-                        to={`/categories/${categoryLink}`}
+                        to={categorySlug ? `/categories/${categorySlug}` : "#"}
                         className="text-xs text-blue-500 mb-1"
                     >
                         {product.category.name}

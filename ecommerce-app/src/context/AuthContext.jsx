@@ -34,18 +34,16 @@ export function AuthProvider({ children }) {
         const result = await authLogin(email, password);
 
         if (result.success) {
-            try {
-                const res = await http.get("/users/profile", {
-                    withCredentials: true,
-                });
+                    try {
+        const res = await api.get("/users/profile");
+        setUser(res.data);
+        setIsAuthenticated(true);
+        } catch (err) {
+        console.log("No autenticado, pero no redirigir");
+        setUser(null);
+        setIsAuthenticated(false);
 
-                setUser(res?.data?.user || null);
-            } catch {
-                setUser(null);
-            }
-
-            navigate("/");
-            return { success: true };
+        // 🚫 IMPORTANTE: NO redirigir aquí
         }
 
         return result;
