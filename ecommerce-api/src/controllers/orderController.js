@@ -64,15 +64,3 @@ export const createOrder = async (req, res, next) => {
     next(error);
   }
 };
-
-/* =========================
-   OTHER FUNCTIONS (SI EXISTEN)
-========================= */
-// aquí puedes agregar getOrders, updateOrder, etc.
-
-/* =========================
-   EXPORTS (CORRECTO)
-========================= */
-export {
-  createOrder,
-};

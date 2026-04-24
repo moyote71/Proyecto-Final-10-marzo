@@ -19,8 +19,6 @@ import {
   mongoIdValidation,
   orderStatusValidation,
   paymentStatusValidation,
-  shippingCostValidation,
-  bodyMongoIdValidation,
 } from "../middlewares/validators.js";
 
 const router = express.Router();
@@ -47,19 +45,9 @@ router.get(
 );
 
 /* =========================
-   CREATE ORDER
+   CREATE ORDER (CLEAN)
 ========================= */
-router.post(
-  "/",
-  authMiddleware,
-  [
-    bodyMongoIdValidation("shippingAddress", "Shipping address"),
-    bodyMongoIdValidation("paymentMethod", "Payment method"),
-    shippingCostValidation(),
-  ],
-  validate,
-  createOrder
-);
+router.post("/", authMiddleware, createOrder);
 
 /* =========================
    STATUS UPDATE
@@ -68,10 +56,7 @@ router.patch(
   "/:id/status",
   authMiddleware,
   isAdmin,
-  [
-    mongoIdValidation("id", "Order ID"),
-    orderStatusValidation(),
-  ],
+  [mongoIdValidation("id", "Order ID"), orderStatusValidation()],
   validate,
   updateOrderStatus
 );
@@ -83,10 +68,7 @@ router.patch(
   "/:id/payment-status",
   authMiddleware,
   isAdmin,
-  [
-    mongoIdValidation("id", "Order ID"),
-    paymentStatusValidation(),
-  ],
+  [mongoIdValidation("id", "Order ID"), paymentStatusValidation()],
   validate,
   updatePaymentStatus
 );
