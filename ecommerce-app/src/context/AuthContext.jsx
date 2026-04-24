@@ -13,11 +13,11 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const res = await http.get("/users/profile", {
-                    withCredentials: true
-                });
+                // ✅ SOLO intentar si hay cookies (sesión previa)
+                const res = await http.get("/users/profile");
                 setUser(res.data.user);
             } catch (error) {
+                // ✅ NO logs innecesarios ni romper flujo
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -29,22 +29,25 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password) => {
         const result = await authLogin(email, password);
+
         if (result.success) {
-            console.log("Usuario logueado:", result.user);
             setUser(result.user);
             navigate("/");
             return { success: true };
         }
+
         return result;
     };
 
     const register = async (name, email, password) => {
         const result = await authRegister(name, email, password);
+
         if (result.success) {
             setUser(result.user);
             navigate("/");
             return { success: true };
         }
+
         return result;
     };
 
@@ -55,6 +58,7 @@ export function AuthProvider({ children }) {
             console.error(e);
         }
         setUser(null);
+        navigate("/login"); // ✅ opcional pero recomendable
     };
 
     const value = {
@@ -63,13 +67,14 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!user, // ✅ boolean correcto
     };
 
+    // ✅ IMPORTANTE: evita pantalla en blanco total
     if (loading) {
-  return null;
-}
-    
+        return <div className="p-4 text-center">Cargando...</div>;
+    }
+
     return (
         <AuthContext.Provider value={value}>
             {children}
@@ -79,8 +84,10 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
+
     if (!context) {
         throw new Error("useAuth debe estar dentro del proveedor AuthProvider");
     }
+
     return context;
 }

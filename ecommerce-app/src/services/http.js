@@ -10,15 +10,20 @@ console.log("🚀 API_BASE FINAL:", API_BASE);
 
 export const http = axios.create({
   baseURL: API_BASE,
-  withCredentials: true,
+  withCredentials: true, // ✅ necesario para cookies
 });
 
+// ✅ interceptor limpio
 http.interceptors.response.use(
   (res) => res,
   (err) => {
-    console.error("HTTP ERROR:", err.response?.data || err.message);
+    if (err.response?.status === 401) {
+      // ⚠️ normal si no hay sesión
+      console.warn("No autenticado");
+    } else {
+      console.error("HTTP ERROR:", err.response?.data || err.message);
+    }
 
-    // ❌ NO REDIRIGIR GLOBALMENTE
     return Promise.reject(err);
   }
 );
