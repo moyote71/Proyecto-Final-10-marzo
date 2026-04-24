@@ -1,9 +1,7 @@
 import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
-
 import {
   getShippingAddresses,
-  getShippingAddressesByUser,
   getDefaultShippingAddress,
   createShippingAddress,
   updateShippingAddress,
@@ -12,49 +10,14 @@ import {
 
 const router = express.Router();
 
-/* =========================
-   USER ADDRESSES
-========================= */
-router.get(
-    "/shipping-addresses/me",
-    authMiddleware,
-    getShippingAddresses
-);
+router.get("/me", authMiddleware, getShippingAddresses);
 
-/* =========================
-   DEFAULT ADDRESS
-========================= */
-router.get(
-    "/shipping-addresses/default",
-    authMiddleware,
-    getDefaultShippingAddress
-);
+router.get("/default", authMiddleware, getDefaultShippingAddress);
 
-/* =========================
-   CREATE
-========================= */
-router.post(
-    "/shipping-addresses",
-    authMiddleware,
-    createShippingAddress
-);
+router.post("/", authMiddleware, createShippingAddress);
 
-/* =========================
-   UPDATE
-========================= */
-router.put(
-    "/shipping-addresses/:id",
-    authMiddleware,
-    updateShippingAddress
-);
+router.put("/:id", authMiddleware, updateShippingAddress);
 
-/* =========================
-   DELETE
-========================= */
-router.delete(
-    "/shipping-addresses/:id",
-    authMiddleware,
-    deleteShippingAddress
-);
+router.delete("/:id", authMiddleware, deleteShippingAddress);
 
 export default router;

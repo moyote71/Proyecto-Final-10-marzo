@@ -12,12 +12,22 @@ export const http = axios.create({
   timeout: 10000,
 });
 
-// REQUEST
+/* =========================
+   REQUEST INTERCEPTOR
+========================= */
 http.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 });
 
-// RESPONSE (IMPORTANTE)
+/* =========================
+   RESPONSE INTERCEPTOR
+========================= */
 http.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -25,7 +35,16 @@ http.interceptors.response.use(
 
     if (status === 401) {
       console.warn("🔒 No autenticado (token inválido o expirado)");
-      // aquí luego puedes agregar refresh token automático
+
+      // 🔥 FIX IMPORTANTE
+      localStorage.removeItem("token");
+
+      // opcional: redirección automática
+      window.location.href = "/login";
+    }
+
+    if (status === 404) {
+      console.warn("⚠️ Endpoint no encontrado:", error.config?.url);
     }
 
     return Promise.reject(error);

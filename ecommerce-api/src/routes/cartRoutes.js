@@ -1,130 +1,98 @@
-  import express from "express";
-  import { body, param } from "express-validator";
-  import {
-    addProductToCart,
-    createCart,
-    deleteCart,
-    getCartById,
-    getCartByUser,
-    getCarts,
-    updateCart,
-    updateCartItem,
-    removeCartItem,
-    clearCartItems,
-  } from "../controllers/cartController.js";
-  import authMiddleware from "../middlewares/authMiddleware.js";
-  import isAdmin from "../middlewares/isAdminMiddleware.js";
-  import validate from "../middlewares/validation.js";
-  import {
-    mongoIdValidation,
-    bodyMongoIdValidation,
-    quantityValidation,
-  } from "../middlewares/validators.js";
+import express from "express";
+import { body } from "express-validator";
+import {
+  addProductToCart,
+  createCart,
+  deleteCart,
+  getCartById,
+  getCartByUser,
+  getCarts,
+  updateCart,
+  updateCartItem,
+  removeCartItem,
+  clearCartItems,
+} from "../controllers/cartController.js";
 
-  const router = express.Router();
+import authMiddleware from "../middlewares/authMiddleware.js";
+import isAdmin from "../middlewares/isAdminMiddleware.js";
+import validate from "../middlewares/validation.js";
+import {
+  mongoIdValidation,
+  bodyMongoIdValidation,
+  quantityValidation,
+} from "../middlewares/validators.js";
 
-  router.get("/cart", authMiddleware, isAdmin, getCarts);
+const router = express.Router();
 
-  router.get(
-    "/cart/user/:id",
-    authMiddleware,
-    [mongoIdValidation("id", "User ID")],
-    validate,
-    getCartByUser,
-  );
+/* =========================
+   ADMIN
+========================= */
+router.get("/", authMiddleware, isAdmin, getCarts);
 
-  router.post(
-    "/cart/add-product",
-    authMiddleware,
-    [
-      bodyMongoIdValidation("userId", "User ID"),
-      bodyMongoIdValidation("productId", "Product ID"),
-      quantityValidation("quantity", true),
-    ],
-    validate,
-    addProductToCart,
-  );
+/* =========================
+   GET BY USER
+========================= */
+router.get(
+  "/user/:id",
+  authMiddleware,
+  [mongoIdValidation("id", "User ID")],
+  validate,
+  getCartByUser
+);
 
-  router.get(
-    "/cart/:id",
-    authMiddleware,
-    isAdmin,
-    [mongoIdValidation("id", "Cart ID")],
-    validate,
-    getCartById,
-  );
+/* =========================
+   ADD PRODUCT
+========================= */
+router.post(
+  "/add-product",
+  authMiddleware,
+  [
+    bodyMongoIdValidation("userId", "User ID"),
+    bodyMongoIdValidation("productId", "Product ID"),
+    quantityValidation("quantity", true),
+  ],
+  validate,
+  addProductToCart
+);
 
-  router.post(
-    "/cart",
-    authMiddleware,
-    [
-      bodyMongoIdValidation("user", "User"),
-      body("products")
-        .notEmpty()
-        .withMessage("Products are required")
-        .isArray({ min: 1 })
-        .withMessage("Products must be a non-empty array"),
-      bodyMongoIdValidation("products.*.product", "Product ID"),
-      quantityValidation("products.*.quantity"),
-    ],
-    validate,
-    createCart,
-  );
+/* =========================
+   UPDATE ITEM
+========================= */
+router.put(
+  "/update-item",
+  authMiddleware,
+  [
+    bodyMongoIdValidation("userId", "User ID"),
+    bodyMongoIdValidation("productId", "Product ID"),
+    quantityValidation("quantity", true),
+  ],
+  validate,
+  updateCartItem
+);
 
-  router.put(
-    "/cart-item/:id",
-    authMiddleware,
-    [
-      mongoIdValidation("id", "Cart ID"),
-      bodyMongoIdValidation("user", "User ID", true),
-      body("products")
-        .optional()
-        .isArray({ min: 1 })
-        .withMessage("Products must be a non-empty array"),
-      bodyMongoIdValidation("products.*.product", "Product ID", true),
-      quantityValidation("products.*.quantity", true),
-    ],
-    validate,
-    updateCart,
-  );
+/* =========================
+   REMOVE ITEM
+========================= */
+router.delete(
+  "/remove-item/:productId",
+  authMiddleware,
+  [
+    mongoIdValidation("productId", "Product ID"),
+    bodyMongoIdValidation("userId", "User ID"),
+  ],
+  validate,
+  removeCartItem
+);
 
-  router.delete(
-    "/cart/:id",
-    authMiddleware,
-    [mongoIdValidation("id", "Cart ID")],
-    validate,
-    deleteCart,
-  );
+/* =========================
+   CLEAR
+========================= */
+router.post(
+  "/clear",
+  authMiddleware,
+  [bodyMongoIdValidation("userId", "User ID")],
+  validate,
+  clearCartItems
+);
 
-  // Rutas nuevas
-  router.put(
-    "/cart/update-item",
-    authMiddleware,
-    [
-      bodyMongoIdValidation("userId", "User ID"),
-      bodyMongoIdValidation("productId", "Product ID"),
-      quantityValidation("quantity", true),
-    ],
-    validate,
-    updateCartItem,
-  );
-
-  router.delete(
-    "/cart/remove-item/:productId",
-    authMiddleware,
-    [
-      mongoIdValidation("productId", "Product ID"),
-      bodyMongoIdValidation("userId", "User ID"),
-    ],
-    validate,
-    removeCartItem,
-  );
-
-  router.post(
-    "/cart/clear",
-    authMiddleware,
-    [bodyMongoIdValidation("userId", "User ID")],
-    validate,
-    clearCartItems,
-  );
-  export default router;
+export default router;
