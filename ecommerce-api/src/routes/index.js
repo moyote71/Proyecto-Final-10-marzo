@@ -35,13 +35,13 @@ router.use("/notifications", notificationRoutes);
 // ORDERS
 router.use("/orders", orderRoutes);
 
-// PAYMENT METHODS
+// PAYMENTS
 router.use("/payment-methods", paymentMethodRoutes);
 
 // REVIEWS
 router.use("/reviews", reviewRoutes);
 
-// SHIPPING
+// SHIPPING ADDRESS
 router.use("/shipping-address", shippingAddressRoutes);
 
 // WISHLIST
