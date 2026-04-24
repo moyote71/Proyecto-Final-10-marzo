@@ -1,9 +1,21 @@
 import ShippingAddress from "../models/shippingAddress.js";
 
 /* =========================
-   GET ALL USER ADDRESSES
+   GET ALL (ADMIN)
 ========================= */
-export const getShippingAddresses = async (req, res, next) => {
+export async function getShippingAddresses(req, res, next) {
+    try {
+        const addresses = await ShippingAddress.find().populate("user");
+        res.json(addresses);
+    } catch (error) {
+        next(error);
+    }
+}
+
+/* =========================
+   GET BY USER (LOGGED USER)
+========================= */
+export async function getShippingAddressesByUser(req, res, next) {
     try {
         const userId = req.user._id;
 
@@ -13,12 +25,12 @@ export const getShippingAddresses = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
+}
 
 /* =========================
    GET DEFAULT ADDRESS
 ========================= */
-export const getDefaultShippingAddress = async (req, res, next) => {
+export async function getDefaultShippingAddress(req, res, next) {
     try {
         const userId = req.user._id;
 
@@ -27,20 +39,16 @@ export const getDefaultShippingAddress = async (req, res, next) => {
             isDefault: true,
         });
 
-        if (!address) {
-            return res.status(404).json({ message: "No default address" });
-        }
-
-        res.json(address);
+        res.json(address || null);
     } catch (error) {
         next(error);
     }
-};
+}
 
 /* =========================
    CREATE ADDRESS
 ========================= */
-export const createShippingAddress = async (req, res, next) => {
+export async function createShippingAddress(req, res, next) {
     try {
         const userId = req.user._id;
 
@@ -53,12 +61,12 @@ export const createShippingAddress = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
+}
 
 /* =========================
    UPDATE ADDRESS
 ========================= */
-export const updateShippingAddress = async (req, res, next) => {
+export async function updateShippingAddress(req, res, next) {
     try {
         const { id } = req.params;
 
@@ -72,27 +80,16 @@ export const updateShippingAddress = async (req, res, next) => {
             return res.status(404).json({ message: "Address not found" });
         }
 
-        /* Si se marca como default */
-        if (req.body.isDefault) {
-            await ShippingAddress.updateMany(
-                {
-                    user: updated.user,
-                    _id: { $ne: updated._id },
-                },
-                { isDefault: false }
-            );
-        }
-
         res.json(updated);
     } catch (error) {
         next(error);
     }
-};
+}
 
 /* =========================
    DELETE ADDRESS
 ========================= */
-export const deleteShippingAddress = async (req, res, next) => {
+export async function deleteShippingAddress(req, res, next) {
     try {
         const { id } = req.params;
 
@@ -102,8 +99,8 @@ export const deleteShippingAddress = async (req, res, next) => {
             return res.status(404).json({ message: "Address not found" });
         }
 
-        res.json({ message: "Address deleted" });
+        res.json({ message: "Address deleted successfully" });
     } catch (error) {
         next(error);
     }
-};
+}

@@ -2,12 +2,13 @@ import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
 import {
-    getShippingAddresses,
-    getDefaultShippingAddress,
-    createShippingAddress,
-    updateShippingAddress,
-    deleteShippingAddress,
-} from "../controllers/shippingController.js";
+  getShippingAddresses,
+  getShippingAddressesByUser,
+  getDefaultShippingAddress,
+  createShippingAddress,
+  updateShippingAddress,
+  deleteShippingAddress,
+} from "../controllers/shippingAddressController.js";
 
 const router = express.Router();
 
