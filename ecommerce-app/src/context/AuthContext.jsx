@@ -18,8 +18,10 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch {
+            } catch (err) {
+                // 🔥 IMPORTANTE: NO CRASH NI REDIRECCIÓN
                 setUser(null);
+                console.warn("No autenticado");
             } finally {
                 setLoading(false);
             }
@@ -38,8 +40,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch (error) {
-                console.error("Error obteniendo perfil:", error);
+            } catch {
                 setUser(null);
             }
 
@@ -60,8 +61,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setUser(res?.data?.user || null);
-            } catch (error) {
-                console.error("Error obteniendo perfil:", error);
+            } catch {
                 setUser(null);
             }
 
@@ -75,12 +75,10 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         try {
             await http.post("/auth/logout", {}, { withCredentials: true });
-        } catch (e) {
-            console.error("Logout error:", e);
-        } finally {
-            setUser(null);
-            navigate("/login");
-        }
+        } catch {}
+
+        setUser(null);
+        navigate("/login");
     };
 
     const value = {
@@ -89,12 +87,10 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user, // 🔥 OK
     };
 
-    if (loading) {
-        return <div className="p-4 text-center">Cargando...</div>;
-    }
+    if (loading) return <div className="p-4 text-center">Cargando...</div>;
 
     return (
         <AuthContext.Provider value={value}>
@@ -105,10 +101,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-
-    if (!context) {
-        throw new Error("useAuth debe estar dentro de AuthProvider");
-    }
-
+    if (!context) throw new Error("useAuth debe estar dentro de AuthProvider");
     return context;
 }
