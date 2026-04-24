@@ -1,5 +1,5 @@
 import express from "express";
-import { body } from "express-validator";
+
 import {
   addProductToCart,
   createCart,
@@ -16,6 +16,7 @@ import {
 import authMiddleware from "../middlewares/authMiddleware.js";
 import isAdmin from "../middlewares/isAdminMiddleware.js";
 import validate from "../middlewares/validation.js";
+
 import {
   mongoIdValidation,
   bodyMongoIdValidation,
@@ -30,7 +31,7 @@ const router = express.Router();
 router.get("/", authMiddleware, isAdmin, getCarts);
 
 /* =========================
-   GET BY USER
+   GET CART BY USER (TOKEN SAFE)
 ========================= */
 router.get(
   "/user/:id",
@@ -47,11 +48,14 @@ router.post(
   "/add-product",
   authMiddleware,
   [
-    bodyMongoIdValidation("userId", "User ID"),
     bodyMongoIdValidation("productId", "Product ID"),
     quantityValidation("quantity", true),
   ],
   validate,
+  (req, res, next) => {
+    req.body.userId = req.user.userId; // 🔥 inyectar desde token
+    next();
+  },
   addProductToCart
 );
 
@@ -62,11 +66,14 @@ router.put(
   "/update-item",
   authMiddleware,
   [
-    bodyMongoIdValidation("userId", "User ID"),
     bodyMongoIdValidation("productId", "Product ID"),
     quantityValidation("quantity", true),
   ],
   validate,
+  (req, res, next) => {
+    req.body.userId = req.user.userId; // 🔥 token
+    next();
+  },
   updateCartItem
 );
 
@@ -78,21 +85,51 @@ router.delete(
   authMiddleware,
   [
     mongoIdValidation("productId", "Product ID"),
-    bodyMongoIdValidation("userId", "User ID"),
   ],
   validate,
+  (req, res, next) => {
+    req.body.userId = req.user.userId; // 🔥 token (NO body externo)
+    next();
+  },
   removeCartItem
 );
 
 /* =========================
-   CLEAR
+   CLEAR CART
 ========================= */
 router.post(
   "/clear",
   authMiddleware,
-  [bodyMongoIdValidation("userId", "User ID")],
-  validate,
+  [],
+  (req, res, next) => {
+    req.body.userId = req.user.userId; // 🔥 token
+    next();
+  },
   clearCartItems
+);
+
+/* =========================
+   (OPCIONAL) GET BY ID ADMIN
+========================= */
+router.get(
+  "/:id",
+  authMiddleware,
+  isAdmin,
+  [mongoIdValidation("id", "Cart ID")],
+  validate,
+  getCartById
+);
+
+/* =========================
+   (OPCIONAL) DELETE CART ADMIN
+========================= */
+router.delete(
+  "/:id",
+  authMiddleware,
+  isAdmin,
+  [mongoIdValidation("id", "Cart ID")],
+  validate,
+  deleteCart
 );
 
 export default router;

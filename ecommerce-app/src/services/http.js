@@ -25,9 +25,6 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-/* =========================
-   RESPONSE INTERCEPTOR
-========================= */
 http.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -36,11 +33,12 @@ http.interceptors.response.use(
     if (status === 401) {
       console.warn("🔒 No autenticado (token inválido o expirado)");
 
-      // 🔥 FIX IMPORTANTE
       localStorage.removeItem("token");
 
-      // opcional: redirección automática
-      window.location.href = "/login";
+      // evita loops raros en checkout
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
 
     if (status === 404) {

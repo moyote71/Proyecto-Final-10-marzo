@@ -1,21 +1,116 @@
+import express from "express";
+
+import {
+  createPaymentMethod,
+  deactivatePaymentMethod,
+  deletePaymentMethod,
+  getDefaultPaymentMethod,
+  getPaymentMethodById,
+  getPaymentMethods,
+  getPaymentMethodsByUser,
+  setDefaultPaymentMethod,
+  updatePaymentMethod,
+} from "../controllers/paymentMethodController.js";
+
+import authMiddleware from "../middlewares/authMiddleware.js";
+import isAdmin from "../middlewares/isAdminMiddleware.js";
+import validate from "../middlewares/validation.js";
+
+import {
+  accountNumberValidation,
+  bankNameValidation,
+  booleanValidation,
+  cardHolderNameValidation,
+  cardNumberValidation,
+  expiryDateValidation,
+  mongoIdValidation,
+  paymentTypeValidation,
+  paypalEmailValidation,
+} from "../middlewares/validators.js";
+
 const router = express.Router();
 
+/* =========================
+   ADMIN
+========================= */
 router.get("/", authMiddleware, isAdmin, getPaymentMethods);
 
+/* =========================
+   USER
+========================= */
 router.get("/default", authMiddleware, getDefaultPaymentMethod);
-
 router.get("/me", authMiddleware, getPaymentMethodsByUser);
 
-router.get("/:id", authMiddleware, [mongoIdValidation("id")], validate, getPaymentMethodById);
+/* =========================
+   GET BY ID
+========================= */
+router.get(
+  "/:id",
+  authMiddleware,
+  [mongoIdValidation("id", "Payment method ID")],
+  validate,
+  getPaymentMethodById
+);
 
-router.post("/", authMiddleware, validate, createPaymentMethod);
+/* =========================
+   CREATE
+========================= */
+router.post(
+  "/",
+  authMiddleware,
+  [
+    paymentTypeValidation(),
+    cardNumberValidation(),
+    cardHolderNameValidation(),
+    expiryDateValidation(),
+    paypalEmailValidation(),
+    bankNameValidation(),
+    accountNumberValidation(),
+    booleanValidation("isDefault"),
+  ],
+  validate,
+  createPaymentMethod
+);
 
-router.patch("/:id/set-default", authMiddleware, validate, setDefaultPaymentMethod);
+/* =========================
+   SET DEFAULT
+========================= */
+router.patch(
+  "/:id/set-default",
+  authMiddleware,
+  [mongoIdValidation("id", "Payment method ID")],
+  validate,
+  setDefaultPaymentMethod
+);
 
-router.patch("/:id/deactivate", authMiddleware, validate, deactivatePaymentMethod);
+/* =========================
+   UPDATE
+========================= */
+router.put(
+  "/:id",
+  authMiddleware,
+  [
+    mongoIdValidation("id", "Payment method ID"),
+    cardHolderNameValidation(),
+    expiryDateValidation(),
+    paypalEmailValidation(),
+    bankNameValidation(),
+    accountNumberValidation(),
+    booleanValidation("isDefault"),
+  ],
+  validate,
+  updatePaymentMethod
+);
 
-router.put("/:id", authMiddleware, validate, updatePaymentMethod);
-
-router.delete("/:id", authMiddleware, validate, deletePaymentMethod);
+/* =========================
+   DELETE
+========================= */
+router.delete(
+  "/:id",
+  authMiddleware,
+  [mongoIdValidation("id", "Payment method ID")],
+  validate,
+  deletePaymentMethod
+);
 
 export default router;

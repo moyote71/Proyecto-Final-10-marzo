@@ -31,7 +31,7 @@ router.use("/notifications", notificationRoutes);
 router.use("/orders", orderRoutes);
 router.use("/payment-methods", paymentMethodRoutes);
 router.use("/reviews", reviewRoutes);
-router.use("/shipping-address", shippingAddressRoutes);
+router.use("/shipping-addresses", shippingAddressRoutes);
 router.use("/wishlist", wishListRoutes);
 
 export default router;

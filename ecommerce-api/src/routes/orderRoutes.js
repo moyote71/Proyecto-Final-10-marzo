@@ -7,7 +7,6 @@ import {
   getOrderById,
   getOrders,
   getOrdersByUser,
-  updateOrder,
   updateOrderStatus,
   updatePaymentStatus,
 } from "../controllers/orderController.js";
@@ -32,20 +31,12 @@ const router = express.Router();
 router.get("/", authMiddleware, isAdmin, getOrders);
 
 /* =========================
-   USER - MY ORDERS
+   USER ORDERS
 ========================= */
-router.get(
-  "/me",
-  authMiddleware,
-  (req, res, next) => {
-    req.params.userId = req.user.userId;
-    next();
-  },
-  getOrdersByUser
-);
+router.get("/me", authMiddleware, getOrdersByUser);
 
 /* =========================
-   GET ORDER BY ID
+   GET BY ID
 ========================= */
 router.get(
   "/:id",
@@ -68,18 +59,6 @@ router.post(
   ],
   validate,
   createOrder
-);
-
-/* =========================
-   CANCEL ORDER
-========================= */
-router.patch(
-  "/:id/cancel",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID")],
-  validate,
-  cancelOrder
 );
 
 /* =========================
@@ -113,20 +92,15 @@ router.patch(
 );
 
 /* =========================
-   UPDATE ORDER
+   CANCEL ORDER
 ========================= */
-router.put(
-  "/:id",
+router.patch(
+  "/:id/cancel",
   authMiddleware,
   isAdmin,
-  [
-    mongoIdValidation("id", "Order ID"),
-    orderStatusValidation(true),
-    paymentStatusValidation(true),
-    shippingCostValidation(),
-  ],
+  [mongoIdValidation("id", "Order ID")],
   validate,
-  updateOrder
+  cancelOrder
 );
 
 /* =========================
