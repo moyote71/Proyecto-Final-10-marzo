@@ -4,5 +4,5 @@ import CategoryProducts from "../components/CategoryProducts/CategoryProducts";
 export default function CategoryPage() {
     const { slug } = useParams();
 
-    return <CategoryProducts categoryId={slug} />;
+    return <CategoryProducts slug={slug} />;
 }
