@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
-import { fetchCart, addToCartAPI, updateCartItemAPI, removeFromCartAPI, clearCartAPI } from "../services/cartService";
+import {
+    fetchCart,
+    addToCartAPI,
+    updateCartItemAPI,
+    removeFromCartAPI,
+    clearCartAPI,
+} from "../services/cartService";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
@@ -11,65 +17,74 @@ export const ACTIONS = {
     ADD_ITEM: "ADD_ITEM",
     REMOVE_ITEM: "REMOVE_ITEM",
     UPDATE_QUANTITY: "UPDATE_QUANTITY",
-    CLEAR_CART: "CLEAR_CART"
+    CLEAR_CART: "CLEAR_CART",
 };
 
-export const initialState = {
+const initialState = {
     cartItems: [],
     loading: true,
-    error: null
+    error: null,
 };
 
 function cartReducer(state, action) {
     switch (action.type) {
         case ACTIONS.FETCH_START:
-            return { ...state, loading: true, error: null };
+            return { ...state, loading: true };
+
         case ACTIONS.FETCH_SUCCESS:
             return { ...state, loading: false, cartItems: action.payload };
+
         case ACTIONS.FETCH_ERROR:
             return { ...state, loading: false, error: action.payload };
+
         case ACTIONS.ADD_ITEM: {
-            const product = action.payload.product;
-            const quantity = action.payload.quantity;
-            const existing = state.cartItems.find(item => item._id === product._id);
-            
-            if (existing) {
+            const { product, quantity } = action.payload;
+
+            const exists = state.cartItems.find(
+                (i) => i._id === product._id
+            );
+
+            if (exists) {
                 return {
                     ...state,
-                    cartItems: state.cartItems.map(item =>
-                        item._id === product._id
-                            ? { ...item, quantity: item.quantity + quantity }
-                            : item
-                    )
+                    cartItems: state.cartItems.map((i) =>
+                        i._id === product._id
+                            ? { ...i, quantity: i.quantity + quantity }
+                            : i
+                    ),
                 };
             }
+
             return {
                 ...state,
-                cartItems: [...state.cartItems, { ...product, quantity }]
+                cartItems: [
+                    ...state.cartItems,
+                    { ...product, quantity },
+                ],
             };
         }
+
         case ACTIONS.REMOVE_ITEM:
             return {
                 ...state,
-                cartItems: state.cartItems.filter(item => item._id !== action.payload)
+                cartItems: state.cartItems.filter(
+                    (i) => i._id !== action.payload
+                ),
             };
+
         case ACTIONS.UPDATE_QUANTITY:
-            if (action.payload.quantity <= 0) {
-                return {
-                    ...state,
-                    cartItems: state.cartItems.filter(item => item._id !== action.payload.productId)
-                };
-            }
             return {
                 ...state,
-                cartItems: state.cartItems.map(item =>
-                    item._id === action.payload.productId
-                        ? { ...item, quantity: action.payload.quantity }
-                        : item
-                )
+                cartItems: state.cartItems.map((i) =>
+                    i._id === action.payload.productId
+                        ? { ...i, quantity: action.payload.quantity }
+                        : i
+                ),
             };
+
         case ACTIONS.CLEAR_CART:
             return { ...state, cartItems: [] };
+
         default:
             return state;
     }
@@ -79,123 +94,110 @@ export function CartProvider({ children }) {
     const [state, dispatch] = useReducer(cartReducer, initialState);
     const { user } = useAuth();
 
-    // Cargar el carrito desde la API cuando hay usuario autenticado
     useEffect(() => {
-        // Sin usuario = carrito vacío, sin llamada API
         if (!user?._id) {
-            dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: [] });
+            dispatch({
+                type: ACTIONS.FETCH_SUCCESS,
+                payload: [],
+            });
             return;
         }
 
         const loadCart = async () => {
             dispatch({ type: ACTIONS.FETCH_START });
+
             try {
                 const cart = await fetchCart(user._id);
-                // Normalizar estructura de la base de datos a lo que usa la UI frontend
-                if (cart && cart.products) {
-                    const normalizedItems = cart.products.map(p => {
-                        const productData = (p.product && typeof p.product === 'object') ? p.product : {};
-                        return {
-                            ...productData,
-                            quantity: p.quantity,
-                            _id: (p.product?._id || p.product || "").toString()
-                        };
-                    });
-                    dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: normalizedItems });
-                } else {
-                    dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: [] });
-                }
-            } catch (error) {
-                console.error("Error cargando carrito", error);
-                dispatch({ type: ACTIONS.FETCH_ERROR, payload: error.message });
+
+                const products = cart?.products || [];
+
+                const normalized = products.map((p) => {
+                    const product = p.product || {};
+                    return {
+                        ...product,
+                        quantity: p.quantity,
+                        _id: product._id,
+                    };
+                });
+
+                dispatch({
+                    type: ACTIONS.FETCH_SUCCESS,
+                    payload: normalized,
+                });
+            } catch (err) {
+                dispatch({
+                    type: ACTIONS.FETCH_ERROR,
+                    payload: err.message,
+                });
             }
         };
+
         loadCart();
     }, [user]);
 
     const addToCart = async (product, quantity = 1) => {
-        // Optimistic UI update
-        dispatch({ type: ACTIONS.ADD_ITEM, payload: { product, quantity } });
+        dispatch({
+            type: ACTIONS.ADD_ITEM,
+            payload: { product, quantity },
+        });
 
-        // API Call — solo si hay sesión
         if (!user?._id) return;
-        try {
-            await addToCartAPI(user._id, product._id, quantity);
-        } catch (error) {
-            console.error("Error al añadir al carrito en BD", error);
-        }
+
+        await addToCartAPI(user._id, product._id, quantity);
     };
 
     const removeFromCart = async (productId) => {
-        // Optimistic UI
         dispatch({ type: ACTIONS.REMOVE_ITEM, payload: productId });
-        
-        // API Call — solo si hay sesión
+
         if (!user?._id) return;
-        try {
-            await removeFromCartAPI(user._id, productId);
-        } catch (error) {
-            console.error("Error al eliminar del carrito en BD", error);
-        }
+
+        await removeFromCartAPI(user._id, productId);
     };
 
-    const updateQuantity = async (productId, newQuantity) => {
-        // Optimistic UI
-        dispatch({ type: ACTIONS.UPDATE_QUANTITY, payload: { productId, quantity: newQuantity } });
+    const updateQuantity = async (productId, quantity) => {
+        dispatch({
+            type: ACTIONS.UPDATE_QUANTITY,
+            payload: { productId, quantity },
+        });
 
-        // API Call — solo si hay sesión
         if (!user?._id) return;
-        try {
-            if (newQuantity <= 0) {
-                await removeFromCartAPI(user._id, productId);
-            } else {
-                await updateCartItemAPI(user._id, productId, newQuantity);
-            }
-        } catch (error) {
-            console.error("Error al actualizar cantidad en BD", error);
+
+        if (quantity <= 0) {
+            await removeFromCartAPI(user._id, productId);
+        } else {
+            await updateCartItemAPI(user._id, productId, quantity);
         }
     };
 
     const clearCart = async () => {
         dispatch({ type: ACTIONS.CLEAR_CART });
-        if (!user?._id) return;
-        try {
-            await clearCartAPI(user._id);
-        } catch (error) {
-            console.error("Error limpiando carrito en BD", error);
-        }
-    };
 
-    const getTotalItems = () =>
-        state.cartItems.reduce((total, item) => total + item.quantity, 0);
+        if (!user?._id) return;
+
+        await clearCartAPI(user._id);
+    };
 
     const getTotalPrice = () =>
         state.cartItems.reduce(
-            (total, item) => total + (item.price || 0) * item.quantity,
+            (t, i) => t + (i.price || 0) * i.quantity,
             0
         );
 
-    const value = {
-        cartItems: state.cartItems,
-        loading: state.loading,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getTotalItems,
-        getTotalPrice,
-    };
-
     return (
-        <CartContext.Provider value={value}>
+        <CartContext.Provider
+            value={{
+                cartItems: state.cartItems,
+                loading: state.loading,
+                addToCart,
+                removeFromCart,
+                updateQuantity,
+                clearCart,
+                getTotalPrice,
+            }}
+        >
             {children}
         </CartContext.Provider>
     );
 }
 
-export function useCart() {
-    const context = useContext(CartContext);
-    if (!context)
-        throw new Error("useCart debe ser usado dentro de CartProvider");
-    return context;
-}
+export const useCart = () => useContext(CartContext);

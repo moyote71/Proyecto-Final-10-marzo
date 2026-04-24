@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+
 import CartView from "../components/Cart/CartView";
 import AddressList from "../components/Checkout/Address/AddressList";
 import PaymentList from "../components/Checkout/Payment/PaymentList";
@@ -7,56 +10,48 @@ import SummarySection from "../components/Checkout/shared/SummarySection";
 import Button from "../components/common/Button/Button";
 import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
 import Loading from "../components/common/Loading/Loading";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
 
 import {
-    getDefaultPaymentMethods,
-    getPaymentMethods,
-    createPaymentMethod,
-    updatePaymentMethod,
-    deletePaymentMethod as deletePaymentMethodAPI,
-} from "../services/paymentService";
-
-import {
-    getDefaultShippingAddress,
     getShippingAddresses,
     createShippingAddress,
     updateShippingAddress,
-    deleteShippingAddress as deleteShippingAddressAPI,
+    deleteShippingAddress as deleteAddressAPI,
+    getDefaultShippingAddress,
 } from "../services/shippingService";
 
+import {
+    getPaymentMethods,
+    createPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod as deletePaymentAPI,
+    getDefaultPaymentMethods,
+} from "../services/paymentService";
+
 import { http } from "../services/http";
+
 import * as styles from "./CheckoutStyles";
 
-const AddressForm = lazy(() => import("../components/Checkout/Address/AddressForm"));
-const PaymentForm = lazy(() => import("../components/Checkout/Payment/PaymentForm"));
+const AddressForm = lazy(() =>
+    import("../components/Checkout/Address/AddressForm")
+);
+
+const PaymentForm = lazy(() =>
+    import("../components/Checkout/Payment/PaymentForm")
+);
 
 export default function Checkout() {
     const navigate = useNavigate();
     const { cartItems, getTotalPrice, clearCart } = useCart();
     const { user } = useAuth();
 
-    /* =========================
-       TOTAL CART
-    ========================= */
-    const subtotal = useMemo(() => getTotalPrice() || 0, [cartItems, getTotalPrice]);
+    const subtotal = useMemo(() => getTotalPrice(), [cartItems]);
 
-    const TAX_RATE = 0.16;
-    const SHIPPING_RATE = 350;
-    const FREE_SHIPPING_THRESHOLD = 1000;
+    const TAX = 0.16;
+    const SHIPPING = 350;
 
-    const taxAmount = useMemo(() => subtotal * TAX_RATE, [subtotal]);
-
-    const shippingCost = useMemo(
-        () => (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE),
-        [subtotal]
-    );
-
-    const grandTotal = useMemo(
-        () => subtotal + taxAmount + shippingCost,
-        [subtotal, taxAmount, shippingCost]
-    );
+    const tax = subtotal * TAX;
+    const shipping = subtotal > 1000 ? 0 : SHIPPING;
+    const total = subtotal + tax + shipping;
 
     const money = (v) =>
         new Intl.NumberFormat("es-MX", {
@@ -64,60 +59,30 @@ export default function Checkout() {
             currency: "MXN",
         }).format(v);
 
-    const [isOrderFinished, setIsOrderFinished] = useState(false);
-
-    /* =========================
-       REDIRECT IF EMPTY CART
-    ========================= */
-    useEffect(() => {
-        if (!cartItems?.length && !isOrderFinished) {
-            navigate("/cart");
-        }
-    }, [cartItems, isOrderFinished, navigate]);
-
-    /* =========================
-       STATE
-    ========================= */
-    const [addresses, setAddresses] = useState([]);
-    const [payments, setPayments] = useState([]);
-
-    const [selectedAddress, setSelectedAddress] = useState(null);
-    const [selectedPayment, setSelectedPayment] = useState(null);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [showAddressForm, setShowAddressForm] = useState(false);
-    const [showPaymentForm, setShowPaymentForm] = useState(false);
+    const [addresses, setAddresses] = useState([]);
+    const [payments, setPayments] = useState([]);
 
-    const [editingAddress, setEditingAddress] = useState(null);
-    const [editingPayment, setEditingPayment] = useState(null);
+    const [selectedAddress, setSelected] = useState(null);
+    const [selectedPayment, setPayment] = useState(null);
 
-    const [addressOpen, setAddressOpen] = useState(false);
-    const [paymentOpen, setPaymentOpen] = useState(false);
-
-    /* =========================
-       LOAD CHECKOUT DATA
-    ========================= */
     useEffect(() => {
         const load = async () => {
-            setLoading(true);
             try {
-                const [addrList, defAddr, payList, defPay] = await Promise.all([
+                const [a, da, p, dp] = await Promise.all([
                     getShippingAddresses(),
                     getDefaultShippingAddress(),
                     getPaymentMethods(),
                     getDefaultPaymentMethods(),
                 ]);
 
-                setAddresses(addrList || []);
-                setPayments(payList || []);
+                setAddresses(a || []);
+                setPayments(p || []);
 
-                setSelectedAddress(defAddr || null);
-                setSelectedPayment(defPay || null);
-
-                setAddressOpen(!defAddr);
-                setPaymentOpen(!defPay);
+                setSelected(da || null);
+                setPayment(dp || null);
             } catch {
                 setError("Error cargando checkout");
             } finally {
@@ -128,219 +93,76 @@ export default function Checkout() {
         load();
     }, []);
 
-    /* =========================
-       SHIPPING HANDLERS
-    ========================= */
-    const handleAddressSubmit = async (data) => {
-        try {
-            let saved;
+    const createOrder = async () => {
+        if (!user || !selectedAddress || !selectedPayment) return;
 
-            if (editingAddress) {
-                saved = await updateShippingAddress(editingAddress._id, data);
-                setAddresses((prev) =>
-                    prev.map((a) => (a._id === editingAddress._id ? saved : a))
-                );
-            } else {
-                saved = await createShippingAddress(data);
-                setAddresses((prev) => [...prev, saved]);
-            }
-
-            setSelectedAddress(saved);
-            setShowAddressForm(false);
-            setEditingAddress(null);
-            setAddressOpen(false);
-        } catch (err) {
-            setError(err.response?.data?.message || "Error dirección");
-        }
-    };
-
-    const handleDeleteAddress = async (addr) => {
-        await deleteShippingAddressAPI(addr._id);
-        const updated = addresses.filter((a) => a._id !== addr._id);
-
-        setAddresses(updated);
-
-        if (selectedAddress?._id === addr._id) {
-            setSelectedAddress(updated[0] || null);
-        }
-    };
-
-    /* =========================
-       PAYMENT HANDLERS
-    ========================= */
-    const handlePaymentSubmit = async (data) => {
-        try {
-            let saved;
-
-            if (editingPayment) {
-                saved = await updatePaymentMethod(editingPayment._id, data);
-                setPayments((prev) =>
-                    prev.map((p) => (p._id === editingPayment._id ? saved : p))
-                );
-            } else {
-                saved = await createPaymentMethod(data);
-                setPayments((prev) => [...prev, saved]);
-            }
-
-            setSelectedPayment(saved);
-            setShowPaymentForm(false);
-            setEditingPayment(null);
-            setPaymentOpen(false);
-        } catch (err) {
-            setError(err.response?.data?.message || "Error pago");
-        }
-    };
-
-    const handleDeletePayment = async (pay) => {
-        await deletePaymentMethodAPI(pay._id);
-        const updated = payments.filter((p) => p._id !== pay._id);
-
-        setPayments(updated);
-
-        if (selectedPayment?._id === pay._id) {
-            setSelectedPayment(updated[0] || null);
-        }
-    };
-
-    /* =========================
-       CREATE ORDER (FIXED)
-    ========================= */
-    const handleCreateOrder = async () => {
-        if (!selectedAddress || !selectedPayment) return;
-
-        if (!user) {
-            setError("Debes iniciar sesión");
-            return;
-        }
+        const payload = {
+            user: user._id,
+            products: cartItems.map((i) => ({
+                productId: i._id,
+                quantity: i.quantity,
+                price: i.price,
+            })),
+            shippingAddress: selectedAddress._id,
+            paymentMethod: selectedPayment._id,
+            shippingCost: shipping,
+        };
 
         try {
-            const payload = {
-                user: user._id,
-                products: cartItems.map((item) => ({
-                    productId: item._id,
-                    quantity: item.quantity,
-                })),
-                shippingAddress: selectedAddress._id,
-                paymentMethod: selectedPayment._id,
-                shippingCost,
-            };
-
             const res = await http.post("/orders", payload);
 
-            const order = res.data;
-
-            setIsOrderFinished(true);
             clearCart();
 
             navigate("/order-confirmation", {
-                state: { order },
+                state: { order: res.data },
             });
-
         } catch (err) {
-            setError(
-                err.response?.data?.message || "Error al crear la orden"
-            );
+            setError(err.message);
         }
     };
 
-    /* =========================
-       LOADING / ERROR
-    ========================= */
-    if (loading) return <Loading message="Cargando checkout..." />;
+    if (loading) return <Loading />;
     if (error) return <ErrorMessage message={error} />;
 
-    /* =========================
-       UI
-    ========================= */
     return (
         <div className={styles.checkoutContainer()}>
             <div className={styles.checkoutLeft()}>
-
-                <SummarySection
-                    title="1. Dirección"
-                    selected={selectedAddress}
-                    isExpanded={addressOpen || !selectedAddress}
-                    onToggle={() => setAddressOpen((p) => !p)}
-                >
-                    {!showAddressForm ? (
-                        <AddressList
-                            addresses={addresses}
-                            selectedAddress={selectedAddress}
-                            onSelect={setSelectedAddress}
-                            onAdd={() => setShowAddressForm(true)}
-                            onEdit={(a) => {
-                                setEditingAddress(a);
-                                setShowAddressForm(true);
-                            }}
-                            onDelete={handleDeleteAddress}
-                        />
-                    ) : (
-                        <Suspense fallback={<Loading message="..." />}>
-                            <AddressForm
-                                isEdit={!!editingAddress}
-                                initialValues={editingAddress || {}}
-                                onSubmit={handleAddressSubmit}
-                                onCancel={() => setShowAddressForm(false)}
-                            />
-                        </Suspense>
-                    )}
+                <SummarySection title="Dirección">
+                    <AddressList
+                        addresses={addresses}
+                        selectedAddress={selectedAddress}
+                        onSelect={setSelected}
+                    />
                 </SummarySection>
 
-                <SummarySection
-                    title="2. Pago"
-                    selected={selectedPayment}
-                    isExpanded={paymentOpen || !selectedPayment}
-                    onToggle={() => setPaymentOpen((p) => !p)}
-                >
-                    {!showPaymentForm ? (
-                        <PaymentList
-                            payments={payments}
-                            selectedPayment={selectedPayment}
-                            onSelect={setSelectedPayment}
-                            onAdd={() => setShowPaymentForm(true)}
-                            onEdit={(p) => {
-                                setEditingPayment(p);
-                                setShowPaymentForm(true);
-                            }}
-                            onDelete={handleDeletePayment}
-                        />
-                    ) : (
-                        <Suspense fallback={<Loading message="..." />}>
-                            <PaymentForm
-                                isEdit={!!editingPayment}
-                                initialValues={editingPayment || {}}
-                                onSubmit={handlePaymentSubmit}
-                                onCancel={() => setShowPaymentForm(false)}
-                            />
-                        </Suspense>
-                    )}
+                <SummarySection title="Pago">
+                    <PaymentList
+                        payments={payments}
+                        selectedPayment={selectedPayment}
+                        onSelect={setPayment}
+                    />
                 </SummarySection>
 
-                <SummarySection title="3. Carrito" isExpanded>
+                <SummarySection title="Carrito">
                     <CartView />
                 </SummarySection>
             </div>
 
             <div className={styles.checkoutRight()}>
-                <div className={styles.summaryBox()}>
-                    <h3>Resumen</h3>
+                <h3>Resumen</h3>
 
-                    <p>Subtotal: {money(subtotal)}</p>
-                    <p>IVA: {money(taxAmount)}</p>
-                    <p>Envío: {shippingCost === 0 ? "Gratis" : money(shippingCost)}</p>
+                <p>Subtotal: {money(subtotal)}</p>
+                <p>IVA: {money(tax)}</p>
+                <p>Envío: {money(shipping)}</p>
+                <hr />
+                <b>Total: {money(total)}</b>
 
-                    <hr />
-
-                    <p><b>Total: {money(grandTotal)}</b></p>
-
-                    <Button
-                        variant="primary"
-                        disabled={!selectedAddress || !selectedPayment}
-                        onClick={handleCreateOrder}
-                    >
-                        Confirmar orden
-                    </Button>
-                </div>
+                <Button
+                    disabled={!selectedAddress || !selectedPayment}
+                    onClick={createOrder}
+                >
+                    Confirmar orden
+                </Button>
             </div>
         </div>
     );

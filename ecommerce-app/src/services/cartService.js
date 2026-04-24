@@ -1,49 +1,76 @@
 import { http } from "./http";
 
-// Obtener o crear carrito para el usuario
+/* =========================
+   GET CART
+========================= */
 export const fetchCart = async (userId) => {
     try {
         if (!userId) return { products: [] };
-        
-        const response = await http.get(`/cart/user/${userId}`);
-        const data = response.data?.data || response.data;
-        return data || { products: [] };
+
+        const res = await http.get(`/cart/user/${userId}`);
+
+        // backend devuelve { message, cart }
+        const data = res.data?.cart || res.data?.data || res.data;
+
+        if (!data || !data.products) return { products: [] };
+
+        return data;
     } catch (error) {
-        console.error("Error fetching cart from API", error);
+        console.error("fetchCart error:", error);
         return { products: [] };
     }
 };
 
-export const addToCartAPI = async (userId, productId, quantity) => {
+/* =========================
+   ADD PRODUCT
+========================= */
+export const addToCartAPI = async (userId, productId, quantity = 1) => {
     if (!userId) throw new Error("User not authenticated");
-    const response = await http.post("/cart/add-product", {
+
+    const res = await http.post("/cart/add-product", {
         userId,
         productId,
         quantity,
     });
-    return response.data;
+
+    return res.data;
 };
 
+/* =========================
+   UPDATE ITEM
+========================= */
 export const updateCartItemAPI = async (userId, productId, quantity) => {
     if (!userId) throw new Error("User not authenticated");
-    const response = await http.put("/cart/update-item", {
+
+    const res = await http.put("/cart/update-item", {
         userId,
         productId,
         quantity,
     });
-    return response.data;
+
+    return res.data;
 };
 
+/* =========================
+   REMOVE ITEM
+========================= */
 export const removeFromCartAPI = async (userId, productId) => {
     if (!userId) throw new Error("User not authenticated");
-    const response = await http.delete(`/cart/remove-item/${productId}`, {
-        data: { userId }
+
+    const res = await http.delete(`/cart/remove-item/${productId}`, {
+        data: { userId },
     });
-    return response.data;
+
+    return res.data;
 };
 
+/* =========================
+   CLEAR CART
+========================= */
 export const clearCartAPI = async (userId) => {
     if (!userId) throw new Error("User not authenticated");
-    const response = await http.post("/cart/clear", { userId });
-    return response.data;
-};
+
+    const res = await http.post("/cart/clear", { userId });
+
+    return res.data;
+};  
