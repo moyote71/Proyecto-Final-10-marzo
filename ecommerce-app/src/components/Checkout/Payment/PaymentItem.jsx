@@ -4,25 +4,32 @@ import * as styles from "./PaymentItemStyles";
 const PaymentItem = ({ payment, isSelected, onSelect, onEdit, onDelete }) => {
     const maskCardNumber = (number) => {
         if (!number) return "**** **** **** ****";
-        return `**** **** **** ${number.slice(-4)}`;
+        const clean = number.toString().replace(/\s/g, "");
+        return `**** **** **** ${clean.slice(-4)}`;
     };
+
+    // Normalización de campos
+    const alias = payment.alias || "Tarjeta";
+    const expiry = payment.expiryDate || payment.expireDate || "MM/YY";
+    const holder = payment.cardHolderName || payment.placeHolder || "Titular";
+    const isDefault = payment.isDefault || payment.default || false;
 
     return (
         <div
             className={`
                 ${styles.item}
                 ${isSelected ? styles.selected : ""}
-                ${payment.isDefault ? styles.defaultItem : ""}
+                ${isDefault ? styles.defaultItem : ""}
             `}
         >
             {/* Contenido */}
             <div className={styles.content}>
-                <h4 className={styles.title}>{payment.alias}</h4>
+                <h4 className={styles.title}>{alias}</h4>
                 <p>{maskCardNumber(payment.cardNumber)}</p>
-                <p>Vence: {payment.expireDate}</p>
-                <p>Titular: {payment.placeHolder}</p>
+                <p>Vence: {expiry}</p>
+                <p>Titular: {holder}</p>
 
-                {payment.isDefault && (
+                {isDefault && (
                     <span className={styles.badge}>Predeterminada</span>
                 )}
             </div>
@@ -37,7 +44,7 @@ const PaymentItem = ({ payment, isSelected, onSelect, onEdit, onDelete }) => {
                     Editar
                 </Button>
 
-                <Button variant="danger" onClick={() => onDelete(payment.id)}>
+                <Button variant="danger" onClick={() => onDelete(payment._id || payment.id)}>
                     Eliminar
                 </Button>
             </div>

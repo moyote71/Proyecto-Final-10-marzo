@@ -12,15 +12,21 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const { isAuthenticated, loading } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: wishlist = [] } = useQuery({
+    const { data: wishlistData } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
         enabled: isAuthenticated && !loading,
     });
 
-    // wishListService.getWishList() SIEMPRE retorna array — safe para .some()
+    // 🔥 DEFENSA EXTREMA: Asegurar que wishlist sea SIEMPRE un array
+    const wishlist = Array.isArray(wishlistData) ? wishlistData : [];
+
+    // Ahora es 100% seguro llamar a .some()
     const inWishList = wishlist.some(
-        item => (item.product?._id || item._id) === product?._id
+        item => {
+            const itemId = item?.product?._id || item?.product || item?._id;
+            return itemId === product?._id;
+        }
     );
 
     const toggleMutation = useMutation({
@@ -42,7 +48,6 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     }
 
     const { name, price, stock, imagesUrl, description } = product;
-
     const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
 
     return (

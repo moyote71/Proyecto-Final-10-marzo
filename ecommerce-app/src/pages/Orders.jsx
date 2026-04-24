@@ -254,10 +254,10 @@ export default function Orders() {
                                     <address className={OrdersStyles.address()}>
                                         <strong>{selectedOrder.shippingAddress.name}</strong>
 
-                                        <p>{selectedOrder.shippingAddress.address1}</p>
+                                        <p>{selectedOrder.shippingAddress.address || selectedOrder.shippingAddress.address1}</p>
 
-                                        {selectedOrder.shippingAddress.address2 && (
-                                            <p>{selectedOrder.shippingAddress.address2}</p>
+                                        {selectedOrder.shippingAddress.state && (
+                                            <p>{selectedOrder.shippingAddress.state}</p>
                                         )}
 
                                         <p>

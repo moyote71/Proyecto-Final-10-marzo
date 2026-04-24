@@ -10,25 +10,26 @@ const PaymentForm = ({
     isEdit = false,
 }) => {
     const [formData, setFormData] = useState({
+        type: "credit_card", // Requerido por backend
         alias: "",
         cardNumber: "",
-        placeHolder: "",
-        expireDate: "",
+        cardHolderName: "", // Backend usa 'cardHolderName'
+        expiryDate: "", // Backend usa 'expiryDate'
         cvv: "",
-        default: false,
+        isDefault: false,
         ...initialValues,
     });
 
     useEffect(() => {
         if (initialValues && Object.keys(initialValues).length > 0) {
             setFormData({
-                alias: "",
-                cardNumber: "",
-                placeHolder: "",
-                expireDate: "",
-                cvv: "",
-                default: false,
-                ...initialValues,
+                type: initialValues.type || "credit_card",
+                alias: initialValues.alias || "",
+                cardNumber: initialValues.cardNumber || "",
+                cardHolderName: initialValues.cardHolderName || initialValues.placeHolder || "",
+                expiryDate: initialValues.expiryDate || initialValues.expireDate || "",
+                cvv: initialValues.cvv || "",
+                isDefault: initialValues.isDefault || initialValues.default || false,
             });
         }
     }, [initialValues]);
@@ -43,16 +44,24 @@ const PaymentForm = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        // Enviar solo números para la tarjeta
+        const cleanData = {
+            ...formData,
+            cardNumber: formData.cardNumber.replace(/\D/g, ""),
+        };
+
+        onSubmit(cleanData);
 
         if (!isEdit) {
             setFormData({
+                type: "credit_card",
                 alias: "",
                 cardNumber: "",
-                placeHolder: "",
-                expireDate: "",
+                cardHolderName: "",
+                expiryDate: "",
                 cvv: "",
-                default: false,
+                isDefault: false,
             });
         }
     };
@@ -63,8 +72,21 @@ const PaymentForm = ({
                 {isEdit ? "Editar Método de Pago" : "Nuevo Método de Pago"}
             </h3>
 
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Tarjeta</label>
+                <select 
+                    name="type" 
+                    value={formData.type} 
+                    onChange={handleChange}
+                    className="w-full border rounded-lg p-2"
+                >
+                    <option value="credit_card">Tarjeta de Crédito</option>
+                    <option value="debit_card">Tarjeta de Débito</option>
+                </select>
+            </div>
+
             <Input
-                label="Alias de la tarjeta"
+                label="Alias (Ej: Mi Visa, Nómina)"
                 name="alias"
                 value={formData.alias}
                 onChange={handleChange}
@@ -76,15 +98,15 @@ const PaymentForm = ({
                 name="cardNumber"
                 value={formData.cardNumber}
                 onChange={handleChange}
-                pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}"
-                placeholder="1234-5678-9012-3456"
+                placeholder="16 dígitos"
+                maxLength="16"
                 required
             />
 
             <Input
                 label="Nombre del titular"
-                name="placeHolder"
-                value={formData.placeHolder}
+                name="cardHolderName"
+                value={formData.cardHolderName}
                 onChange={handleChange}
                 required
             />
@@ -92,11 +114,10 @@ const PaymentForm = ({
             <div className={styles.row}>
                 <Input
                     label="Fecha de expiración"
-                    name="expireDate"
-                    value={formData.expireDate}
+                    name="expiryDate"
+                    value={formData.expiryDate}
                     onChange={handleChange}
                     placeholder="MM/YY"
-                    pattern="[0-9]{2}/[0-9]{2}"
                     required
                 />
 
@@ -107,7 +128,6 @@ const PaymentForm = ({
                     onChange={handleChange}
                     type="password"
                     maxLength="4"
-                    pattern="[0-9]{3,4}"
                     required
                 />
             </div>
@@ -115,8 +135,8 @@ const PaymentForm = ({
             <div className={styles.checkbox}>
                 <input
                     type="checkbox"
-                    name="default"
-                    checked={formData.default}
+                    name="isDefault"
+                    checked={formData.isDefault}
                     onChange={handleChange}
                     id="defaultPayment"
                     className="w-4 h-4"

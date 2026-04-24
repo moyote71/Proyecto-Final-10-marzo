@@ -10,22 +10,35 @@ export default function AddressForm({
     isEdit = false,
 }) {
 
+    // Mapeo de campos iniciales si vienen del backend (address -> address)
     const [formData, setFormData] = useState({
         name: "",
-        address1: "",
-        address2: "",
-        postalCode: "",
+        address: "", // Backend usa 'address'
         city: "",
-        country: "",
-        reference: "",
-        default: false,
+        state: "", // Requerido por backend
+        postalCode: "",
+        country: "México",
+        phone: "", // Requerido por backend
+        addressType: "home",
+        isDefault: false,
         ...initialValues,
     });
 
     // Cargar valores iniciales al editar
     useEffect(() => {
         if (initialValues && Object.keys(initialValues).length > 0) {
-            setFormData({ ...initialValues });
+            // Asegurar que mapeamos campos viejos si existen
+            setFormData({
+                name: initialValues.name || "",
+                address: initialValues.address || initialValues.address1 || "",
+                city: initialValues.city || "",
+                state: initialValues.state || "",
+                postalCode: initialValues.postalCode || "",
+                country: initialValues.country || "México",
+                phone: initialValues.phone || "",
+                addressType: initialValues.addressType || "home",
+                isDefault: initialValues.isDefault || initialValues.default || false,
+            });
         }
     }, [initialValues]);
 
@@ -41,17 +54,17 @@ export default function AddressForm({
         e.preventDefault();
         onSubmit(formData);
 
-        //Solo resetear cuando es NUEVA dirección
         if (!isEdit) {
             setFormData({
                 name: "",
-                address1: "",
-                address2: "",
-                postalCode: "",
+                address: "",
                 city: "",
-                country: "",
-                reference: "",
-                default: false,
+                state: "",
+                postalCode: "",
+                country: "México",
+                phone: "",
+                addressType: "home",
+                isDefault: false,
             });
         }
     };
@@ -63,7 +76,7 @@ export default function AddressForm({
             </h3>
 
             <Input
-                label="Nombre de la dirección"
+                label="Alias (Ej: Casa, Oficina)"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -71,24 +84,9 @@ export default function AddressForm({
             />
 
             <Input
-                label="Dirección Línea 1"
-                name="address1"
-                value={formData.address1}
-                onChange={handleChange}
-                required
-            />
-
-            <Input
-                label="Dirección Línea 2"
-                name="address2"
-                value={formData.address2}
-                onChange={handleChange}
-            />
-
-            <Input
-                label="Código Postal"
-                name="postalCode"
-                value={formData.postalCode}
+                label="Calle y Número"
+                name="address"
+                value={formData.address}
                 onChange={handleChange}
                 required
             />
@@ -102,25 +100,35 @@ export default function AddressForm({
             />
 
             <Input
-                label="País"
-                name="country"
-                value={formData.country}
+                label="Estado"
+                name="state"
+                value={formData.state}
                 onChange={handleChange}
                 required
             />
 
             <Input
-                label="Referencia"
-                name="reference"
-                value={formData.reference}
+                label="Código Postal"
+                name="postalCode"
+                value={formData.postalCode}
                 onChange={handleChange}
+                required
+            />
+
+            <Input
+                label="Teléfono"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="10 dígitos"
+                required
             />
 
             <div className={S.checkboxWrapper}>
                 <input
                     type="checkbox"
-                    name="default"
-                    checked={formData.default}
+                    name="isDefault"
+                    checked={formData.isDefault}
                     onChange={handleChange}
                     id="defaultAddress"
                     className={S.checkbox}

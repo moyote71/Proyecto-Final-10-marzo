@@ -2,25 +2,26 @@ import Button from "../../common/Button";
 import * as styles from "./AddressItemStyles";
 
 const AddressItem = ({ address, isSelected, onSelect, onEdit, onDelete }) => {
+    // Normalizar para mostrar datos tanto de backend como de fakes anteriores
+    const name = address.name || "Sin nombre";
+    const line1 = address.address || address.address line || address.address1 || "Sin dirección";
+    const city = address.city || "";
+    const state = address.state || "";
+    const cp = address.postalCode || "";
+    const isDefault = address.isDefault || address.default || false;
+
     return (
-        <div className={styles.container(isSelected, address.default)}>
+        <div className={styles.container(isSelected, isDefault)}>
             <div className="mb-4">
-                <h4 className={styles.title}>{address.name}</h4>
+                <h4 className={styles.title}>{name}</h4>
 
-                <p className={styles.text}>{address.address1}</p>
+                <p className={styles.text}>{line1}</p>
 
-                {address.address2 && (
-                    <p className={styles.text}>{address.address2}</p>
-                )}
                 <p className={styles.text}>
-                    {address.city}, {address.postalCode}
+                    {city}{state ? `, ${state}` : ""} {cp}
                 </p>
 
-                {address.reference && (
-                    <p className={styles.text}>{address.reference}</p>
-                )}
-
-                {address.default && (
+                {isDefault && (
                     <span className={styles.defaultBadge}>Predeterminada</span>
                 )}
             </div>
@@ -37,7 +38,7 @@ const AddressItem = ({ address, isSelected, onSelect, onEdit, onDelete }) => {
                     Editar
                 </Button>
 
-                <Button variant="danger" onClick={() => onDelete(address.id)}>
+                <Button variant="danger" onClick={() => onDelete(address._id || address.id)}>
                     Eliminar
                 </Button>
             </div>

@@ -16,7 +16,6 @@ export default function OrderConfirmation() {
   const [order, setOrder] = useState(stateOrder);
   const [loading, setLoading] = useState(!stateOrder && !!orderIdFromURL);
 
-  // Si no hay datos en location.state pero sí un orderId en URL, fetch del backend
   useEffect(() => {
     if (stateOrder || !orderIdFromURL) return;
 
@@ -38,7 +37,6 @@ export default function OrderConfirmation() {
     fetchOrder();
   }, [stateOrder, orderIdFromURL, navigate]);
 
-  // Si no hay orden ni orderId, redirigir a home
   useEffect(() => {
     if (!stateOrder && !orderIdFromURL && !order) {
       navigate("/");
@@ -55,7 +53,6 @@ export default function OrderConfirmation() {
 
   if (!order) return null;
 
-  // Normalizar campos — soporta tanto la estructura del Checkout (local) como la del backend (API)
   const address = order.shippingAddress || {};
   const items = order.items || (order.products || []).map((p) => ({
     _id: p.productId?._id || p.productId || "",
@@ -64,6 +61,7 @@ export default function OrderConfirmation() {
     quantity: p.quantity || 1,
     subtotal: (p.price || 0) * (p.quantity || 1),
   }));
+
   const subtotal = order.subtotal || items.reduce((s, i) => s + (i.subtotal || i.price * i.quantity), 0);
   const tax = order.tax || 0;
   const shipping = order.shipping ?? order.shippingCost ?? 0;
@@ -83,7 +81,6 @@ export default function OrderConfirmation() {
   return (
     <div className={OrderConfirmationStyles.container()}>
       <div className={OrderConfirmationStyles.card()}>
-        {/* ICON */}
         <div className={OrderConfirmationStyles.iconBox()}>
           <Icon name="checkCircle" size={64} className="text-green-500" />
         </div>
@@ -91,72 +88,44 @@ export default function OrderConfirmation() {
         <h1 className={OrderConfirmationStyles.title()}>¡Gracias por tu compra!</h1>
 
         <p className={OrderConfirmationStyles.message()}>
-          Tu pedido <strong>#{typeof orderId === "string" && orderId.length > 8 ? orderId.slice(-8) : orderId}</strong> ha sido confirmado y está siendo procesado.
+          Tu pedido <strong>#{typeof orderId === "string" && orderId.length > 8 ? orderId.slice(-8) : orderId}</strong> ha sido confirmado.
         </p>
 
-        {/* --- DETALLES DEL PEDIDO --- */}
         <div className={OrderConfirmationStyles.details()}>
           <h2 className={OrderConfirmationStyles.subtitle()}>Detalles de tu pedido</h2>
 
           <div className={OrderConfirmationStyles.orderBox()}>
-            <p>
-              <strong>Fecha: </strong>
-              {orderDate}
-            </p>
+            <p><strong>Fecha: </strong>{orderDate}</p>
 
             <h3 className="font-semibold text-lg mt-4">Productos</h3>
-
             <ul className={OrderConfirmationStyles.itemsList()}>
               {items.map((item, idx) => (
                 <li key={item._id || idx} className={OrderConfirmationStyles.item()}>
-                  <span>
-                    {item.name} x {item.quantity} · {formatMoney(item.price)}
-                  </span>
+                  <span>{item.name} x {item.quantity} · {formatMoney(item.price)}</span>
                   <span className="font-semibold">{formatMoney(item.subtotal || item.price * item.quantity)}</span>
                 </li>
               ))}
             </ul>
 
             <div className={OrderConfirmationStyles.totals()}>
-              <p>
-                <strong>Subtotal:</strong> {formatMoney(subtotal)}
-              </p>
-              {tax > 0 && (
-                <p>
-                  <strong>IVA:</strong> {formatMoney(tax)}
-                </p>
-              )}
-              <p>
-                <strong>Envío:</strong> {shipping === 0 ? "Gratis" : formatMoney(shipping)}
-              </p>
-              <p className="text-lg font-bold">
-                <strong>Total:</strong> {formatMoney(total)}
-              </p>
+              <p><strong>Subtotal:</strong> {formatMoney(subtotal)}</p>
+              {tax > 0 && <p><strong>IVA:</strong> {formatMoney(tax)}</p>}
+              <p><strong>Envío:</strong> {shipping === 0 ? "Gratis" : formatMoney(shipping)}</p>
+              <p className="text-lg font-bold"><strong>Total:</strong> {formatMoney(total)}</p>
 
-              <p className="mt-4 font-semibold">Dirección de envío:</p>
-              <address className="not-italic">
-                {address.name || "No disponible"}
-                <br />
-                {address.address1}
-                {address.address1 && <br />}
-                {address.address2}
-                {address.address2 && <br />}
-                {address.city && address.postalCode
-                  ? `${address.city}, ${address.postalCode}`
-                  : "Ciudad y código postal no disponibles"}
-                <br />
-                {address.country || "País no especificado"}
-              </address>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="font-semibold">Dirección de envío:</p>
+                <address className="not-italic text-gray-600">
+                  {address.name || "Usuario"} <br />
+                  {address.address || address.address1} <br />
+                  {address.city}, {address.state || ""} {address.postalCode} <br />
+                  {address.country}
+                </address>
+              </div>
             </div>
           </div>
-
-          <p className="text-gray-600 text-sm">
-            Hemos enviado un correo electrónico con los detalles de tu compra.
-            También puedes ver tus pedidos desde tu perfil.
-          </p>
         </div>
 
-        {/* --- ACCIONES --- */}
         <div className={OrderConfirmationStyles.actions()}>
           <Link to="/" className={OrderConfirmationStyles.primaryBtn()}>
             <Icon name="home" size={20} />
@@ -165,7 +134,7 @@ export default function OrderConfirmation() {
 
           <Link to="/orders" className={OrderConfirmationStyles.secondaryBtn()}>
             <Icon name="package" size={20} />
-            <span>Ver mis pedidos</span>
+            <span>Mis pedidos</span>
           </Link>
         </div>
       </div>
