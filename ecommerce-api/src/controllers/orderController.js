@@ -1,7 +1,10 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 
-export async function createOrder(req, res, next) {
+/* =========================
+   CREATE ORDER
+========================= */
+export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -9,37 +12,39 @@ export async function createOrder(req, res, next) {
       req.body;
 
     if (!products || products.length === 0) {
-      return res.status(422).json({ message: "Cart empty" });
+      return res.status(422).json({ message: "Cart is empty" });
     }
 
-    const populatedProducts = [];
+    const items = [];
 
     for (const item of products) {
       const product = await Product.findById(item.productId);
 
-      if (!product) continue;
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
 
       if (product.stock < item.quantity) {
         return res.status(400).json({
-          message: "Not enough stock",
+          message: "Insufficient stock",
         });
       }
 
-      populatedProducts.push({
+      items.push({
         productId: product._id,
         quantity: item.quantity,
         price: product.price,
       });
     }
 
-    const subtotal = populatedProducts.reduce(
-      (acc, p) => acc + p.price * p.quantity,
+    const subtotal = items.reduce(
+      (acc, i) => acc + i.price * i.quantity,
       0
     );
 
     const order = await Order.create({
       user: userId,
-      products: populatedProducts,
+      products: items,
       shippingAddress,
       paymentMethod,
       shippingCost,
@@ -48,12 +53,26 @@ export async function createOrder(req, res, next) {
       paymentStatus: "pending",
     });
 
-    res.status(201).json(order);
+    const populated = await order.populate([
+      "products.productId",
+      "shippingAddress",
+      "paymentMethod",
+    ]);
+
+    res.status(201).json(populated);
   } catch (error) {
     next(error);
   }
-}
+};
 
+/* =========================
+   OTHER FUNCTIONS (SI EXISTEN)
+========================= */
+// aquí puedes agregar getOrders, updateOrder, etc.
+
+/* =========================
+   EXPORTS (CORRECTO)
+========================= */
 export {
   createOrder,
 };
