@@ -2,16 +2,68 @@ import Order from "../models/order.js";
 import Product from "../models/product.js";
 
 /* =========================
+   GET ALL ORDERS (ADMIN)
+========================= */
+export const getOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find()
+      .populate("user")
+      .populate("products.productId")
+      .populate("shippingAddress")
+      .populate("paymentMethod")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   GET ORDER BY ID
+========================= */
+export const getOrderById = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("user")
+      .populate("products.productId")
+      .populate("shippingAddress")
+      .populate("paymentMethod");
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   GET MY ORDERS
+========================= */
+export const getOrdersByUser = async (req, res, next) => {
+  try {
+    const orders = await Order.find({ user: req.user.userId })
+      .populate("products.productId")
+      .populate("shippingAddress")
+      .populate("paymentMethod")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
    CREATE ORDER
 ========================= */
 export const createOrder = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
-
     const { products, shippingAddress, paymentMethod, shippingCost = 0 } =
       req.body;
 
-    if (!products || products.length === 0) {
+    if (!products?.length) {
       return res.status(422).json({ message: "Cart is empty" });
     }
 
@@ -25,9 +77,7 @@ export const createOrder = async (req, res, next) => {
       }
 
       if (product.stock < item.quantity) {
-        return res.status(400).json({
-          message: "Insufficient stock",
-        });
+        return res.status(400).json({ message: "Insufficient stock" });
       }
 
       items.push({
@@ -43,7 +93,7 @@ export const createOrder = async (req, res, next) => {
     );
 
     const order = await Order.create({
-      user: userId,
+      user: req.user.userId,
       products: items,
       shippingAddress,
       paymentMethod,
@@ -60,6 +110,82 @@ export const createOrder = async (req, res, next) => {
     ]);
 
     res.status(201).json(populated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   UPDATE ORDER STATUS
+========================= */
+export const updateOrderStatus = async (req, res, next) => {
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
+    );
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   UPDATE PAYMENT STATUS
+========================= */
+export const updatePaymentStatus = async (req, res, next) => {
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus: req.body.paymentStatus },
+      { new: true }
+    );
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   CANCEL ORDER
+========================= */
+export const cancelOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (["delivered", "cancelled"].includes(order.status)) {
+      return res.status(400).json({ message: "Cannot cancel order" });
+    }
+
+    await Promise.all(
+      order.products.map((item) =>
+        Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: item.quantity },
+        })
+      )
+    );
+
+    order.status = "cancelled";
+    await order.save();
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================
+   DELETE ORDER
+========================= */
+export const deleteOrder = async (req, res, next) => {
+  try {
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
   } catch (error) {
     next(error);
   }

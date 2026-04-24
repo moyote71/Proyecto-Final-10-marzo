@@ -1,100 +1,29 @@
 import express from "express";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 import {
-  cancelOrder,
-  createOrder,
-  deleteOrder,
-  getOrderById,
   getOrders,
+  getOrderById,
   getOrdersByUser,
+  createOrder,
   updateOrderStatus,
   updatePaymentStatus,
+  cancelOrder,
+  deleteOrder,
 } from "../controllers/orderController.js";
-
-import authMiddleware from "../middlewares/authMiddleware.js";
-import isAdmin from "../middlewares/isAdminMiddleware.js";
-import validate from "../middlewares/validation.js";
-
-import {
-  mongoIdValidation,
-  orderStatusValidation,
-  paymentStatusValidation,
-} from "../middlewares/validators.js";
 
 const router = express.Router();
 
-/* =========================
-   ADMIN - ALL ORDERS
-========================= */
-router.get("/", authMiddleware, isAdmin, getOrders);
-
-/* =========================
-   USER ORDERS
-========================= */
+router.get("/", authMiddleware, getOrders);
 router.get("/me", authMiddleware, getOrdersByUser);
+router.get("/:id", authMiddleware, getOrderById);
 
-/* =========================
-   GET BY ID
-========================= */
-router.get(
-  "/:id",
-  authMiddleware,
-  [mongoIdValidation("id", "Order ID")],
-  validate,
-  getOrderById
-);
-
-/* =========================
-   CREATE ORDER (CLEAN)
-========================= */
 router.post("/", authMiddleware, createOrder);
 
-/* =========================
-   STATUS UPDATE
-========================= */
-router.patch(
-  "/:id/status",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID"), orderStatusValidation()],
-  validate,
-  updateOrderStatus
-);
+router.patch("/:id/status", authMiddleware, updateOrderStatus);
+router.patch("/:id/payment-status", authMiddleware, updatePaymentStatus);
+router.patch("/:id/cancel", authMiddleware, cancelOrder);
 
-/* =========================
-   PAYMENT STATUS
-========================= */
-router.patch(
-  "/:id/payment-status",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID"), paymentStatusValidation()],
-  validate,
-  updatePaymentStatus
-);
-
-/* =========================
-   CANCEL ORDER
-========================= */
-router.patch(
-  "/:id/cancel",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID")],
-  validate,
-  cancelOrder
-);
-
-/* =========================
-   DELETE ORDER
-========================= */
-router.delete(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Order ID")],
-  validate,
-  deleteOrder
-);
+router.delete("/:id", authMiddleware, deleteOrder);
 
 export default router;

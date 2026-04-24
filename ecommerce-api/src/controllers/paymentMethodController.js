@@ -1,13 +1,10 @@
 import PaymentMethod from "../models/paymentMethod.js";
 
-/* =========================
-   GET USER PAYMENT METHODS
-========================= */
 export const getPaymentMethodsByUser = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
-
-    const methods = await PaymentMethod.find({ user: userId });
+    const methods = await PaymentMethod.find({
+      user: req.user.userId,
+    });
 
     res.json(methods);
   } catch (error) {
@@ -15,9 +12,6 @@ export const getPaymentMethodsByUser = async (req, res, next) => {
   }
 };
 
-/* =========================
-   GET DEFAULT
-========================= */
 export const getDefaultPaymentMethod = async (req, res, next) => {
   try {
     const method = await PaymentMethod.findOne({
@@ -31,9 +25,6 @@ export const getDefaultPaymentMethod = async (req, res, next) => {
   }
 };
 
-/* =========================
-   CREATE
-========================= */
 export const createPaymentMethod = async (req, res, next) => {
   try {
     const method = await PaymentMethod.create({
@@ -47,30 +38,23 @@ export const createPaymentMethod = async (req, res, next) => {
   }
 };
 
-/* =========================
-   UPDATE
-========================= */
 export const updatePaymentMethod = async (req, res, next) => {
   try {
-    const updated = await PaymentMethod.findByIdAndUpdate(
+    const method = await PaymentMethod.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
 
-    res.json(updated);
+    res.json(method);
   } catch (error) {
     next(error);
   }
 };
 
-/* =========================
-   DELETE
-========================= */
 export const deletePaymentMethod = async (req, res, next) => {
   try {
     await PaymentMethod.findByIdAndDelete(req.params.id);
-
     res.json({ message: "Deleted" });
   } catch (error) {
     next(error);
