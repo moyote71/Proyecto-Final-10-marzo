@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
-import { getCategoryBySlug, getProductsByCategoryAndChildren } from "../../services/categoryService";
+import { getCategoryBySlug } from "../../services/categoryService";
+import { getProductsByCategoryAndChildren } from "../../services/categoryService";
 import ProductCard from "../ProductCard/ProductCard";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
@@ -19,7 +20,7 @@ export default function CategoryProducts({ slug }) {
         setLoading(true);
         setError(null);
 
-        const load = async () => {
+        const loadData = async () => {
             try {
                 const categoryData = await getCategoryBySlug(slug);
 
@@ -28,44 +29,65 @@ export default function CategoryProducts({ slug }) {
                     return;
                 }
 
-                const productsData = await getProductsByCategoryAndChildren(categoryData._id);
+                const productsData = await getProductsByCategoryAndChildren(
+                    categoryData._id
+                );
 
                 setCategory(categoryData);
                 setProducts(productsData);
             } catch (err) {
-                setError("Error al cargar categoría");
+                setError("Error al cargar la categoría o productos");
             } finally {
                 setLoading(false);
             }
         };
 
-        load();
+        loadData();
     }, [slug]);
 
-    if (loading) return <Loading message="Cargando..." />;
+    if (loading) {
+        return (
+            <div className={S.root}>
+                <Loading message="Cargando categoría y productos..." />
+            </div>
+        );
+    }
 
     if (error || !category) {
         return (
-            <ErrorMessage message={error || "No encontrada"}>
-                <Link to="/" className="text-blue-600 underline">
-                    Volver al inicio
-                </Link>
-            </ErrorMessage>
+            <div className={S.root}>
+                <ErrorMessage message={error || "Categoría no encontrada"}>
+                    <p className={S.muted}>
+                        Vuelve al <Link to="/" className="text-blue-600 underline">inicio</Link>
+                    </p>
+                </ErrorMessage>
+            </div>
         );
     }
 
     return (
         <div className={S.root}>
-            <BreadCrumb items={[{ label: "Inicio", to: "/" }, { label: category.name }]} />
+            <BreadCrumb items={[
+                { label: "Inicio", to: "/" },
+                { label: category.name }
+            ]} />
 
             <div className={S.container}>
                 <h1 className={S.title}>{category.name}</h1>
 
-                <div className={S.grid}>
-                    {products.map((product) => (
-                        <ProductCard key={product._id} product={product} />
-                    ))}
-                </div>
+                {(products || []).length > 0 ? (
+                    <div className={S.grid}>
+                        {products.map((product) => (
+                            <ProductCard
+                                key={product._id}
+                                product={product}
+                                orientation="vertical"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <p>No hay productos en esta categoría</p>
+                )}
             </div>
         </div>
     );

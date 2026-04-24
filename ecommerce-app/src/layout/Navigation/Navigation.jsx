@@ -100,13 +100,12 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                                     >
                                         {/* ✔ FIX AQUÍ */}
                                         <Link
-                                            to={`/categories/${category.slug}`}
-                                            className={navStyles.mainCategoryLink}
+                                            to={`/categories/${category.slug}`}                                                className={navStyles.mainCategoryLink}
                                         >
-                                            {category.name}
-                                            {subcategories.length > 0 && (
-                                                <Icon name="chevronRight" size={12} />
-                                            )}
+                                        {category.name}
+                                        {subcategories.length > 0 && (
+                                        <Icon name="chevronRight" size={12} />
+                                        )}
                                         </Link>
 
                                         {subcategories.length > 0 && (

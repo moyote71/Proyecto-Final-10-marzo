@@ -48,8 +48,9 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     }
 
     const { name, price, stock, imagesUrl, description } = product;
-    const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
-
+    const productImageUrl = formatImageUrl(
+         product.image || product.imagesUrl?.[0] || "https://placehold.co/800x600?text=Producto"
+    );
     return (
         <div className={`rounded-xl p-4 flex shadow-md bg-white border relative ${
             orientation === "horizontal" ? "md:flex-row flex-col gap-4" : "flex-col gap-4"
