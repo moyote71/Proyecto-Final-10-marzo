@@ -29,22 +29,30 @@ async function getCartById(req, res, next) {
 async function getCartByUser(req, res, next) {
   try {
     const userId = req.params.id;
+
     const cart = await Cart.findOne({ user: userId })
-      .populate("user")
       .populate("products.product");
 
+    // 🔥 FIX: nunca devolver 404 (rompe frontend)
     if (!cart) {
       return res.status(200).json({
-        message: "No cart found for this user",
-        cart: null,
+        message: "Cart empty",
+        cart: {
+          user: userId,
+          products: [],
+        },
       });
     }
-    res.json({ message: "Cart retrieved successfully", cart });
+
+    return res.status(200).json({
+      message: "Cart retrieved successfully",
+      cart,
+    });
+
   } catch (error) {
     next(error);
   }
-}
-
+} 
 async function createCart(req, res, next) {
   try {
     const { user, products } = req.body;

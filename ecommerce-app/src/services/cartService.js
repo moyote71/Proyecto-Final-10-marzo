@@ -7,16 +7,15 @@ export const fetchCart = async (userId) => {
     try {
         if (!userId) return { products: [] };
 
-        const res = await http.get(`/cart/user/${userId}`);
+        const response = await http.get(`/cart/user/${userId}`);
 
-        // backend devuelve { message, cart }
-        const data = res.data?.cart || res.data?.data || res.data;
+        const data = response.data?.cart || response.data;
 
-        if (!data || !data.products) return { products: [] };
-
-        return data;
+        return data || { products: [] };
     } catch (error) {
-        console.error("fetchCart error:", error);
+        console.error("Cart fetch error:", error);
+
+        // 🔥 NUNCA ROMPER UI
         return { products: [] };
     }
 };
