@@ -3,27 +3,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCart } from "../../context/CartContext";
 import Badge from "../common/Bagde";
 import Button from "../common/Button";
-import ProductCardStyles from "./ProductCardStyles";
 import { getWishList, addToWishList, removeFromWishList } from "../../services/wishListService";
 import { useAuth } from "../../context/AuthContext";
 import formatImageUrl from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
-
-    // ✅ CORRECTO: es boolean, NO función
     const { isAuthenticated, loading } = useAuth();
-
     const queryClient = useQueryClient();
 
-    // ✅ Evita ejecutar antes de que auth cargue
     const { data: wishlist = [] } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
         enabled: isAuthenticated && !loading,
     });
 
-    // ✅ PROTECCIÓN extra contra undefined
     const inWishList = wishlist?.some(
         item => (item.product?._id || item._id) === product?._id
     );
@@ -36,7 +30,6 @@ export default function ProductCard({ product, orientation = "vertical" }) {
         onSuccess: () => queryClient.invalidateQueries(["wishlist"]),
     });
 
-    // ✅ evita render prematuro
     if (loading) return null;
 
     if (!product) {
@@ -49,21 +42,13 @@ export default function ProductCard({ product, orientation = "vertical" }) {
 
     const { name, price, stock, imagesUrl, description } = product;
 
-    const stockBadge =
-        stock > 0
-            ? { text: "En stock", variant: "success" }
-            : { text: "Agotado", variant: "error" };
-
-    const hasDiscount = product.discount && product.discount > 0;
-
-    const handleAddToCart = () => addToCart(product, 1);
-
-    const productLink = `/product/${product._id}`;
-
     const productImageUrl = formatImageUrl(product.image || imagesUrl?.[0]);
 
     return (
-        <div className={ProductCardStyles.card({ orientation }) + " relative group"}>
+        <div className={`rounded-xl p-4 flex shadow-md bg-white border relative ${
+            orientation === "horizontal" ? "md:flex-row flex-col gap-4" : "flex-col gap-4"
+        }`}>
+
             {/* ❤️ Wishlist */}
             {isAuthenticated && (
                 <button
@@ -72,8 +57,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                         e.stopPropagation();
                         toggleMutation.mutate();
                     }}
-                    className="absolute top-2 right-2 z-10 text-2xl hover:scale-110 transition-transform bg-white/50 rounded-full w-8 h-8 flex items-center justify-center p-0 cursor-pointer"
-                    title={inWishList ? "Quitar de favoritos" : "Añadir a favoritos"}
+                    className="absolute top-2 right-2 z-10 text-2xl hover:scale-110 transition-transform bg-white/70 rounded-full w-8 h-8 flex items-center justify-center"
                     disabled={toggleMutation.isPending}
                 >
                     {inWishList ? "❤️" : "🤍"}
@@ -81,13 +65,13 @@ export default function ProductCard({ product, orientation = "vertical" }) {
             )}
 
             {/* Imagen */}
-            <Link to={productLink} className="block">
+            <Link to={`/product/${product._id}`} className="block">
                 <img
                     src={productImageUrl}
                     alt={name}
-                    className={ProductCardStyles.image({ orientation })}
-                    loading="lazy"
-                    decoding="async"
+                    className={`object-cover rounded-lg border ${
+                        orientation === "horizontal" ? "w-40 h-40" : "w-full h-56"
+                    }`}
                     onError={(e) => {
                         e.target.src = "https://placehold.co/800x600?text=Producto";
                     }}
@@ -95,30 +79,33 @@ export default function ProductCard({ product, orientation = "vertical" }) {
             </Link>
 
             {/* Contenido */}
-            <div className={ProductCardStyles.content()}>
-                <h3 className={ProductCardStyles.title()}>
-                    <Link to={productLink} className="hover:text-strongblue">
+            <div className="flex flex-col flex-1">
+                <h3 className="text-lg font-semibold mb-1 text-gray-900">
+                    <Link to={`/product/${product._id}`} className="hover:text-blue-600">
                         {name}
                     </Link>
                 </h3>
 
                 {description && (
-                    <p className={ProductCardStyles.description()}>
+                    <p className="text-sm text-gray-500 mb-2">
                         {description.length > 60
                             ? `${description.substring(0, 60)}...`
                             : description}
                     </p>
                 )}
 
-                <div className={ProductCardStyles.price()}>
+                <div className="text-xl font-bold text-teal-500 mb-3">
                     ${price}
                 </div>
 
                 {/* Footer */}
-                <div className={ProductCardStyles.footer()}>
+                <div className="flex items-center justify-between mt-auto">
                     <div className="flex gap-2">
-                        <Badge text={stockBadge.text} variant={stockBadge.variant} />
-                        {hasDiscount && (
+                        <Badge
+                            text={stock > 0 ? "En stock" : "Agotado"}
+                            variant={stock > 0 ? "success" : "error"}
+                        />
+                        {product.discount > 0 && (
                             <Badge text={`-${product.discount}%`} variant="warning" />
                         )}
                     </div>
@@ -127,9 +114,9 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                         variant="primary"
                         size="sm"
                         disabled={stock === 0}
-                        onClick={handleAddToCart}
+                        onClick={() => addToCart(product, 1)}
                     >
-                        Agregar al carrito
+                        Agregar
                     </Button>
                 </div>
             </div>
