@@ -34,28 +34,17 @@ console.log("🛍️ PRODUCT ROUTES LOADED");
 
 const router = express.Router();
 
-/**
- * @openapi
- * tags:
- *   name: Products
- *   description: Catálogo y gestión de productos
- */
+/* =========================
+   PRODUCTS
+   BASE: /api/products
+========================= */
 
-/**
- * @openapi
- * /products:
- *   get:
- *     summary: Obtener todos los productos con paginación
- *     tags: [Products]
- *     responses:
- *       200:
- *         description: Lista de productos exitosa
- */
-// Obtener todos los productos con paginación
-router.get("/products", [...paginationValidation()], validate, getProducts);
-// Buscar productos con filtros
+// GET /api/products
+router.get("/", [...paginationValidation()], validate, getProducts);
+
+// GET /api/products/search
 router.get(
-  "/products/search",
+  "/search",
   [
     searchQueryValidation(),
     queryMongoIdValidation("category", "Category"),
@@ -69,36 +58,21 @@ router.get(
   validate,
   searchProducts
 );
-// Obtener productos por categoría
+
+// GET /api/products/category/:idCategory
 router.get(
-  "/products/category/:idCategory",
+  "/category/:idCategory",
   [mongoIdValidation("idCategory", "Category ID")],
   validate,
   getProductByCategory
 );
-/**
- * @openapi
- * /products/{id}:
- *   get:
- *     summary: Obtener producto por ID
- *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Producto encontrado
- *       404:
- *         description: Producto no encontrado
- */
-// Obtener producto por ID
-router.get("/products/:id", [mongoIdValidation("id", "Product ID")], validate, getProductById);
-// Crear producto (solo admin)
+
+// GET /api/products/:id
+router.get("/:id", [mongoIdValidation("id", "Product ID")], validate, getProductById);
+
+// POST /api/products (admin)
 router.post(
-  "/products",
+  "/",
   authMiddleware,
   isAdmin,
   [
@@ -112,9 +86,10 @@ router.post(
   validate,
   createProduct
 );
-// Actualizar producto (solo admin)
+
+// PUT /api/products/:id (admin)
 router.put(
-  "/products/:id",
+  "/:id",
   authMiddleware,
   isAdmin,
   [
@@ -129,9 +104,10 @@ router.put(
   validate,
   updateProduct
 );
-// Eliminar producto (solo admin)
+
+// DELETE /api/products/:id (admin)
 router.delete(
-  "/products/:id",
+  "/:id",
   authMiddleware,
   isAdmin,
   [mongoIdValidation("id", "Product ID")],

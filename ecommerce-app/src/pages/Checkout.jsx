@@ -8,6 +8,8 @@ import Button from "../components/common/Button/Button";
 import ErrorMessage from "../components/common/ErrorMessage/ErrorMessage";
 import Loading from "../components/common/Loading/Loading";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+
 import {
     getDefaultPaymentMethods,
     getPaymentMethods,
@@ -15,6 +17,7 @@ import {
     updatePaymentMethod,
     deletePaymentMethod as deletePaymentMethodAPI,
 } from "../services/paymentService";
+
 import {
     getDefaultShippingAddress,
     getShippingAddresses,
@@ -22,9 +25,9 @@ import {
     updateShippingAddress,
     deleteShippingAddress as deleteShippingAddressAPI,
 } from "../services/shippingService";
-import * as styles from "./CheckoutStyles";
+
 import { http } from "../services/http";
-import { useAuth } from "../context/AuthContext";
+import * as styles from "./CheckoutStyles";
 
 const AddressForm = lazy(() => import("../components/Checkout/Address/AddressForm"));
 const PaymentForm = lazy(() => import("../components/Checkout/Payment/PaymentForm"));
@@ -34,18 +37,26 @@ export default function Checkout() {
     const { cartItems, getTotalPrice, clearCart } = useCart();
     const { user } = useAuth();
 
-    //calculo financiero
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* =========================
+       TOTAL CART
+    ========================= */
     const subtotal = useMemo(() => getTotalPrice() || 0, [cartItems, getTotalPrice]);
+
     const TAX_RATE = 0.16;
     const SHIPPING_RATE = 350;
     const FREE_SHIPPING_THRESHOLD = 1000;
 
     const taxAmount = useMemo(() => subtotal * TAX_RATE, [subtotal]);
-    const shippingCost = useMemo(() => subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE, [subtotal]);
-    const grandTotal = useMemo(() => subtotal + taxAmount + shippingCost, [subtotal, taxAmount, shippingCost]);
 
-    const [isOrderFinished, setIsOrderFinished] = useState(false);
+    const shippingCost = useMemo(
+        () => (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE),
+        [subtotal]
+    );
+
+    const grandTotal = useMemo(
+        () => subtotal + taxAmount + shippingCost,
+        [subtotal, taxAmount, shippingCost]
+    );
 
     const money = (v) =>
         new Intl.NumberFormat("es-MX", {
@@ -53,19 +64,28 @@ export default function Checkout() {
             currency: "MXN",
         }).format(v);
 
-    //redirección si carrito vacío
-    useEffect(() => {
-        if (!cartItems || cartItems.length === 0) {
-            if (!isOrderFinished) navigate("/cart");
-        }
-    }, [cartItems, navigate, isOrderFinished]);
+    const [isOrderFinished, setIsOrderFinished] = useState(false);
 
-    //estados principales
+    /* =========================
+       REDIRECT IF EMPTY CART
+    ========================= */
+    useEffect(() => {
+        if (!cartItems?.length && !isOrderFinished) {
+            navigate("/cart");
+        }
+    }, [cartItems, isOrderFinished, navigate]);
+
+    /* =========================
+       STATE
+    ========================= */
     const [addresses, setAddresses] = useState([]);
     const [payments, setPayments] = useState([]);
 
-    const [loadingLocal, setLoadingLocal] = useState(true);
-    const [localError, setLocalError] = useState(null);
+    const [selectedAddress, setSelectedAddress] = useState(null);
+    const [selectedPayment, setSelectedPayment] = useState(null);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -73,16 +93,15 @@ export default function Checkout() {
     const [editingAddress, setEditingAddress] = useState(null);
     const [editingPayment, setEditingPayment] = useState(null);
 
-    const [addressSectionOpen, setAddressSectionOpen] = useState(false);
-    const [paymentSectionOpen, setPaymentSectionOpen] = useState(false);
+    const [addressOpen, setAddressOpen] = useState(false);
+    const [paymentOpen, setPaymentOpen] = useState(false);
 
-    const [selectedAddress, setSelectedAddress] = useState(null);
-    const [selectedPayment, setSelectedPayment] = useState(null);
-
-    //cargar datos iniciales
+    /* =========================
+       LOAD CHECKOUT DATA
+    ========================= */
     useEffect(() => {
-        async function load() {
-            setLoadingLocal(true);
+        const load = async () => {
+            setLoading(true);
             try {
                 const [addrList, defAddr, payList, defPay] = await Promise.all([
                     getShippingAddresses(),
@@ -94,322 +113,232 @@ export default function Checkout() {
                 setAddresses(addrList || []);
                 setPayments(payList || []);
 
-                setSelectedAddress(defAddr);
-                setSelectedPayment(defPay);
+                setSelectedAddress(defAddr || null);
+                setSelectedPayment(defPay || null);
 
-                setAddressSectionOpen(!defAddr);
-                setPaymentSectionOpen(!defPay);
+                setAddressOpen(!defAddr);
+                setPaymentOpen(!defPay);
             } catch {
-                setLocalError("Error cargando direcciones o métodos de pago.");
+                setError("Error cargando checkout");
             } finally {
-                setLoadingLocal(false);
+                setLoading(false);
             }
-        }
+        };
+
         load();
     }, []);
 
-    //handlers direcciones
-    const handleAddressToggle = () => {
-        setShowAddressForm(false);
-        setEditingAddress(null);
-        setAddressSectionOpen((p) => !p);
-    };
-
-    const handleSelectAddress = (addr) => {
-        setSelectedAddress(addr);
-        setShowAddressForm(false);
-        setEditingAddress(null);
-        setAddressSectionOpen(false);
-    };
-
-    const handleAddressNew = () => {
-        setShowAddressForm(true);
-        setEditingAddress(null);
-        setAddressSectionOpen(true);
-    };
-
-    const handleAddressEdit = (addr) => {
-        setShowAddressForm(true);
-        setEditingAddress(addr);
-        setAddressSectionOpen(true);
-    };
-
-    const handleAddressDelete = async (addr) => {
-        try {
-            await deleteShippingAddressAPI(addr._id);
-            const updated = addresses.filter((a) => a._id !== addr._id);
-            if (selectedAddress?._id === addr._id) {
-                setSelectedAddress(updated[0] || null);
-            }
-            setAddresses(updated);
-        } catch (error) {
-            setLocalError("Error al eliminar dirección");
-        }
-    };
-
+    /* =========================
+       SHIPPING HANDLERS
+    ========================= */
     const handleAddressSubmit = async (data) => {
         try {
-            setLocalError(null);
             let saved;
-            let updated;
 
             if (editingAddress) {
                 saved = await updateShippingAddress(editingAddress._id, data);
-                updated = addresses.map((a) =>
-                    a._id === editingAddress._id ? saved : a
+                setAddresses((prev) =>
+                    prev.map((a) => (a._id === editingAddress._id ? saved : a))
                 );
             } else {
                 saved = await createShippingAddress(data);
-                updated = [...addresses, saved];
+                setAddresses((prev) => [...prev, saved]);
             }
 
-            setAddresses(updated);
             setSelectedAddress(saved);
             setShowAddressForm(false);
             setEditingAddress(null);
-            setAddressSectionOpen(false);
-        } catch (error) {
-            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "Error al guardar dirección";
-            setLocalError(msg);
+            setAddressOpen(false);
+        } catch (err) {
+            setError(err.response?.data?.message || "Error dirección");
         }
     };
 
-    const handleCancelAddress = () => {
-        setShowAddressForm(false);
-        setEditingAddress(null);
-        setAddressSectionOpen(false);
-    };
+    const handleDeleteAddress = async (addr) => {
+        await deleteShippingAddressAPI(addr._id);
+        const updated = addresses.filter((a) => a._id !== addr._id);
 
-    //handlers pagos 
-    const handlePaymentToggle = () => {
-        setShowPaymentForm(false);
-        setEditingPayment(null);
-        setPaymentSectionOpen((p) => !p);
-    };
+        setAddresses(updated);
 
-    const handleSelectPayment = (pay) => {
-        setSelectedPayment(pay);
-        setShowPaymentForm(false);
-        setEditingPayment(null);
-        setPaymentSectionOpen(false);
-    };
-
-    const handlePaymentNew = () => {
-        setShowPaymentForm(true);
-        setEditingPayment(null);
-        setPaymentSectionOpen(true);
-    };
-
-    const handlePaymentEdit = (pay) => {
-        setShowPaymentForm(true);
-        setEditingPayment(pay);
-        setPaymentSectionOpen(true);
-    };
-
-    const handlePaymentDelete = async (pay) => {
-        try {
-            await deletePaymentMethodAPI(pay._id);
-            const updated = payments.filter((p) => p._id !== pay._id);
-            if (selectedPayment?._id === pay._id) {
-                setSelectedPayment(updated[0] || null);
-            }
-            setPayments(updated);
-        } catch (error) {
-            setLocalError("Error al eliminar método de pago");
+        if (selectedAddress?._id === addr._id) {
+            setSelectedAddress(updated[0] || null);
         }
     };
 
+    /* =========================
+       PAYMENT HANDLERS
+    ========================= */
     const handlePaymentSubmit = async (data) => {
         try {
-            setLocalError(null);
             let saved;
-            let updated;
 
             if (editingPayment) {
                 saved = await updatePaymentMethod(editingPayment._id, data);
-                updated = payments.map((p) =>
-                    p._id === editingPayment._id ? saved : p
+                setPayments((prev) =>
+                    prev.map((p) => (p._id === editingPayment._id ? saved : p))
                 );
             } else {
                 saved = await createPaymentMethod(data);
-                updated = [...payments, saved];
+                setPayments((prev) => [...prev, saved]);
             }
 
-            setPayments(updated);
             setSelectedPayment(saved);
             setShowPaymentForm(false);
             setEditingPayment(null);
-            setPaymentSectionOpen(false);
-        } catch (error) {
-            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "Error al guardar método de pago";
-            setLocalError(msg);
+            setPaymentOpen(false);
+        } catch (err) {
+            setError(err.response?.data?.message || "Error pago");
         }
     };
 
-    const handleCancelPayment = () => {
-        setShowPaymentForm(false);
-        setEditingPayment(null);
-        setPaymentSectionOpen(false);
+    const handleDeletePayment = async (pay) => {
+        await deletePaymentMethodAPI(pay._id);
+        const updated = payments.filter((p) => p._id !== pay._id);
+
+        setPayments(updated);
+
+        if (selectedPayment?._id === pay._id) {
+            setSelectedPayment(updated[0] || null);
+        }
     };
 
-    //finalizar orden
+    /* =========================
+       CREATE ORDER (FIXED)
+    ========================= */
     const handleCreateOrder = async () => {
         if (!selectedAddress || !selectedPayment) return;
+
         if (!user) {
-            setLocalError("Debes iniciar sesión para completar la orden");
+            setError("Debes iniciar sesión");
             return;
         }
 
-        const orderData = {
-            user: user._id,
-            products: cartItems.map((i) => ({
-                productId: i._id,
-                quantity: i.quantity,
-                price: i.price,
-            })),
-            shippingAddress: selectedAddress._id,
-            paymentMethod: selectedPayment._id,
-            shippingCost: shippingCost,
-        };
-
         try {
-            const response = await http.post("/orders", orderData);
-            
-            const orderId = response.data?._id || response.data?.id;
+            const payload = {
+                user: user._id,
+                products: cartItems.map((item) => ({
+                    productId: item._id,
+                    quantity: item.quantity,
+                })),
+                shippingAddress: selectedAddress._id,
+                paymentMethod: selectedPayment._id,
+                shippingCost,
+            };
+
+            const res = await http.post("/orders", payload);
+
+            const order = res.data;
+
             setIsOrderFinished(true);
             clearCart();
-            navigate(`/order-confirmation${orderId ? `?orderId=${orderId}` : ""}`, { state: { order: response.data } });
-        } catch (error) {
-            setLocalError(error.message || "Error al crear la orden. Inténtalo más tarde.");
+
+            navigate("/order-confirmation", {
+                state: { order },
+            });
+
+        } catch (err) {
+            setError(
+                err.response?.data?.message || "Error al crear la orden"
+            );
         }
     };
 
-    // UI states 
-    if (loadingLocal) return <Loading message="Cargando datos..." />;
-    if (localError) return <ErrorMessage message={localError} />;
+    /* =========================
+       LOADING / ERROR
+    ========================= */
+    if (loading) return <Loading message="Cargando checkout..." />;
+    if (error) return <ErrorMessage message={error} />;
 
+    /* =========================
+       UI
+    ========================= */
     return (
         <div className={styles.checkoutContainer()}>
-            {/* LEFT */}
             <div className={styles.checkoutLeft()}>
+
                 <SummarySection
-                    title="1. Dirección de envío"
+                    title="1. Dirección"
                     selected={selectedAddress}
-                    summaryContent={
-                        selectedAddress && (
-                            <div>
-                                <p>{selectedAddress.name}</p>
-                                <p>{selectedAddress.address}</p>
-                                <p>
-                                    {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
-                                </p>
-                            </div>
-                        )
-                    }
-                    isExpanded={
-                        showAddressForm || addressSectionOpen || !selectedAddress
-                    }
-                    onToggle={handleAddressToggle}
+                    isExpanded={addressOpen || !selectedAddress}
+                    onToggle={() => setAddressOpen((p) => !p)}
                 >
                     {!showAddressForm ? (
                         <AddressList
                             addresses={addresses}
                             selectedAddress={selectedAddress}
-                            onSelect={handleSelectAddress}
-                            onEdit={handleAddressEdit}
-                            onAdd={handleAddressNew}
-                            onDelete={handleAddressDelete}
+                            onSelect={setSelectedAddress}
+                            onAdd={() => setShowAddressForm(true)}
+                            onEdit={(a) => {
+                                setEditingAddress(a);
+                                setShowAddressForm(true);
+                            }}
+                            onDelete={handleDeleteAddress}
                         />
                     ) : (
-                        <Suspense fallback={<Loading message="Cargando formulario..." />}>
+                        <Suspense fallback={<Loading message="..." />}>
                             <AddressForm
                                 isEdit={!!editingAddress}
                                 initialValues={editingAddress || {}}
                                 onSubmit={handleAddressSubmit}
-                                onCancel={handleCancelAddress}
+                                onCancel={() => setShowAddressForm(false)}
                             />
                         </Suspense>
                     )}
                 </SummarySection>
 
                 <SummarySection
-                    title="2. Método de pago"
+                    title="2. Pago"
                     selected={selectedPayment}
-                    summaryContent={
-                        selectedPayment && (
-                            <div>
-                                <p>{selectedPayment.alias}</p>
-                                <p>**** {selectedPayment.cardNumber?.slice(-4)}</p>
-                            </div>
-                        )
-                    }
-                    isExpanded={
-                        showPaymentForm || paymentSectionOpen || !selectedPayment
-                    }
-                    onToggle={handlePaymentToggle}
+                    isExpanded={paymentOpen || !selectedPayment}
+                    onToggle={() => setPaymentOpen((p) => !p)}
                 >
                     {!showPaymentForm ? (
                         <PaymentList
                             payments={payments}
                             selectedPayment={selectedPayment}
-                            onSelect={handleSelectPayment}
-                            onEdit={handlePaymentEdit}
-                            onAdd={handlePaymentNew}
-                            onDelete={handlePaymentDelete}
+                            onSelect={setSelectedPayment}
+                            onAdd={() => setShowPaymentForm(true)}
+                            onEdit={(p) => {
+                                setEditingPayment(p);
+                                setShowPaymentForm(true);
+                            }}
+                            onDelete={handleDeletePayment}
                         />
                     ) : (
-                        <Suspense fallback={<Loading message="Cargando formulario..." />}>
+                        <Suspense fallback={<Loading message="..." />}>
                             <PaymentForm
                                 isEdit={!!editingPayment}
                                 initialValues={editingPayment || {}}
                                 onSubmit={handlePaymentSubmit}
-                                onCancel={handleCancelPayment}
+                                onCancel={() => setShowPaymentForm(false)}
                             />
                         </Suspense>
                     )}
                 </SummarySection>
 
-                <SummarySection title="3. Revisa tu pedido" isExpanded={true}>
+                <SummarySection title="3. Carrito" isExpanded>
                     <CartView />
                 </SummarySection>
             </div>
 
-            {/* RIGHT */}
             <div className={styles.checkoutRight()}>
                 <div className={styles.summaryBox()}>
-                    <h3 className="text-xl font-semibold mb-3">Resumen de la Orden</h3>
+                    <h3>Resumen</h3>
 
-                    <p>
-                        <strong>Dirección:</strong> {selectedAddress?.name}
-                    </p>
+                    <p>Subtotal: {money(subtotal)}</p>
+                    <p>IVA: {money(taxAmount)}</p>
+                    <p>Envío: {shippingCost === 0 ? "Gratis" : money(shippingCost)}</p>
 
-                    <p>
-                        <strong>Pago:</strong> {selectedPayment?.alias}
-                    </p>
+                    <hr />
 
-                    <div className="my-4 space-y-2">
-                        <p>
-                            <strong>Subtotal:</strong> {money(subtotal)}
-                        </p>
-                        <p>
-                            <strong>IVA:</strong> {money(taxAmount)}
-                        </p>
-                        <p>
-                            <strong>Envío:</strong>{" "}
-                            {shippingCost === 0 ? "Gratis" : money(shippingCost)}
-                        </p>
-                        <hr />
-                        <p className="text-lg font-bold">
-                            Total: {money(grandTotal)}
-                        </p>
-                    </div>
+                    <p><b>Total: {money(grandTotal)}</b></p>
 
                     <Button
                         variant="primary"
                         disabled={!selectedAddress || !selectedPayment}
                         onClick={handleCreateOrder}
                     >
-                        Confirmar y pagar
+                        Confirmar orden
                     </Button>
                 </div>
             </div>
