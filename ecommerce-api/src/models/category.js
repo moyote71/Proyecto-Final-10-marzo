@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const categorySchema = new mongoose.Schema({
   name: {
@@ -7,10 +8,8 @@ const categorySchema = new mongoose.Schema({
     trim: true,
   },
 
-  // 🔥 NUEVO: slug
   slug: {
     type: String,
-    required: true,
     unique: true,
     index: true,
   },
@@ -32,6 +31,17 @@ const categorySchema = new mongoose.Schema({
     ref: "Category",
     default: null,
   },
+});
+
+// AUTO SLUG
+categorySchema.pre("save", function (next) {
+  if (this.name && (!this.slug || this.isModified("name"))) {
+    this.slug = slugify(this.name, {
+      lower: true,
+      strict: true,
+    });
+  }
+  next();
 });
 
 export default mongoose.model("Category", categorySchema);

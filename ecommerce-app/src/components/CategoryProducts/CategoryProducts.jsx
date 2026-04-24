@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
-import {
-    getCategoryById,
-    getProductsByCategoryAndChildren,
-} from "../../services/categoryService";
+import { getCategoryBySlug, getProductsByCategoryAndChildren } from "../../services/categoryService";
 import ProductCard from "../ProductCard/ProductCard";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
@@ -17,32 +14,33 @@ export default function CategoryProducts({ categoryId }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
+    setLoading(true);
+    setError(null);
 
-        const loadCategoryAndProducts = async () => {
-            try {
-                const [categoryData, productsData] = await Promise.all([
-                    getCategoryById(categoryId),
-                    getProductsByCategoryAndChildren(categoryId),
-                ]);
+    const loadCategoryAndProducts = async () => {
+        try {
+            const categoryData = await getCategoryBySlug(categoryId);
 
-                if (!categoryData) {
-                    setError("Categoría no encontrada");
-                    return;
-                }
-
-                setCategory(categoryData);
-                setProducts(productsData);
-            } catch (err) {
-                setError("Error al cargar la categoría o productos");
-            } finally {
-                setLoading(false);
+            if (!categoryData) {
+                setError("Categoría no encontrada");
+                return;
             }
-        };
 
-        loadCategoryAndProducts();
-    }, [categoryId]);
+            const productsData = await getProductsByCategoryAndChildren(
+                categoryData._id
+            );
+
+            setCategory(categoryData);
+            setProducts(productsData);
+        } catch (err) {
+            setError("Error al cargar la categoría o productos");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    loadCategoryAndProducts();
+}, [categoryId]);
 
     if (loading) {
         return (

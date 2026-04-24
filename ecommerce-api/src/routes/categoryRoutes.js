@@ -1,4 +1,6 @@
 import express from "express";
+import Category from "../models/category.js";
+
 import {
   createCategory,
   deleteCategory,
@@ -28,7 +30,7 @@ import {
 const router = express.Router();
 
 /* =========================
-   SEARCH (DEBE IR PRIMERO)
+   SEARCH
 ========================= */
 router.get(
   "/search",
@@ -44,10 +46,13 @@ router.get(
 );
 
 /* =========================
-   GET ALL CATEGORIES
+   GET ALL
 ========================= */
 router.get("/", getCategories);
 
+/* =========================
+   GET BY SLUG (🔥 IMPORTANTE - PRODUCCIÓN)
+========================= */
 router.get("/slug/:slug", async (req, res, next) => {
   try {
     const category = await Category.findOne({
@@ -58,14 +63,14 @@ router.get("/slug/:slug", async (req, res, next) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.json(category);
+    res.status(200).json(category);
   } catch (error) {
     next(error);
   }
 });
 
 /* =========================
-   GET CATEGORY BY ID
+   GET BY ID (BACKOFF LEGACY)
 ========================= */
 router.get(
   "/:id",
@@ -75,7 +80,7 @@ router.get(
 );
 
 /* =========================
-   CREATE CATEGORY
+   CREATE
 ========================= */
 router.post(
   "/",
@@ -92,7 +97,7 @@ router.post(
 );
 
 /* =========================
-   UPDATE CATEGORY
+   UPDATE
 ========================= */
 router.put(
   "/:id",
@@ -110,7 +115,7 @@ router.put(
 );
 
 /* =========================
-   DELETE CATEGORY
+   DELETE
 ========================= */
 router.delete(
   "/:id",

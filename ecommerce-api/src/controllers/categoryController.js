@@ -9,35 +9,47 @@ const slugify = (text) =>
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 
-async function getCategories(req, res, next) {
+/* ========================= */
+export async function getCategories(req, res, next) {
   try {
-    const categories = await Category.find().populate("parentCategory").sort({ name: 1 });
+    const categories = await Category.find()
+      .populate("parentCategory")
+      .sort({ name: 1 });
+
     res.status(200).json(categories);
   } catch (error) {
     next(error);
   }
 }
-async function getCategoryById(req, res, next) {
+
+/* ========================= */
+export async function getCategoryById(req, res, next) {
   try {
-    const category = await Category.findById(req.params.id).populate("parentCategory");
+    const category = await Category.findById(req.params.id).populate(
+      "parentCategory"
+    );
+
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
+
     res.status(200).json(category);
   } catch (error) {
     next(error);
   }
 }
-async function createCategory(req, res, next) {
+
+/* ========================= */
+export async function createCategory(req, res, next) {
   try {
     const { name, description, parentCategory, imageURL } = req.body;
 
     const newCategory = new Category({
       name,
-      slug: slugify(name), // 🔥 NUEVO
+      slug: slugify(name),
       description,
       parentCategory: parentCategory || null,
-      imageURL: imageURL || null,
+      imageURL: imageURL || "https://placehold.co/800x600.png",
     });
 
     await newCategory.save();
@@ -46,7 +58,9 @@ async function createCategory(req, res, next) {
     next(error);
   }
 }
-async function updateCategory(req, res, next) {
+
+/* ========================= */
+export async function updateCategory(req, res, next) {
   try {
     const { name, description, parentCategory, imageURL } = req.body;
     const idCategory = req.params.id;
@@ -55,11 +69,12 @@ async function updateCategory(req, res, next) {
 
     if (name !== undefined) {
       updateData.name = name;
-      updateData.slug = slugify(name); // 🔥 actualiza slug
+      updateData.slug = slugify(name);
     }
 
     if (description !== undefined) updateData.description = description;
-    if (parentCategory !== undefined) updateData.parentCategory = parentCategory;
+    if (parentCategory !== undefined)
+      updateData.parentCategory = parentCategory;
     if (imageURL !== undefined) updateData.imageURL = imageURL;
 
     const updatedCategory = await Category.findByIdAndUpdate(
@@ -77,24 +92,29 @@ async function updateCategory(req, res, next) {
     next(error);
   }
 }
-async function deleteCategory(req, res, next) {
+
+/* ========================= */
+export async function deleteCategory(req, res, next) {
   try {
-    const idCategory = req.params.id;
-    const deletedCategory = await Category.findByIdAndDelete(idCategory);
-    if (!deletedCategory) {
+    const deleted = await Category.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
       return res.status(404).json({ message: "Category not found" });
     }
+
     res.status(204).send();
   } catch (error) {
     next(error);
   }
 }
 
-async function searchCategory(req, res, next) {
+/* ========================= */
+export async function searchCategory(req, res, next) {
   try {
-    const { q, parentCategory, sort, order, page = 1, limit = 10 } = req.query;
+    const { q, parentCategory, sort, order, page = 1, limit = 10 } =
+      req.query;
 
-    let filters = {};
+    const filters = {};
 
     if (q) {
       filters.$or = [
@@ -102,51 +122,33 @@ async function searchCategory(req, res, next) {
         { description: { $regex: q, $options: "i" } },
       ];
     }
+
     if (parentCategory) {
       filters.parentCategory = parentCategory;
     }
-    let sortOptions = {};
-    if (sort) {
-      const sortOrder = order === "desc" ? -1 : 1;
-      sortOptions[sort] = sortOrder;
-    } else {
-      sortOptions.name = -1;
-    }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = {};
+    sortOptions[sort || "name"] = order === "desc" ? -1 : 1;
+
+    const skip = (page - 1) * limit;
+
     const categories = await Category.find(filters)
       .populate("parentCategory")
       .sort(sortOptions)
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(Number(limit));
 
-    const totalResults = await Category.countDocuments(filters);
-    const totalPages = Math.ceil(totalResults / parseInt(limit));
+    const total = await Category.countDocuments(filters);
 
     res.status(200).json({
       categories,
       pagination: {
-        currentPage: parseInt(page),
-        totalPages,
-        totalResults,
-        hasNext: parseInt(page) < totalPages,
-        nasPrev: parseInt(page) > 1,
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / limit),
+        totalResults: total,
       },
-      searchTerm: q || null,
-      parentCategory: parentCategory || null,
-      sort: sort || "name",
-      order: order || "desc",
     });
   } catch (error) {
     next(error);
   }
 }
-
-export {
-  createCategory,
-  deleteCategory,
-  getCategories,
-  getCategoryById,
-  searchCategory,
-  updateCategory,
-};
