@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, lazy } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 
 import CartView from "../components/Cart/CartView";
@@ -15,11 +15,15 @@ import { useAuth } from "../context/AuthContext";
 import {
   getShippingAddresses,
   getDefaultShippingAddress,
+  createShippingAddress,
+  updateShippingAddress,
 } from "../services/shippingService";
 
 import {
   getPaymentMethods,
   getDefaultPaymentMethod,
+  createPaymentMethod,
+  updatePaymentMethod,
 } from "../services/paymentService";
 
 import { http } from "../services/http";
@@ -38,6 +42,9 @@ export default function Checkout() {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
 
+  /* =========================
+     CALCULOS
+  ========================= */
   const subtotal = useMemo(() => {
     return Array.isArray(cartItems) ? getTotalPrice?.() || 0 : 0;
   }, [cartItems, getTotalPrice]);
@@ -59,6 +66,9 @@ export default function Checkout() {
       currency: "MXN",
     }).format(v);
 
+  /* =========================
+     STATE
+  ========================= */
   const [addresses, setAddresses] = useState([]);
   const [payments, setPayments] = useState([]);
 
@@ -75,16 +85,14 @@ export default function Checkout() {
   const [editingPayment, setEditingPayment] = useState(null);
 
   /* =========================
-     AUTH GUARD
+     AUTH
   ========================= */
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
   /* =========================
-     LOAD CHECKOUT DATA
+     LOAD DATA
   ========================= */
   useEffect(() => {
     if (!user) return;
@@ -93,32 +101,17 @@ export default function Checkout() {
       setLoading(true);
 
       try {
-        let addrList = [];
-        let payList = [];
-        let defAddr = null;
-        let defPay = null;
+        const addrList = await getShippingAddresses();
+        const payList = await getPaymentMethods();
 
-        try {
-          addrList = await getShippingAddresses();
-          defAddr = await getDefaultShippingAddress();
-        } catch {
-          addrList = [];
-          defAddr = null;
-        }
+        const defAddr = await getDefaultShippingAddress();
+        const defPay = await getDefaultPaymentMethod();
 
-        try {
-          payList = await getPaymentMethods();
-          defPay = await getDefaultPaymentMethod();
-        } catch {
-          payList = [];
-          defPay = null;
-        }
+        setAddresses(addrList || []);
+        setPayments(payList || []);
 
-        setAddresses(addrList);
-        setPayments(payList);
-
-        setSelectedAddress(defAddr || addrList[0] || null);
-        setSelectedPayment(defPay || payList[0] || null);
+        setSelectedAddress(defAddr || addrList?.[0] || null);
+        setSelectedPayment(defPay || payList?.[0] || null);
       } catch (err) {
         console.error(err);
         setError("Error cargando checkout");
@@ -131,6 +124,54 @@ export default function Checkout() {
   }, [user]);
 
   /* =========================
+     SAVE ADDRESS
+  ========================= */
+  const handleAddressSubmit = async (data) => {
+    try {
+      let saved;
+
+      if (editingAddress) {
+        saved = await updateShippingAddress(editingAddress._id, data);
+      } else {
+        saved = await createShippingAddress(data);
+      }
+
+      setAddresses((prev) => [...prev, saved]);
+      setSelectedAddress(saved);
+
+      setShowAddressForm(false);
+      setEditingAddress(null);
+    } catch (err) {
+      console.error(err);
+      setError("Error guardando dirección");
+    }
+  };
+
+  /* =========================
+     SAVE PAYMENT
+  ========================= */
+  const handlePaymentSubmit = async (data) => {
+    try {
+      let saved;
+
+      if (editingPayment) {
+        saved = await updatePaymentMethod(editingPayment._id, data);
+      } else {
+        saved = await createPaymentMethod(data);
+      }
+
+      setPayments((prev) => [...prev, saved]);
+      setSelectedPayment(saved);
+
+      setShowPaymentForm(false);
+      setEditingPayment(null);
+    } catch (err) {
+      console.error(err);
+      setError("Error guardando pago");
+    }
+  };
+
+  /* =========================
      CREATE ORDER
   ========================= */
   const handleCreateOrder = async () => {
@@ -141,7 +182,7 @@ export default function Checkout() {
 
     try {
       const payload = {
-        products: (cartItems || []).map((i) => ({
+        products: cartItems.map((i) => ({
           productId: i._id,
           quantity: i.quantity,
         })),
@@ -169,30 +210,58 @@ export default function Checkout() {
   return (
     <div className={styles.checkoutContainer()}>
       <div className={styles.checkoutLeft()}>
+        {/* =========================
+           DIRECCIÓN
+        ========================= */}
         <SummarySection title="1. Dirección" isExpanded>
-          <AddressList
-            addresses={addresses}
-            selectedAddress={selectedAddress}
-            onSelect={setSelectedAddress}
-            onAdd={() => setShowAddressForm(true)}
-            onEdit={(a) => {
-              setEditingAddress(a);
-              setShowAddressForm(true);
-            }}
-          />
+          {!showAddressForm ? (
+            <AddressList
+              addresses={addresses}
+              selectedAddress={selectedAddress}
+              onSelect={setSelectedAddress}
+              onAdd={() => setShowAddressForm(true)}
+              onEdit={(a) => {
+                setEditingAddress(a);
+                setShowAddressForm(true);
+              }}
+            />
+          ) : (
+            <Suspense fallback={<Loading />}>
+              <AddressForm
+                isEdit={!!editingAddress}
+                initialValues={editingAddress || {}}
+                onSubmit={handleAddressSubmit}
+                onCancel={() => setShowAddressForm(false)}
+              />
+            </Suspense>
+          )}
         </SummarySection>
 
+        {/* =========================
+           PAGO
+        ========================= */}
         <SummarySection title="2. Pago" isExpanded>
-          <PaymentList
-            payments={payments}
-            selectedPayment={selectedPayment}
-            onSelect={setSelectedPayment}
-            onAdd={() => setShowPaymentForm(true)}
-            onEdit={(p) => {
-              setEditingPayment(p);
-              setShowPaymentForm(true);
-            }}
-          />
+          {!showPaymentForm ? (
+            <PaymentList
+              payments={payments}
+              selectedPayment={selectedPayment}
+              onSelect={setSelectedPayment}
+              onAdd={() => setShowPaymentForm(true)}
+              onEdit={(p) => {
+                setEditingPayment(p);
+                setShowPaymentForm(true);
+              }}
+            />
+          ) : (
+            <Suspense fallback={<Loading />}>
+              <PaymentForm
+                isEdit={!!editingPayment}
+                initialValues={editingPayment || {}}
+                onSubmit={handlePaymentSubmit}
+                onCancel={() => setShowPaymentForm(false)}
+              />
+            </Suspense>
+          )}
         </SummarySection>
 
         <SummarySection title="3. Carrito" isExpanded>

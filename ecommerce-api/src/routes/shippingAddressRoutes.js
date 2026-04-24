@@ -11,29 +11,10 @@ import {
 
 const router = express.Router();
 
-/* =========================
-   USER ADDRESSES
-========================= */
-router.get("/me", authMiddleware, getShippingAddresses);
-
-/* =========================
-   DEFAULT
-========================= */
+router.get("/", authMiddleware, getShippingAddresses);
 router.get("/default", authMiddleware, getDefaultShippingAddress);
-
-/* =========================
-   CREATE
-========================= */
 router.post("/", authMiddleware, createShippingAddress);
-
-/* =========================
-   UPDATE
-========================= */
 router.put("/:id", authMiddleware, updateShippingAddress);
-
-/* =========================
-   DELETE
-========================= */
 router.delete("/:id", authMiddleware, deleteShippingAddress);
 
 export default router;
