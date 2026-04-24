@@ -2,12 +2,9 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
-// 🔴 Validación fuerte
 if (!API_BASE) {
-  throw new Error("❌ REACT_APP_API_BASE_URL NO está definido");
+  throw new Error("REACT_APP_API_BASE_URL NO está definido");
 }
-
-console.log("🚀 API_BASE FINAL:", API_BASE);
 
 export const http = axios.create({
   baseURL: API_BASE,
@@ -15,23 +12,20 @@ export const http = axios.create({
   timeout: 10000,
 });
 
-// ✅ REQUEST INTERCEPTOR
-http.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error)
-);
+// REQUEST
+http.interceptors.request.use((config) => {
+  return config;
+});
 
-// ✅ RESPONSE INTERCEPTOR SEGURO
+// RESPONSE (IMPORTANTE)
 http.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
 
     if (status === 401) {
-      // 🔒 NO romper UI
-      console.warn("No autenticado");
-    } else {
-      console.error("HTTP ERROR:", error.response?.data || error.message);
+      console.warn("🔒 No autenticado (token inválido o expirado)");
+      // aquí luego puedes agregar refresh token automático
     }
 
     return Promise.reject(error);
