@@ -93,11 +93,14 @@ export function CartProvider({ children }) {
                 const cart = await fetchCart(user._id);
                 // Normalizar estructura de la base de datos a lo que usa la UI frontend
                 if (cart && cart.products) {
-                    const normalizedItems = cart.products.map(p => ({
-                        ...(p.product || {}),
-                        quantity: p.quantity,
-                        _id: (p.product?._id || p.product || "").toString()
-                    }));
+                    const normalizedItems = cart.products.map(p => {
+                        const productData = (p.product && typeof p.product === 'object') ? p.product : {};
+                        return {
+                            ...productData,
+                            quantity: p.quantity,
+                            _id: (p.product?._id || p.product || "").toString()
+                        };
+                    });
                     dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: normalizedItems });
                 } else {
                     dispatch({ type: ACTIONS.FETCH_SUCCESS, payload: [] });
