@@ -39,13 +39,11 @@ async function getPaymentMethodById(req, res, next) {
   }
 }
 
-async function getPaymentMethodsByUser(req, res, next) {
+export async function getPaymentMethodsByUser(req, res, next) {
   try {
-    const userId = req.user.userId;
     const paymentMethods = await PaymentMethod.find({
-      user: userId,
-      isActive: true,
-    }).populate("user");
+      user: req.user.userId,
+    });
 
     res.json(paymentMethods);
   } catch (error) {

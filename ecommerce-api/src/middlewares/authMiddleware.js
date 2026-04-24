@@ -12,10 +12,13 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded;
+    // 🔥 UNIFICAR TODO A userId
+    req.user = {
+      userId: decoded.userId || decoded._id,
+      role: decoded.role,
+    };
 
-    // 🔥 DEBUG (puedes quitarlo después)
-    console.log("🔐 USER AUTH:", decoded);
+    console.log("🔐 AUTH FIXED:", req.user);
 
     next();
   } catch (error) {
