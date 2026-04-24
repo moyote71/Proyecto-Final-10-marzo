@@ -62,20 +62,29 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
+        useEffect(() => {
         const loadOrders = async () => {
             if (!user?._id) {
                 setOrders([]);
                 setLoading(false);
                 return;
             }
+
             try {
                 const response = await http.get(`/orders/user/${user._id}`);
-                const rawOrders = Array.isArray(response.data) ? response.data : response.data?.data || [];
-                const normalized = rawOrders.map(normalizeOrder).filter(Boolean);
+
+                const rawOrders = Array.isArray(response.data)
+                    ? response.data
+                    : response.data?.data || [];
+
+                const normalized = rawOrders
+                    .map(normalizeOrder)
+                    .filter(Boolean);
+
                 const sorted = normalized.sort(
                     (a, b) => new Date(b.date) - new Date(a.date)
                 );
+
                 setOrders(sorted);
                 setSelectedOrderId((cur) => cur ?? sorted[0]?.id ?? null);
             } catch (err) {
@@ -85,8 +94,9 @@ export default function Orders() {
                 setLoading(false);
             }
         };
+
         loadOrders();
-    }, []);
+    }, [user?._id]);
 
     const selectedOrder = useMemo(
         () => orders.find((o) => o.id === selectedOrderId) || null,
