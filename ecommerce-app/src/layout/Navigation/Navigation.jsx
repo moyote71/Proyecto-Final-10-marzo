@@ -54,8 +54,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                 {categories.map((category) => (
                     <Link
                         key={category._id}
-                        to={`/category/${category._id}`}
-                        className={navStyles.mobileLink}
+                        to={`/categories/${category.slug}`}                        className={navStyles.mobileLink}
                         onClick={onLinkClick}
                     >
                         <Icon name="chevronRight" size={16} />
@@ -92,8 +91,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                                         className={navStyles.categoryGroup}
                                     >
                                         <Link
-                                            to={`/category/${category._id}`}
-                                            className={navStyles.mainCategoryLink}
+                                            to={`/categories/${category.slug}`}                                             className={navStyles.mainCategoryLink}
                                         >
                                             {category.name}
                                             {subcategories.length > 0 && (

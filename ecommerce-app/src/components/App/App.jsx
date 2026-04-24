@@ -37,8 +37,7 @@ function App() {
 
               <Route path="/search" element={<SearchResults />} />
               <Route path="/product/:productId" element={<Product />} />
-              <Route path="/category/:categoryId" element={<CategoryPage />} />
-
+              <Route path="/categories/:slug" element={<CategoryPage />} />
               {/* Profile */}
               <Route
                 path="/profile"

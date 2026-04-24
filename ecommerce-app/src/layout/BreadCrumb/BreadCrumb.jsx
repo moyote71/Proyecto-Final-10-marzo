@@ -56,8 +56,7 @@ const Breadcrumb = ({ categories = [] }) => {
                                     </span>
                                 ) : (
                                     <Link
-                                        to={`/category/${category._id}`}
-                                        className={styles.link()}
+                                        to={`/categories/${category.slug}`}                                        className={styles.link()}
                                     >
                                         {category.name}
                                     </Link>

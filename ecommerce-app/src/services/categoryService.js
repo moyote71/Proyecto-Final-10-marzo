@@ -30,7 +30,7 @@ export const getCategoryById = async (categoryId) => {
 ========================= */
 export const getCategoryBySlug = async (slug) => {
     const response = await http.get(`/categories/slug/${slug}`);
-    return response.data?.data || response.data || null;
+    return response.data;
 };
 
 /* =========================

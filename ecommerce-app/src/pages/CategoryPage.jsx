@@ -3,8 +3,7 @@ import CategoryProducts from "../components/CategoryProducts/CategoryProducts";
 import { CategoryPageStyles } from "./CategoryPageStyles";
 
 export default function CategoryPage() {
-    const { categoryId } = useParams();
-
+    const { slug } = useParams();
     return (
         <div className={CategoryPageStyles.wrapper()}>
             <CategoryProducts categoryId={categoryId} />
