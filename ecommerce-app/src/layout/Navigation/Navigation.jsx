@@ -26,10 +26,13 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
         const subcategories = categoriesData.filter(
             (cat) => cat.parentCategory && cat.parentCategory._id === parentId
         );
+
         return subcategories.sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    /*  MOBILE VERSION */
+    /* =========================
+       MOBILE
+    ========================= */
     if (isMobile) {
         return (
             <div className={`${navStyles.mobileWrapper} ${navContrastFix.mobileWrapperFix()}`}>
@@ -54,7 +57,8 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                 {categories.map((category) => (
                     <Link
                         key={category._id}
-                        to={`/categories/${category.slug}`}                        className={navStyles.mobileLink}
+                        to={`/categories/${category.slug}`}
+                        className={navStyles.mobileLink}
                         onClick={onLinkClick}
                     >
                         <Icon name="chevronRight" size={16} />
@@ -65,11 +69,14 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
         );
     }
 
-    /*  DESKTOP VERSION */
+    /* =========================
+       DESKTOP
+    ========================= */
     return (
         <div className={`${navStyles.wrapper} ${navContrastFix.allWhite()}`}>
             <div className={navStyles.inner}>
-                {/* CATEGORIES DROPDOWN */}
+
+                {/* DROPDOWN */}
                 <div className="relative">
                     <button
                         className={`${navStyles.dropdownButton} ${navContrastFix.dropdownButtonFix()}`}
@@ -85,13 +92,17 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                         <div className={`${navStyles.dropdownMenu} ${navContrastFix.dropdownStrong()}`}>
                             {categories.map((category) => {
                                 const subcategories = getSubcategories(category._id);
+
                                 return (
                                     <div
                                         key={category._id}
                                         className={navStyles.categoryGroup}
                                     >
+                                        {/* ✔ FIX AQUÍ */}
                                         <Link
-                                            to={`/categories/${subcat.slug}`}>
+                                            to={`/categories/${category.slug}`}
+                                            className={navStyles.mainCategoryLink}
+                                        >
                                             {category.name}
                                             {subcategories.length > 0 && (
                                                 <Icon name="chevronRight" size={12} />
@@ -118,7 +129,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                     )}
                 </div>
 
-                {/* HORIZONTAL NAV */}
+                {/* NAV HORIZONTAL */}
                 <nav className={`${navStyles.navHorizontal} ${navContrastFix.navHorizontalFix()}`}>
                     <Link to="/new" className={navStyles.navLinkSpecial}>
                         Servicios
@@ -136,6 +147,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                         Venta de Equipo
                     </Link>
                 </nav>
+
             </div>
         </div>
     );
