@@ -12,15 +12,20 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const { isAuthenticated, loading } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: wishlist = [] } = useQuery({
-        queryKey: ["wishlist"],
-        queryFn: getWishList,
-        enabled: isAuthenticated && !loading,
-    });
+    const { data } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: getWishList,
+    enabled: isAuthenticated && !loading,
+});
 
-    const inWishList = wishlist?.some(
-        item => (item.product?._id || item._id) === product?._id
-    );
+// 🔥 NORMALIZAR RESPUESTA (CLAVE)
+const wishlist = Array.isArray(data)
+    ? data
+    : data?.wishlist || data?.items || [];
+
+const inWishList = wishlist.some(
+    item => (item.product?._id || item._id) === product?._id
+);
 
     const toggleMutation = useMutation({
         mutationFn: () =>
