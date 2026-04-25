@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     const navigate = useNavigate();
 
     const isAuthenticated = !!user;
+    const isAdmin = user?.role === "admin"; // 🔥 FIX IMPORTANTE
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -95,6 +96,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         isAuthenticated,
+        isAdmin, // 🔥 FIX EXPORTADO
     };
 
     if (loading) {
