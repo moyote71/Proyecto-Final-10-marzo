@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BreadCrumb from "../../layout/BreadCrumb/BreadCrumb";
-import { getCategoryBySlug, getProductsByCategoryAndChildren } from "../../services/categoryService";
+import {
+    getCategoryBySlug,
+    getProductsByCategoryAndChildren,
+} from "../../services/categoryService";
 import ProductCard from "../ProductCard/ProductCard";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
@@ -14,31 +17,40 @@ export default function CategoryProducts({ slug }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!slug || slug === "undefined") {
+        // 🧨 FIX: proteger undefined / string basura
+        if (!slug || slug === "undefined" || slug === "null") {
             setError("Slug inválido");
             setLoading(false);
+            setCategory(null);
+            setProducts([]);
             return;
         }
 
         const load = async () => {
             try {
                 setLoading(true);
+                setError(null);
 
                 const categoryData = await getCategoryBySlug(slug);
 
-                if (!categoryData) {
+                // 🧨 FIX: si backend falla o no existe
+                if (!categoryData || !categoryData._id) {
                     setError("Categoría no encontrada");
+                    setCategory(null);
+                    setProducts([]);
                     return;
                 }
 
-                const productsData = await getProductsByCategoryAndChildren(
-                    categoryData._id
-                );
+                const productsData =
+                    await getProductsByCategoryAndChildren(categoryData._id);
 
                 setCategory(categoryData);
-                setProducts(productsData || []);
+                setProducts(Array.isArray(productsData) ? productsData : []);
             } catch (err) {
+                console.error("Error cargando categoría:", err);
                 setError("Error cargando categoría");
+                setCategory(null);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
@@ -47,7 +59,9 @@ export default function CategoryProducts({ slug }) {
         load();
     }, [slug]);
 
-    if (loading) return <Loading message="Cargando..." />;
+    if (loading) {
+        return <Loading message="Cargando..." />;
+    }
 
     if (error || !category) {
         return (
@@ -62,7 +76,7 @@ export default function CategoryProducts({ slug }) {
             <BreadCrumb
                 items={[
                     { label: "Inicio", to: "/" },
-                    { label: category.name },
+                    { label: category.name || "Categoría" },
                 ]}
             />
 
@@ -74,7 +88,9 @@ export default function CategoryProducts({ slug }) {
                         <ProductCard key={p._id} product={p} />
                     ))
                 ) : (
-                    <p>No hay productos en esta categoría</p>
+                    <p className="text-gray-500">
+                        No hay productos en esta categoría
+                    </p>
                 )}
             </div>
         </div>

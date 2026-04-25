@@ -8,7 +8,7 @@ if (!API_BASE) {
 
 export const http = axios.create({
   baseURL: API_BASE,
-  withCredentials: true,
+  withCredentials: true, // 🔥 clave para cookies
   timeout: 10000,
 });
 
@@ -16,29 +16,21 @@ export const http = axios.create({
    REQUEST INTERCEPTOR
 ========================= */
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
+  // 🔥 NO usar token manual
   return config;
 });
 
+/* =========================
+   RESPONSE INTERCEPTOR
+========================= */
 http.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
 
     if (status === 401) {
-      console.warn("🔒 No autenticado (token inválido o expirado)");
-
-      localStorage.removeItem("token");
-
-      // evita loops raros en checkout
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+      console.warn("🔒 No autenticado (modo invitado)");
+      // 🔥 NO redirigir
     }
 
     if (status === 404) {

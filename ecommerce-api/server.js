@@ -33,7 +33,7 @@ if (process.env.NODE_ENV !== "test") {
 ========================= */
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || "*",
+    origin: process.env.CORS_ORIGIN, // 🔥 SIN split
     credentials: true,
   })
 );
@@ -45,6 +45,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(logger);
 app.use("/api", apiLimiter);
+
+app.use("/uploads", express.static("uploads"));
 
 /* =========================
    HEALTH
