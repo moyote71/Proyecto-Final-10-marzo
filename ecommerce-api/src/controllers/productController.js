@@ -1,19 +1,23 @@
 import Product from "../models/product.js";
 
+/* =========================
+   GET ALL PRODUCTS
+========================= */
 async function getProducts(req, res, next) {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 50; // 🔥 más alto para evitar perder productos
     const skip = (page - 1) * limit;
 
     const products = await Product.find()
       .populate("category")
+      .sort({ createdAt: -1 }) // 🔥 CLAVE: nuevos primero
       .skip(skip)
-      .limit(limit)
-      .sort({ name: 1 });
+      .limit(limit);
 
     const totalResults = await Product.countDocuments();
     const totalPages = Math.ceil(totalResults / limit);
+
     res.json({
       products,
       pagination: {
@@ -29,32 +33,45 @@ async function getProducts(req, res, next) {
   }
 }
 
+/* ========================= */
 async function getProductById(req, res, next) {
   try {
     const id = req.params.id;
+
     const product = await Product.findById(id).populate("category");
+
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+
     res.json(product);
   } catch (error) {
     next(error);
   }
 }
 
+/* ========================= */
 async function getProductByCategory(req, res, next) {
   try {
     const id = req.params.idCategory;
-    const products = await Product.find({ category: id }).populate("category").sort({ name: 1 });
+
+    const products = await Product.find({ category: id })
+      .populate("category")
+      .sort({ createdAt: -1 }); // 🔥 también aquí
+
     if (products.length === 0) {
-      return res.status(404).json({ message: "No products found on this category" });
+      return res.status(404).json({
+        message: "No products found on this category",
+      });
     }
+
     res.json(products);
   } catch (error) {
     next(error);
   }
 }
 
+/* ========================= */
 async function createProduct(req, res, next) {
   try {
     const { name, description, price, stock, imagesUrl, category } = req.body;
@@ -68,7 +85,8 @@ async function createProduct(req, res, next) {
       category,
     });
 
-    const populatedProduct = await Product.findById(newProduct._id).populate("category");
+    const populatedProduct = await Product.findById(newProduct._id)
+      .populate("category");
 
     res.status(201).json(populatedProduct);
   } catch (error) {
@@ -76,12 +94,12 @@ async function createProduct(req, res, next) {
   }
 }
 
+/* ========================= */
 async function updateProduct(req, res, next) {
   try {
     const id = req.params.id;
     const { name, description, price, stock, imagesUrl, category } = req.body;
 
-    // Validar que al menos un campo esté presente
     if (
       !name &&
       !description &&
@@ -96,11 +114,11 @@ async function updateProduct(req, res, next) {
     }
 
     const product = await Product.findById(id);
+
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Actualizar solo los campos proporcionados
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = price;
@@ -118,19 +136,24 @@ async function updateProduct(req, res, next) {
   }
 }
 
+/* ========================= */
 async function deleteProduct(req, res, next) {
   try {
     const id = req.params.id;
+
     const deletedProduct = await Product.findByIdAndDelete(id);
+
     if (!deletedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
+
     res.status(204).send();
   } catch (error) {
     next(error);
   }
 }
 
+/* ========================= */
 async function searchProducts(req, res, next) {
   try {
     const {
@@ -171,10 +194,9 @@ async function searchProducts(req, res, next) {
     let sortOptions = {};
 
     if (sort) {
-      const sortOrder = order === "desc" ? -1 : 1;
-      sortOptions[sort] = sortOrder;
+      sortOptions[sort] = order === "desc" ? -1 : 1;
     } else {
-      sortOptions.name = 1;
+      sortOptions = { createdAt: -1 }; // 🔥 default mejorado
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
