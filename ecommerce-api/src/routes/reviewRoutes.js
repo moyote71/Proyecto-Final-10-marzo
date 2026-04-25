@@ -21,7 +21,7 @@ const router = express.Router();
    CREATE REVIEW
 ========================= */
 router.post(
-  "/review",
+  "/",
   authMiddleware,
   [
     bodyMongoIdValidation("product", "Product ID"),
@@ -33,20 +33,10 @@ router.post(
 );
 
 /* =========================
-   GET REVIEWS BY PRODUCT (OFICIAL)
+   GET REVIEWS BY PRODUCT
 ========================= */
 router.get(
-  "/review/product/:productId",
-  [mongoIdValidation("productId", "Product ID")],
-  validate,
-  getProductReviews
-);
-
-/* =========================
-   🔥 ALIAS (OPCIONAL PERO PRO)
-========================= */
-router.get(
-  "/review/product/:productId",
+  "/product/:productId",
   [mongoIdValidation("productId", "Product ID")],
   validate,
   getProductReviews
@@ -61,7 +51,7 @@ router.get("/my-reviews", authMiddleware, getUserReviews);
    UPDATE REVIEW
 ========================= */
 router.put(
-  "/review/:reviewId",
+  "/:reviewId",
   authMiddleware,
   [
     mongoIdValidation("reviewId", "Review ID"),
@@ -76,7 +66,7 @@ router.put(
    DELETE REVIEW
 ========================= */
 router.delete(
-  "/review/:reviewId",
+  "/:reviewId",
   authMiddleware,
   [mongoIdValidation("reviewId", "Review ID")],
   validate,
