@@ -18,7 +18,8 @@ const Profile = lazy(() => import("../../pages/Profile"));
 const SearchResults = lazy(() => import("../../pages/SearchResults"));
 const Settings = lazy(() => import("../../pages/Settings"));
 const WishList = lazy(() => import("../../pages/WishList"));
-const AdminDashboard = lazy(() => import("../../pages/AdminDashboard"));
+const AdminDashboard = lazy(() => import("../../pages/admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("../../pages/admin/AdminProducts"));
 const Register = lazy(() => import("../../pages/Register"));
 
 function App() {
@@ -105,6 +106,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+               <Route
+                 path="/admin/products"
+                  element={
+                   <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminProducts />
+                   </ProtectedRoute>
+                  }
+                />
 
               {/* 404 */}
               <Route path="*" element={<div>Ruta no encontrada</div>} />
