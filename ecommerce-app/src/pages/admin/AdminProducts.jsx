@@ -1,167 +1,195 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-    getAllProductsAdmin,
-    createProduct,
-    updateProduct,
-    deleteProduct
-} from "../../services/adminProductService";
+import { useEffect, useState } from "react";
+import { http } from "../../services/http";
 import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
 
 export default function AdminProducts() {
     const { user, isAuthenticated } = useAuth();
-    const queryClient = useQueryClient();
+
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [form, setForm] = useState({
         name: "",
-        price: 0,
-        stock: 0,
         description: "",
-        image: ""
+        price: "",
+        stock: "",
+        category: "",
+        imagesUrl: [""],
     });
 
     const [editingId, setEditingId] = useState(null);
 
     /* =========================
-       GUARD
+       LOAD PRODUCTS
+    ========================= */
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const res = await http.get("/products");
+            setProducts(res.data?.products || []);
+        } catch (err) {
+            console.error("Error loading products:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    /* =========================
+       CREATE / UPDATE
+    ========================= */
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            if (editingId) {
+                await http.put(`/products/${editingId}`, form);
+            } else {
+                await http.post("/products", form);
+            }
+
+            setForm({
+                name: "",
+                description: "",
+                price: "",
+                stock: "",
+                category: "",
+                imagesUrl: [""],
+            });
+
+            setEditingId(null);
+            fetchProducts();
+        } catch (err) {
+            console.error("Error saving product:", err);
+        }
+    };
+
+    /* =========================
+       DELETE PRODUCT
+    ========================= */
+    const handleDelete = async (id) => {
+        try {
+            await http.delete(`/products/${id}`);
+            fetchProducts();
+        } catch (err) {
+            console.error("Error deleting product:", err);
+        }
+    };
+
+    /* =========================
+       EDIT PRODUCT
+    ========================= */
+    const handleEdit = (p) => {
+        setEditingId(p._id);
+        setForm({
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            stock: p.stock,
+            category: p.category?._id || p.category,
+            imagesUrl: p.imagesUrl || [""],
+        });
+    };
+
+    /* =========================
+       AUTH GUARD
     ========================= */
     if (!isAuthenticated || user?.role !== "admin") {
         return <Navigate to="/" replace />;
     }
 
-    /* =========================
-       GET PRODUCTS
-    ========================= */
-    const { data: products = [] } = useQuery({
-        queryKey: ["admin_products"],
-        queryFn: getAllProductsAdmin,
-    });
-
-    /* =========================
-       CREATE / UPDATE
-    ========================= */
-    const mutation = useMutation({
-        mutationFn: (data) =>
-            editingId
-                ? updateProduct(editingId, data)
-                : createProduct(data),
-
-        onSuccess: () => {
-            queryClient.invalidateQueries(["admin_products"]);
-            setForm({
-                name: "",
-                price: 0,
-                stock: 0,
-                description: "",
-                image: ""
-            });
-            setEditingId(null);
-        }
-    });
-
-    /* =========================
-       DELETE
-    ========================= */
-    const deleteMutation = useMutation({
-        mutationFn: deleteProduct,
-        onSuccess: () => {
-            queryClient.invalidateQueries(["admin_products"]);
-        }
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        mutation.mutate(form);
-    };
-
-    const handleEdit = (product) => {
-        setForm(product);
-        setEditingId(product._id);
-    };
-
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Admin - Productos</h1>
+            <h1 className="text-2xl font-bold mb-4">Admin - Products</h1>
 
             {/* FORM */}
-            <form onSubmit={handleSubmit} className="grid gap-2 mb-6">
+            <form onSubmit={handleSubmit} className="space-y-2 mb-8">
                 <input
-                    placeholder="Nombre"
+                    placeholder="Name"
                     value={form.name}
-                    onChange={(e) =>
-                        setForm({ ...form, name: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="border p-2 w-full"
                 />
 
                 <input
-                    type="number"
-                    placeholder="Precio"
-                    value={form.price}
-                    onChange={(e) =>
-                        setForm({ ...form, price: Number(e.target.value) })
-                    }
-                />
-
-                <input
-                    type="number"
-                    placeholder="Stock"
-                    value={form.stock}
-                    onChange={(e) =>
-                        setForm({ ...form, stock: Number(e.target.value) })
-                    }
-                />
-
-                <input
-                    placeholder="Imagen URL"
-                    value={form.image}
-                    onChange={(e) =>
-                        setForm({ ...form, image: e.target.value })
-                    }
-                />
-
-                <textarea
-                    placeholder="Descripción"
+                    placeholder="Description"
                     value={form.description}
-                    onChange={(e) =>
-                        setForm({ ...form, description: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    className="border p-2 w-full"
                 />
 
-                <button type="submit">
-                    {editingId ? "Actualizar" : "Crear"}
+                <input
+                    placeholder="Price"
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    className="border p-2 w-full"
+                />
+
+                <input
+                    placeholder="Stock"
+                    type="number"
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                    className="border p-2 w-full"
+                />
+
+                <input
+                    placeholder="Category ID"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="border p-2 w-full"
+                />
+
+                <button className="bg-blue-600 text-white px-4 py-2">
+                    {editingId ? "Update Product" : "Create Product"}
                 </button>
             </form>
 
-            {/* LISTA */}
-            <div className="grid gap-4">
-                {products.map((p) => (
-                    <div
-                        key={p._id}
-                        className="border p-3 rounded flex justify-between"
-                    >
-                        <div>
-                            <p className="font-bold">{p.name}</p>
-                            <p>${p.price}</p>
-                            <p>Stock: {p.stock}</p>
-                        </div>
+            {/* LIST */}
+            {loading ? (
+                <p>Cargando...</p>
+            ) : (
+                <table className="w-full border">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                        <div className="flex gap-2">
-                            <button onClick={() => handleEdit(p)}>
-                                Editar
-                            </button>
+                    <tbody>
+                        {products.map((p) => (
+                            <tr key={p._id} className="border-t">
+                                <td>{p.name}</td>
+                                <td>${p.price}</td>
+                                <td>{p.stock}</td>
+                                <td className="space-x-2">
+                                    <button
+                                        onClick={() => handleEdit(p)}
+                                        className="bg-yellow-500 px-2"
+                                    >
+                                        Edit
+                                    </button>
 
-                            <button
-                                onClick={() =>
-                                    deleteMutation.mutate(p._id)
-                                }
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                                    <button
+                                        onClick={() => handleDelete(p._id)}
+                                        className="bg-red-600 text-white px-2"
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 }
