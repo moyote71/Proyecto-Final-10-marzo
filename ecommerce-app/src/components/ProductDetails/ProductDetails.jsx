@@ -245,7 +245,7 @@ export default function ProductDetails({ productId }) {
                             onClick={() =>
                                 addReviewMutation.mutate({
                                     comment: reviewComment,
-                                    score: reviewScore,
+                                    rating: reviewScore,
                                 })
                             }
                             disabled={
