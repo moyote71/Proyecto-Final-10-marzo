@@ -1,6 +1,8 @@
 import { http } from "../services/http";
 
-// LOGIN
+/* =========================
+   LOGIN
+========================= */
 export async function login(email, password) {
     try {
         const response = await http.post(
@@ -13,7 +15,6 @@ export async function login(email, password) {
             success: true,
             user: response.data.user,
         };
-
     } catch (error) {
         return {
             success: false,
@@ -25,7 +26,9 @@ export async function login(email, password) {
     }
 }
 
-// REGISTER
+/* =========================
+   REGISTER
+========================= */
 export async function register(name, email, password) {
     try {
         const response = await http.post(
@@ -38,7 +41,6 @@ export async function register(name, email, password) {
             success: true,
             user: response.data.user,
         };
-
     } catch (error) {
         return {
             success: false,
@@ -50,20 +52,13 @@ export async function register(name, email, password) {
     }
 }
 
-// LOGOUT
+/* =========================
+   LOGOUT
+========================= */
 export async function logout() {
     try {
         await http.post("/auth/logout", {}, { withCredentials: true });
-    } catch (e) {
-        console.error("Logout error", e);
+    } catch (error) {
+        console.error("Logout error:", error);
     }
 }
-
-// SOLO PARA UI (opcional)
-export function getCurrentUser() {
-    return null; // 🔥 ya no usamos localStorage
-}
-
-export function isAuthenticated() {
-    return false; // 🔥 lo maneja el backend
-}  
