@@ -1,5 +1,4 @@
 import express from "express";
-import { body, param } from "express-validator";
 import {
   createReview,
   deleteReview,
@@ -18,16 +17,24 @@ import {
 
 const router = express.Router();
 
-// Crear una nueva review (requiere autenticación)
+/* =========================
+   CREATE REVIEW
+========================= */
 router.post(
   "/review",
   authMiddleware,
-  [bodyMongoIdValidation("product", "Product ID"), ratingValidation(), commentValidation()],
+  [
+    bodyMongoIdValidation("product", "Product ID"),
+    ratingValidation(),
+    commentValidation(),
+  ],
   validate,
   createReview
 );
 
-// Obtener reviews de un producto específico
+/* =========================
+   GET REVIEWS BY PRODUCT (OFICIAL)
+========================= */
 router.get(
   "/review/product/:productId",
   [mongoIdValidation("productId", "Product ID")],
@@ -35,19 +42,39 @@ router.get(
   getProductReviews
 );
 
-// Obtener reviews del usuario autenticado
+/* =========================
+   🔥 ALIAS (OPCIONAL PERO PRO)
+========================= */
+router.get(
+  "/review/product/:productId",
+  [mongoIdValidation("productId", "Product ID")],
+  validate,
+  getProductReviews
+);
+
+/* =========================
+   USER REVIEWS
+========================= */
 router.get("/my-reviews", authMiddleware, getUserReviews);
 
-// Actualizar una review (requiere autenticación)
+/* =========================
+   UPDATE REVIEW
+========================= */
 router.put(
   "/review/:reviewId",
   authMiddleware,
-  [mongoIdValidation("reviewId", "Review ID"), ratingValidation(true), commentValidation()],
+  [
+    mongoIdValidation("reviewId", "Review ID"),
+    ratingValidation(true),
+    commentValidation(),
+  ],
   validate,
   updateReview
 );
 
-// Eliminar una review (requiere autenticación)
+/* =========================
+   DELETE REVIEW
+========================= */
 router.delete(
   "/review/:reviewId",
   authMiddleware,
