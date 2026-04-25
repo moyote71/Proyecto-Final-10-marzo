@@ -42,42 +42,50 @@ export default function AdminProducts() {
     /* =========================
        CREATE / UPDATE
     ========================= */
-    const handleSubmit = async (e) => {
-    e.preventDefault();
+        const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    try {
-        const payload = {
-            ...form,
-            price: Number(form.price),
-            stock: Number(form.stock),
-            category: form.category?.trim(),
-            imagesUrl: Array.isArray(form.imagesUrl)
-                ? form.imagesUrl.filter(url => url.trim() !== "")
-                : [],
-        };
+        try {
+            const payload = {
+                name: form.name?.trim(),
+                description: form.description?.trim(),
+                price: Number(form.price),
+                stock: Number(form.stock),
+                category: form.category?.trim(),
+                imagesUrl: form.imagesUrl
+                    .map(url => url.trim())
+                    .filter(url => url !== ""),
+            };
 
-        if (editingId) {
-            await http.put(`/products/${editingId}`, payload);
-        } else {
-            await http.post("/products", payload);
+            if (!payload.category) {
+                throw new Error("Category is required");
+            }
+
+            if (editingId) {
+                await http.put(`/products/${editingId}`, payload);
+            } else {
+                await http.post("/products", payload);
+            }
+
+            setForm({
+                name: "",
+                description: "",
+                price: "",
+                stock: "",
+                category: "",
+                imagesUrl: [""],
+            });
+
+            setEditingId(null);
+            fetchProducts();
+
+        } catch (err) {
+            console.error(
+                "Error saving product:",
+                err.response?.data || err.message
+            );
         }
-
-        setForm({
-            name: "",
-            description: "",
-            price: "",
-            stock: "",
-            category: "",
-            imagesUrl: [],
-        });
-
-        setEditingId(null);
-        fetchProducts();
-
-    } catch (err) {
-        console.error("Error saving product:", err.response?.data || err);
-    }
-};
+    };
 
     /* =========================
        DELETE PRODUCT
