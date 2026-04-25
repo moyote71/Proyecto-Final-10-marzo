@@ -1,7 +1,7 @@
 import { http } from "./http";
 
 /* =========================
-   GET REVIEWS BY PRODUCT
+   GET REVIEWS
 ========================= */
 export const getProductReviews = async (productId) => {
     const response = await http.get(`/reviews/product/${productId}`);
@@ -9,16 +9,20 @@ export const getProductReviews = async (productId) => {
 };
 
 /* =========================
-   ADD REVIEW (CORREGIDO)
+   ADD REVIEW (FIX VALIDACIÓN)
 ========================= */
 export const addReview = async (productId, reviewData) => {
     const payload = {
-        product: productId,
+        product: String(productId).trim(),
         rating: Number(reviewData.rating),
-        comment: reviewData.comment?.trim(),
+        comment: String(reviewData.comment || "").trim(),
     };
 
-    console.log("SEND REVIEW:", payload);
+    console.log("SEND REVIEW FIXED:", payload);
+
+    if (!payload.product || !payload.rating || !payload.comment) {
+        throw new Error("Faltan datos en la reseña");
+    }
 
     const response = await http.post("/reviews", payload);
 
@@ -29,6 +33,5 @@ export const addReview = async (productId, reviewData) => {
    DELETE REVIEW
 ========================= */
 export const deleteReview = async (reviewId) => {
-    const response = await http.delete(`/reviews/${reviewId}`);
-    return response.data;
+    return await http.delete(`/reviews/${reviewId}`);
 };
