@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { http } from "../../services/http";
 import { useAuth } from "../../context/AuthContext";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 export default function AdminProducts() {
     const { user, isAuthenticated } = useAuth();
@@ -26,16 +26,17 @@ export default function AdminProducts() {
     /* =========================
        LOAD DATA
     ========================= */
-        const fetchProducts = async () => {
+    const fetchProducts = async () => {
         try {
             setLoading(true);
             const res = await http.get("/products");
 
-            console.log("PRODUCTS RESPONSE:", res.data);
+            const data = res.data?.products || res.data;
 
-            setProducts(res.data?.products || res.data || []);
+            setProducts(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error(err);
+            console.error("Error loading products:", err);
+            setProducts([]);
         } finally {
             setLoading(false);
         }
@@ -44,9 +45,9 @@ export default function AdminProducts() {
     const fetchCategories = async () => {
         try {
             const res = await http.get("/categories");
-            setCategories(res.data || []);
+            setCategories(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error(err);
+            console.error("Error loading categories:", err);
         }
     };
 
@@ -101,7 +102,7 @@ export default function AdminProducts() {
             }
 
             resetForm();
-            fetchProducts();
+            await fetchProducts();
 
         } catch (err) {
             console.error("ERROR BACKEND:", err.response?.data || err);
@@ -115,18 +116,18 @@ export default function AdminProducts() {
        DELETE
     ========================= */
     const handleDelete = async (id) => {
-        const confirmDelete = window.confirm("¿Seguro que quieres eliminar este producto?");
+        const confirmDelete = window.confirm("¿Eliminar producto?");
         if (!confirmDelete) return;
 
         try {
             await http.delete(`/products/${id}`);
 
-            // 🔥 Evita bug de edición fantasma
             if (editingId === id) {
                 resetForm();
             }
 
-            fetchProducts();
+            await fetchProducts();
+
         } catch (err) {
             console.error("Error deleting product:", err);
         }
@@ -137,12 +138,13 @@ export default function AdminProducts() {
     ========================= */
     const handleEdit = (p) => {
         setEditingId(p._id);
+
         setForm({
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            stock: p.stock,
-            category: p.category?._id || p.category,
+            name: p.name || "",
+            description: p.description || "",
+            price: p.price || "",
+            stock: p.stock || "",
+            category: p.category?._id || p.category || "",
             imagesUrl: p.imagesUrl?.length ? p.imagesUrl : [""],
         });
     };
@@ -155,19 +157,9 @@ export default function AdminProducts() {
     }
 
     return (
-        <div className="p-6">
+        <div>
 
-            {/* NAV */}
-            <nav className="mb-6 flex gap-4">
-                <Link to="/admin" className="text-blue-600 font-semibold">
-                    Usuarios
-                </Link>
-                <Link to="/admin/products" className="text-blue-600 font-semibold">
-                    Productos
-                </Link>
-            </nav>
-
-            <h1 className="text-2xl font-bold mb-4">
+            <h1 className="text-2xl font-bold mb-6">
                 Gestión de Productos
             </h1>
 
@@ -217,32 +209,35 @@ export default function AdminProducts() {
                     ))}
                 </select>
 
-                <button
-                    disabled={saving}
-                    className="bg-blue-600 text-white px-4 py-2"
-                >
-                    {saving
-                        ? "Guardando..."
-                        : editingId
-                            ? "Actualizar"
-                            : "Crear Producto"}
-                </button>
-
-                {/* 🔥 BOTÓN CANCELAR */}
-                {editingId && (
+                <div className="flex gap-2">
                     <button
-                        type="button"
-                        onClick={resetForm}
-                        className="bg-gray-500 text-white px-4 py-2 ml-2"
+                        disabled={saving}
+                        className="bg-blue-600 text-white px-4 py-2"
                     >
-                        Cancelar edición
+                        {saving
+                            ? "Guardando..."
+                            : editingId
+                                ? "Actualizar"
+                                : "Crear"}
                     </button>
-                )}
+
+                    {editingId && (
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="bg-gray-500 text-white px-4 py-2"
+                        >
+                            Cancelar
+                        </button>
+                    )}
+                </div>
             </form>
 
             {/* LIST */}
             {loading ? (
                 <p>Cargando...</p>
+            ) : products.length === 0 ? (
+                <p>No hay productos</p>
             ) : (
                 <table className="w-full border">
                     <thead>
@@ -256,7 +251,7 @@ export default function AdminProducts() {
                     </thead>
                     <tbody>
                         {products.map(p => (
-                            <tr key={p._id}>
+                            <tr key={p._id} className="border-t">
                                 <td>{p.name}</td>
                                 <td>${p.price}</td>
                                 <td>{p.stock}</td>
@@ -268,6 +263,7 @@ export default function AdminProducts() {
                                     >
                                         Edit
                                     </button>
+
                                     <button
                                         onClick={() => handleDelete(p._id)}
                                         className="bg-red-600 text-white px-2"
