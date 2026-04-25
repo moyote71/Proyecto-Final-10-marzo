@@ -26,11 +26,14 @@ export default function AdminProducts() {
     /* =========================
        LOAD DATA
     ========================= */
-    const fetchProducts = async () => {
+        const fetchProducts = async () => {
         try {
             setLoading(true);
             const res = await http.get("/products");
-            setProducts(res.data?.products || []);
+
+            console.log("PRODUCTS RESPONSE:", res.data);
+
+            setProducts(res.data?.products || res.data || []);
         } catch (err) {
             console.error(err);
         } finally {
