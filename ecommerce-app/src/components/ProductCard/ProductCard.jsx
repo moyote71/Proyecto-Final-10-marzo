@@ -9,7 +9,6 @@ import {
     removeFromWishList,
 } from "../../services/wishListService";
 import { useAuth } from "../../context/AuthContext";
-import formatImageUrl from "../../utils/formatImageUrl";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
@@ -20,6 +19,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
         queryKey: ["wishlist"],
         queryFn: getWishList,
         enabled: isAuthenticated && !loading,
+        retry: false, // 🔥 evita loops si falla
     });
 
     const wishlist = Array.isArray(wishlistData) ? wishlistData : [];
@@ -41,12 +41,11 @@ export default function ProductCard({ product, orientation = "vertical" }) {
 
     const { name, price, stock, description } = product;
 
-    // Imagen segura
+    // ✅ IMAGEN 100% SEGURA
     const productImageUrl =
-    Array.isArray(product?.imagesUrl) && product.imagesUrl.length > 0
-        ? product.imagesUrl[0]
-        : product?.image ||
-          "https://placehold.co/800x600?text=Producto";
+        Array.isArray(product?.imagesUrl) && product.imagesUrl.length > 0
+            ? product.imagesUrl[0]
+            : "https://placehold.co/800x600?text=Producto";
 
     // Categoría segura
     const categoryLink =
@@ -99,7 +98,6 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                     <Link to={`/product/${product?._id}`}>{name}</Link>
                 </h3>
 
-                {/* Categoría */}
                 {product?.category && categoryLink && (
                     <Link
                         to={`/categories/${categoryLink}`}
