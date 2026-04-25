@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { http } from "../../services/http";
 
@@ -24,15 +24,32 @@ export default function AdminDashboard() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-8 text-gray-800">Panel de Control: Administrador</h1>
-            
+
+            <h1 className="text-3xl font-bold mb-8 text-gray-800">
+                Panel de Control: Administrador
+            </h1>
+
+            {/* NAV ADMIN CORRECTO */}
+            <nav className="mb-6 flex gap-4">
+                <Link to="/admin" className="text-blue-600">
+                    Usuarios
+                </Link>
+                <Link to="/admin/products" className="text-blue-600">
+                    Productos
+                </Link>
+            </nav>
+
             <section className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">Gestión de Usuarios</h2>
-                
+                <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                    Gestión de Usuarios
+                </h2>
+
                 {isLoading ? (
                     <p className="text-gray-500">Cargando base de clientes...</p>
                 ) : error ? (
-                    <p className="text-red-500">Error al cargar listado. (Valida tus permisos de administrador)</p>
+                    <p className="text-red-500">
+                        Error al cargar listado. (Valida tus permisos de administrador)
+                    </p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -54,7 +71,9 @@ export default function AdminDashboard() {
                                                 {u.role.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="p-3 text-sm text-gray-500">{new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td className="p-3 text-sm text-gray-500">
+                                            {new Date(u.createdAt).toLocaleDateString()}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
