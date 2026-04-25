@@ -5,7 +5,7 @@ import { Navigate } from "react-router-dom";
 
 export default function AdminProducts() {
     const { user, isAuthenticated } = useAuth();
-
+    const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -39,53 +39,63 @@ export default function AdminProducts() {
         fetchProducts();
     }, []);
 
+
+        useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await http.get("/categories");
+                setCategories(res.data || []);
+            } catch (err) {
+                console.error("Error loading categories:", err);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+
     /* =========================
        CREATE / UPDATE
     ========================= */
         const handleSubmit = async (e) => {
-        e.preventDefault();
+            e.preventDefault();
 
-        try {
-            const payload = {
-                name: form.name?.trim(),
-                description: form.description?.trim(),
-                price: Number(form.price),
-                stock: Number(form.stock),
-                category: form.category?.trim(),
-                imagesUrl: form.imagesUrl
-                    .map(url => url.trim())
-                    .filter(url => url !== ""),
-            };
+            try {
+                const payload = {
+                    name: form.name,
+                    description: form.description,
+                    price: Number(form.price),
+                    stock: Number(form.stock),
+                    category: form.category,
+imagesUrl: form.imagesUrl?.filter(img => img.trim()) || ["https://placehold.co/600x400.png"],                };
 
-            if (!payload.category) {
-                throw new Error("Category is required");
+                if (!payload.category) {
+                    alert("Selecciona una categoría");
+                    return;
+                }
+
+                if (editingId) {
+                    await http.put(`/products/${editingId}`, payload);
+                } else {
+                    await http.post("/products", payload);
+                }
+
+                setForm({
+                    name: "",
+                    description: "",
+                    price: "",
+                    stock: "",
+                    category: "",
+                    imagesUrl: [""],
+                });
+
+                setEditingId(null);
+                fetchProducts();
+
+            } catch (err) {
+                console.error("Error saving product:", err.response?.data || err);
             }
-
-            if (editingId) {
-                await http.put(`/products/${editingId}`, payload);
-            } else {
-                await http.post("/products", payload);
-            }
-
-            setForm({
-                name: "",
-                description: "",
-                price: "",
-                stock: "",
-                category: "",
-                imagesUrl: [""],
-            });
-
-            setEditingId(null);
-            fetchProducts();
-
-        } catch (err) {
-            console.error(
-                "Error saving product:",
-                err.response?.data || err.message
-            );
-        }
-    };
+        };
 
     /* =========================
        DELETE PRODUCT
@@ -157,12 +167,19 @@ export default function AdminProducts() {
                     className="border p-2 w-full"
                 />
 
-                <input
-                    placeholder="Category ID"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="border p-2 w-full"
-                />
+                    <select
+                        value={form.category}
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        className="border p-2 w-full"
+                    >
+                        <option value="">Select category</option>
+
+                        {categories.map((c) => (
+                            <option key={c._id} value={c._id}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </select>       
 
                 <button className="bg-blue-600 text-white px-4 py-2">
                     {editingId ? "Update Product" : "Create Product"}
