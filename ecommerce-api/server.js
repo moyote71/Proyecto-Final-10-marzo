@@ -46,6 +46,8 @@ app.use(cookieParser());
 app.use(logger);
 app.use("/api", apiLimiter);
 
+app.use("/uploads", express.static("uploads"));
+
 /* =========================
    HEALTH
 ========================= */

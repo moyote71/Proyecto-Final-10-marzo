@@ -42,9 +42,11 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const { name, price, stock, description } = product;
 
     // Imagen segura
-    const productImageUrl = formatImageUrl(
-        product.image || product.imagesUrl?.[0]
-    );
+    const productImageUrl =
+    Array.isArray(product?.imagesUrl) && product.imagesUrl.length > 0
+        ? product.imagesUrl[0]
+        : product?.image ||
+          "https://placehold.co/800x600?text=Producto";
 
     // Categoría segura
     const categoryLink =

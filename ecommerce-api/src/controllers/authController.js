@@ -30,6 +30,15 @@ const generateRefreshToken = (user) => {
 };
 
 /* =========================
+   COOKIE CONFIG (FIX PRODUCCIÓN)
+========================= */
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,      // 🔥 obligatorio en Render (HTTPS)
+  sameSite: "none",  // 🔥 obligatorio para cross-domain
+};
+
+/* =========================
    REGISTER
 ========================= */
 export const register = async (req, res, next) => {
@@ -63,7 +72,7 @@ export const register = async (req, res, next) => {
 };
 
 /* =========================
-   LOGIN (PRODUCTION READY)
+   LOGIN (FIX PRODUCCIÓN)
 ========================= */
 export const login = async (req, res, next) => {
   try {
@@ -82,20 +91,14 @@ export const login = async (req, res, next) => {
     const token = generateToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    };
-
     res.cookie("token", token, {
       ...cookieOptions,
-      maxAge: 60 * 60 * 1000,
+      maxAge: 60 * 60 * 1000, // 1 hora
     });
 
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
       path: "/api/auth/refresh",
     });
 
@@ -114,7 +117,7 @@ export const login = async (req, res, next) => {
 };
 
 /* =========================
-   REFRESH TOKEN (FIXED)
+   REFRESH TOKEN
 ========================= */
 export const refreshToken = async (req, res, next) => {
   try {
@@ -133,12 +136,6 @@ export const refreshToken = async (req, res, next) => {
 
     const newToken = generateToken(user);
     const newRefreshToken = generateRefreshToken(user);
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    };
 
     res.cookie("token", newToken, {
       ...cookieOptions,
@@ -169,13 +166,8 @@ export const refreshToken = async (req, res, next) => {
    LOGOUT
 ========================= */
 export const logout = async (req, res) => {
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  };
-
   res.clearCookie("token", cookieOptions);
+
   res.clearCookie("refreshToken", {
     ...cookieOptions,
     path: "/api/auth/refresh",
