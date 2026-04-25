@@ -5,7 +5,7 @@ import { http } from "../../services/http";
 
 const fetchUsers = async () => {
     const res = await http.get("/users");
-    return res.data?.data || res.data;
+    return res.data?.users || [];
 };
 
 export default function AdminDashboard() {
