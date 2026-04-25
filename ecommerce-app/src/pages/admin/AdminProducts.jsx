@@ -60,14 +60,17 @@ export default function AdminProducts() {
         const handleSubmit = async (e) => {
             e.preventDefault();
 
-            try {
-                const payload = {
-                    name: form.name,
-                    description: form.description,
-                    price: Number(form.price),
-                    stock: Number(form.stock),
-                    category: form.category,
-imagesUrl: form.imagesUrl?.filter(img => img.trim()) || ["https://placehold.co/600x400.png"],                };
+        try {
+            const payload = {
+                name: form.name.trim(),
+                description: form.description.trim(),
+                price: Number(form.price),
+                stock: Number(form.stock),
+                category: form.category,
+                imagesUrl: form.imagesUrl?.filter(img => img.trim())?.length
+                    ? form.imagesUrl.filter(img => img.trim())
+                    : ["https://placehold.co/600x400.png"],
+            };
 
                 if (!payload.category) {
                     alert("Selecciona una categoría");
@@ -77,6 +80,7 @@ imagesUrl: form.imagesUrl?.filter(img => img.trim()) || ["https://placehold.co/6
                 if (editingId) {
                     await http.put(`/products/${editingId}`, payload);
                 } else {
+                    console.log("PAYLOAD ENVIADO:", payload);
                     await http.post("/products", payload);
                 }
 
