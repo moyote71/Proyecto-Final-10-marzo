@@ -11,15 +11,16 @@ export default function AdminProducts() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const [form, setForm] = useState({
+    const initialForm = {
         name: "",
         description: "",
         price: "",
         stock: "",
         category: "",
         imagesUrl: [""],
-    });
+    };
 
+    const [form, setForm] = useState(initialForm);
     const [editingId, setEditingId] = useState(null);
 
     /* =========================
@@ -50,6 +51,14 @@ export default function AdminProducts() {
         fetchProducts();
         fetchCategories();
     }, []);
+
+    /* =========================
+       RESET FORM
+    ========================= */
+    const resetForm = () => {
+        setForm(initialForm);
+        setEditingId(null);
+    };
 
     /* =========================
        SUBMIT
@@ -88,16 +97,7 @@ export default function AdminProducts() {
                 await http.post("/products", payload);
             }
 
-            setForm({
-                name: "",
-                description: "",
-                price: "",
-                stock: "",
-                category: "",
-                imagesUrl: [""],
-            });
-
-            setEditingId(null);
+            resetForm();
             fetchProducts();
 
         } catch (err) {
@@ -108,19 +108,30 @@ export default function AdminProducts() {
         }
     };
 
-    /* ========================= */
+    /* =========================
+       DELETE
+    ========================= */
     const handleDelete = async (id) => {
-        if (!window.confirm("¿Eliminar producto?")) return;
+        const confirmDelete = window.confirm("¿Seguro que quieres eliminar este producto?");
+        if (!confirmDelete) return;
 
         try {
             await http.delete(`/products/${id}`);
+
+            // 🔥 Evita bug de edición fantasma
+            if (editingId === id) {
+                resetForm();
+            }
+
             fetchProducts();
         } catch (err) {
-            console.error(err);
+            console.error("Error deleting product:", err);
         }
     };
 
-    /* ========================= */
+    /* =========================
+       EDIT
+    ========================= */
     const handleEdit = (p) => {
         setEditingId(p._id);
         setForm({
@@ -129,11 +140,13 @@ export default function AdminProducts() {
             price: p.price,
             stock: p.stock,
             category: p.category?._id || p.category,
-            imagesUrl: p.imagesUrl || [""],
+            imagesUrl: p.imagesUrl?.length ? p.imagesUrl : [""],
         });
     };
 
-    /* ========================= */
+    /* =========================
+       AUTH
+    ========================= */
     if (!isAuthenticated || user?.role !== "admin") {
         return <Navigate to="/" replace />;
     }
@@ -158,25 +171,31 @@ export default function AdminProducts() {
             {/* FORM */}
             <form onSubmit={handleSubmit} className="space-y-2 mb-8">
 
-                <input placeholder="Nombre"
+                <input
+                    placeholder="Nombre"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="border p-2 w-full"
                 />
 
-                <input placeholder="Descripción"
+                <input
+                    placeholder="Descripción"
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     className="border p-2 w-full"
                 />
 
-                <input type="number" placeholder="Precio"
+                <input
+                    type="number"
+                    placeholder="Precio"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                     className="border p-2 w-full"
                 />
 
-                <input type="number" placeholder="Stock"
+                <input
+                    type="number"
+                    placeholder="Stock"
                     value={form.stock}
                     onChange={(e) => setForm({ ...form, stock: e.target.value })}
                     className="border p-2 w-full"
@@ -205,6 +224,17 @@ export default function AdminProducts() {
                             ? "Actualizar"
                             : "Crear Producto"}
                 </button>
+
+                {/* 🔥 BOTÓN CANCELAR */}
+                {editingId && (
+                    <button
+                        type="button"
+                        onClick={resetForm}
+                        className="bg-gray-500 text-white px-4 py-2 ml-2"
+                    >
+                        Cancelar edición
+                    </button>
+                )}
             </form>
 
             {/* LIST */}
@@ -229,10 +259,16 @@ export default function AdminProducts() {
                                 <td>{p.stock}</td>
                                 <td>{p.category?.name || "N/A"}</td>
                                 <td className="space-x-2">
-                                    <button onClick={() => handleEdit(p)}>
+                                    <button
+                                        onClick={() => handleEdit(p)}
+                                        className="bg-yellow-500 px-2"
+                                    >
                                         Edit
                                     </button>
-                                    <button onClick={() => handleDelete(p._id)}>
+                                    <button
+                                        onClick={() => handleDelete(p._id)}
+                                        className="bg-red-600 text-white px-2"
+                                    >
                                         Delete
                                     </button>
                                 </td>
