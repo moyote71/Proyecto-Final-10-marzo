@@ -25,60 +25,47 @@ export default function AdminDashboard() {
     return (
         <div className="container mx-auto px-4 py-8">
 
-            <h1 className="text-3xl font-bold mb-8 text-gray-800">
-                Panel de Control: Administrador
+            <h1 className="text-3xl font-bold mb-8">
+                Panel de Administración
             </h1>
 
-            {/* NAV ADMIN CORRECTO */}
             <nav className="mb-6 flex gap-4">
-                <Link to="/admin" className="text-blue-600">
+                <Link to="/admin" className="text-blue-600 font-semibold">
                     Usuarios
                 </Link>
-                <Link to="/admin/products" className="text-blue-600">
+                <Link to="/admin/products" className="text-blue-600 font-semibold">
                     Productos
                 </Link>
             </nav>
 
             <section className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">
-                    Gestión de Usuarios
+                <h2 className="text-xl font-semibold mb-4">
+                    Usuarios
                 </h2>
 
                 {isLoading ? (
-                    <p className="text-gray-500">Cargando base de clientes...</p>
+                    <p>Cargando...</p>
                 ) : error ? (
-                    <p className="text-red-500">
-                        Error al cargar listado. (Valida tus permisos de administrador)
-                    </p>
+                    <p className="text-red-500">Error al cargar</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b-2">
-                                    <th className="p-3 text-gray-600">Nombre</th>
-                                    <th className="p-3 text-gray-600">Email</th>
-                                    <th className="p-3 text-gray-600">Rol</th>
-                                    <th className="p-3 text-gray-600">Registro</th>
+                    <table className="w-full">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map(u => (
+                                <tr key={u._id}>
+                                    <td>{u.displayName}</td>
+                                    <td>{u.email}</td>
+                                    <td>{u.role}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {users.map(u => (
-                                    <tr key={u._id} className="border-b hover:bg-gray-50">
-                                        <td className="p-3 font-medium">{u.displayName}</td>
-                                        <td className="p-3 text-gray-600">{u.email}</td>
-                                        <td className="p-3">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
-                                                {u.role.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-sm text-gray-500">
-                                            {new Date(u.createdAt).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </section>
         </div>
