@@ -5,11 +5,11 @@ import { http } from "./http";
 ========================= */
 export const getProductReviews = async (productId) => {
     const response = await http.get(`/reviews/product/${productId}`);
-    return response.data?.reviews || response.data?.data || response.data || [];
+    return response.data?.reviews || [];
 };
 
 /* =========================
-   ADD REVIEW (FIXED)
+   ADD REVIEW (CORREGIDO)
 ========================= */
 export const addReview = async (productId, reviewData) => {
     const payload = {
@@ -20,7 +20,7 @@ export const addReview = async (productId, reviewData) => {
 
     console.log("SEND REVIEW:", payload);
 
-    const response = await http.post("/reviews/review", payload);
+    const response = await http.post("/reviews", payload);
 
     return response.data;
 };
