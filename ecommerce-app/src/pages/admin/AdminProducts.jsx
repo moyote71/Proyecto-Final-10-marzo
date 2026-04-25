@@ -43,30 +43,41 @@ export default function AdminProducts() {
        CREATE / UPDATE
     ========================= */
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
-            if (editingId) {
-                await http.put(`/products/${editingId}`, form);
-            } else {
-                await http.post("/products", form);
-            }
+    try {
+        const payload = {
+            ...form,
+            price: Number(form.price),
+            stock: Number(form.stock),
+            category: form.category?.trim(),
+            imagesUrl: Array.isArray(form.imagesUrl)
+                ? form.imagesUrl.filter(url => url.trim() !== "")
+                : [],
+        };
 
-            setForm({
-                name: "",
-                description: "",
-                price: "",
-                stock: "",
-                category: "",
-                imagesUrl: [""],
-            });
-
-            setEditingId(null);
-            fetchProducts();
-        } catch (err) {
-            console.error("Error saving product:", err);
+        if (editingId) {
+            await http.put(`/products/${editingId}`, payload);
+        } else {
+            await http.post("/products", payload);
         }
-    };
+
+        setForm({
+            name: "",
+            description: "",
+            price: "",
+            stock: "",
+            category: "",
+            imagesUrl: [],
+        });
+
+        setEditingId(null);
+        fetchProducts();
+
+    } catch (err) {
+        console.error("Error saving product:", err.response?.data || err);
+    }
+};
 
     /* =========================
        DELETE PRODUCT
