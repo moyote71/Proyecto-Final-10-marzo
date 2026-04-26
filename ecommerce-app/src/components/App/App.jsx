@@ -29,105 +29,92 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Layout>
-          <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><Loading>Cargando vista...</Loading></div>}>
-            <Routes>
+            <Suspense
+              fallback={
+                <div className="h-screen flex items-center justify-center">
+                  <Loading>Cargando...</Loading>
+                </div>
+              }
+            >
+              <Routes>
 
-              <Route path="/" element={<Home />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+                {/* PUBLIC */}
+                <Route path="/" element={<Home />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-              <Route path="/search" element={<SearchResults />} />
-              <Route path="/product/:productId" element={<Product />} />
-              <Route path="/categories/:slug" element={<CategoryPage />} />
-              {/* Profile */}
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute
-                    redirectTo="/login"
-                    allowedRoles={["admin", "customer", "cliente"]}
-                  >
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
+                <Route path="/search" element={<SearchResults />} />
+                <Route path="/product/:productId" element={<Product />} />
+                <Route path="/categories/:slug" element={<CategoryPage />} />
 
-              {/* Checkout */}
-              <Route
-                path="/checkout"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <Checkout />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Wishlist */}
-              <Route
-                path="/wishlist"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <WishList />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Orders */}
-              <Route
-                path="/orders"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <Orders />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route path="/order-confirmation" element={<OrderConfirmation />} />
-
-              {/* Settings */}
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Admin Panel */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute
-                    redirectTo="/login"
-                    allowedRoles={["admin"]}
-                  >
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-
-               <Route
-                 path="/admin/products"
+                {/* USER */}
+                <Route
+                  path="/profile"
                   element={
-                   <ProtectedRoute allowedRoles={["admin"]}>
-                      <AdminProducts />
-                   </ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["admin", "customer", "cliente"]}>
+                      <Profile />
+                    </ProtectedRoute>
                   }
                 />
 
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route
+                  path="/checkout"
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/wishlist"
+                  element={
+                    <ProtectedRoute>
+                      <WishList />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/orders"
+                  element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
+
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* ✅ ADMIN LIMPIO */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
                   <Route index element={<AdminDashboard />} />
                   <Route path="products" element={<AdminProducts />} />
                 </Route>
 
-              {/* 404 */}
-              <Route path="*" element={<div>Ruta no encontrada</div>} />
+                {/* 404 */}
+                <Route path="*" element={<div>Ruta no encontrada</div>} />
 
-            </Routes>
-          </Suspense>
-        </Layout>
+              </Routes>
+            </Suspense>
+          </Layout>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -21,7 +21,7 @@ export default function AdminLayout() {
             <header className="bg-white shadow p-4 flex justify-between">
                 <h1 className="font-bold text-lg">Admin Panel</h1>
 
-                <Link to="/" className="text-red-600">
+                <Link to="/" className="text-red-600 font-semibold">
                     Salir
                 </Link>
             </header>
@@ -47,7 +47,7 @@ export default function AdminLayout() {
 
                 </aside>
 
-                {/* CONTENT */}
+                {/* CONTENIDO DINÁMICO */}
                 <main className="flex-1 p-6">
                     <Outlet />
                 </main>
