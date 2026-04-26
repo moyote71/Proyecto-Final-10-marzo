@@ -32,5 +32,6 @@ router.use("/orders", orderRoutes);
 router.use("/payment-methods", paymentMethodRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/shipping-addresses", shippingAddressRoutes);
-app.use("/api/wishlist", wishListRoutes);
+router.use("/wishlist", wishListRoutes);
+
 export default router;
