@@ -10,7 +10,7 @@ import productRoutes from "./productRoutes.js";
 import reviewRoutes from "./reviewRoutes.js";
 import shippingAddressRoutes from "./shippingAddressRoutes.js";
 import userRoutes from "./userRoutes.js";
-import wishListRoutes from "./wishListRoutes.js";
+import wishListRoutes from "./routes/wishListRoutes.js";
 
 const router = express.Router();
 
@@ -32,6 +32,5 @@ router.use("/orders", orderRoutes);
 router.use("/payment-methods", paymentMethodRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/shipping-addresses", shippingAddressRoutes);
-router.use("/wishlist", wishListRoutes);
-
+app.use("/api/wishlist", wishListRoutes);
 export default router;

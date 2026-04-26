@@ -1,44 +1,36 @@
 import { http } from "./http";
 
-/**
- * TODAS las funciones normalizan la respuesta del backend.
- * getWishList() SIEMPRE retorna un array limpio [].
- */
-
+/* =========================
+   GET
+========================= */
 export const getWishList = async () => {
-    const response = await http.get("/wishlist");
-    const raw = response.data;
-
-    // Normalizar: el backend puede responder como:
-    //   { wishlist: [...] }  |  { data: [...] }  |  [...]  |  { items: [...] }
-    if (Array.isArray(raw)) return raw;
-    if (Array.isArray(raw?.wishlist)) return raw.wishlist;
-    if (Array.isArray(raw?.data)) return raw.data;
-    if (Array.isArray(raw?.items)) return raw.items;
-    return [];
+  const res = await http.get("/wishlist");
+  return res.data;
 };
 
-export const checkProductInWishList = async (productId) => {
-    const response = await http.get(`/wishlist/check/${productId}`);
-    return response.data?.inWishList || false;
-};
-
+/* =========================
+   ADD
+========================= */
 export const addToWishList = async (productId) => {
-    const response = await http.post("/wishlist/add", { productId });
-    return response.data;
+  const res = await http.post("/wishlist", { productId });
+  return res.data;
 };
 
+/* =========================
+   REMOVE
+========================= */
 export const removeFromWishList = async (productId) => {
-    const response = await http.delete(`/wishlist/remove/${productId}`);
-    return response.data;
+  const res = await http.delete(`/wishlist/${productId}`);
+  return res.data;
 };
 
+/* =========================
+   MOVE TO CART (OPCIONAL)
+========================= */
 export const moveToCart = async (productId) => {
-    const response = await http.post("/wishlist/move-to-cart", { productId });
-    return response.data;
-};
+  // si ya tienes carrito:
+  await http.post("/cart", { productId, quantity: 1 });
 
-export const clearWishList = async () => {
-    const response = await http.delete("/wishlist/clear");
-    return response.data;
+  // eliminar de wishlist
+  await http.delete(`/wishlist/${productId}`);
 };
