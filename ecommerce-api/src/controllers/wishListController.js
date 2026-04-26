@@ -5,17 +5,23 @@ import WishList from "../models/wishList.js";
 ========================= */
 export const getMyWishList = async (req, res, next) => {
   try {
-    let wishlist = await WishList.findOne({ user: req.user.id })
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Usuario no autenticado" });
+    }
+
+    let wishlist = await WishList.findOne({ user: userId })
       .populate("products.product");
 
     if (!wishlist) {
       wishlist = await WishList.create({
-        user: req.user.id,
+        user: userId,
         products: [],
       });
     }
 
-    res.json(wishlist.products);
+    return res.json(wishlist.products);
   } catch (error) {
     next(error);
   }
@@ -26,19 +32,28 @@ export const getMyWishList = async (req, res, next) => {
 ========================= */
 export const addToWishList = async (req, res, next) => {
   try {
+    const userId = req.user?.id;
     const { productId } = req.body;
 
-    let wishlist = await WishList.findOne({ user: req.user.id });
+    if (!userId) {
+      return res.status(401).json({ message: "Usuario no autenticado" });
+    }
+
+    if (!productId) {
+      return res.status(400).json({ message: "productId requerido" });
+    }
+
+    let wishlist = await WishList.findOne({ user: userId });
 
     if (!wishlist) {
       wishlist = await WishList.create({
-        user: req.user.id,
+        user: userId,
         products: [],
       });
     }
 
     const alreadyExists = wishlist.products.some(
-      (p) => p.product.toString() === productId
+      (p) => p?.product?.toString() === productId
     );
 
     if (alreadyExists) {
@@ -49,10 +64,10 @@ export const addToWishList = async (req, res, next) => {
 
     await wishlist.save();
 
-    const populated = await WishList.findOne({ user: req.user.id })
+    const populated = await WishList.findOne({ user: userId })
       .populate("products.product");
 
-    res.status(201).json(populated.products);
+    return res.status(201).json(populated.products);
   } catch (error) {
     next(error);
   }
@@ -63,21 +78,26 @@ export const addToWishList = async (req, res, next) => {
 ========================= */
 export const removeFromWishList = async (req, res, next) => {
   try {
+    const userId = req.user?.id;
     const { productId } = req.params;
 
-    const wishlist = await WishList.findOne({ user: req.user.id });
+    if (!userId) {
+      return res.status(401).json({ message: "Usuario no autenticado" });
+    }
+
+    let wishlist = await WishList.findOne({ user: userId });
 
     if (!wishlist) {
       return res.status(404).json({ message: "Wishlist not found" });
     }
 
     wishlist.products = wishlist.products.filter(
-      (p) => p.product.toString() !== productId
+      (p) => p?.product?.toString() !== productId
     );
 
     await wishlist.save();
 
-    res.json(wishlist.products);
+    return res.json(wishlist.products);
   } catch (error) {
     next(error);
   }
