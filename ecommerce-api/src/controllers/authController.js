@@ -37,6 +37,7 @@ const cookieOptions = {
   secure: true,
   sameSite: "none",
   path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días (consistencia login)
 };
 
 /* =========================
@@ -57,7 +58,7 @@ export const register = async (req, res, next) => {
       displayName,
       email,
       hashPassword,
-      role: "guest",
+      role: "customer ",
     });
 
     // 🔥 OPCIONAL PERO RECOMENDADO: auto login después de registro
@@ -102,10 +103,10 @@ export const login = async (req, res, next) => {
     const token = generateToken(user);
 
     // 🔥 IMPORTANTE: SOLO TOKEN (simplificamos)
-    res.cookie("token", token, {
-      ...cookieOptions,
-      maxAge: 60 * 60 * 1000,
-    });
+          res.cookie("token", token, {
+        ...cookieOptions,
+        maxAge: 60 * 60 * 1000,
+        });
 
     res.status(200).json({
       message: "Login successful",

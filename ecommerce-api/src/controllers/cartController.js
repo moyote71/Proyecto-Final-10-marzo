@@ -1,7 +1,8 @@
 import Cart from "../models/cart.js";
+import Product from "../models/product.js";
 
 /* =========================
-   GET ALL CARTS
+   GET ALL CARTS (ADMIN)
 ========================= */
 async function getCarts(req, res, next) {
   try {
@@ -16,7 +17,7 @@ async function getCarts(req, res, next) {
 }
 
 /* =========================
-   GET CART BY ID
+   GET CART BY ID (ADMIN)
 ========================= */
 async function getCartById(req, res, next) {
   try {
@@ -37,16 +38,16 @@ async function getCartById(req, res, next) {
 }
 
 /* =========================
-   GET CART BY USER (FIX CRÍTICO FRONTEND SAFE)
+   GET CART BY USER (TOKEN SAFE)
 ========================= */
 async function getCartByUser(req, res, next) {
   try {
-    const userId = req.params.id;
+    const userId = req.user.userId;
 
-    let cart = await Cart.findOne({ user: userId })
-      .populate("products.product");
+    let cart = await Cart.findOne({ user: userId }).populate(
+      "products.product"
+    );
 
-    // 🔥 IMPORTANTE: nunca romper frontend
     if (!cart) {
       cart = await Cart.create({
         user: userId,
@@ -58,7 +59,6 @@ async function getCartByUser(req, res, next) {
       user: userId,
       products: cart.products || [],
     });
-
   } catch (error) {
     next(error);
   }
@@ -81,6 +81,144 @@ async function createCart(req, res, next) {
 
     res.status(201).json(newCart);
   } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   ADD PRODUCT (TOKEN SAFE)
+========================= */
+async function addProductToCart(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const { productId, quantity = 1 } = req.body;
+
+    let cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      cart = await Cart.create({
+        user: userId,
+        products: [{ product: productId, quantity }],
+      });
+    } else {
+      const index = cart.products.findIndex(
+        (p) => p.product.toString() === productId
+      );
+
+      if (index >= 0) {
+        cart.products[index].quantity += quantity;
+      } else {
+        cart.products.push({ product: productId, quantity });
+      }
+    }
+
+    await cart.save();
+    await cart.populate("products.product");
+
+    res.status(200).json({
+      user: userId,
+      products: cart.products,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   UPDATE ITEM (TOKEN SAFE)
+========================= */
+async function updateCartItem(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const { productId, quantity } = req.body;
+
+    const cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    const item = cart.products.find(
+      (p) => p.product.toString() === productId
+    );
+
+    if (!item) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    item.quantity = quantity;
+
+    await cart.save();
+    await cart.populate("products.product");
+
+    res.status(200).json({
+      user: userId,
+      products: cart.products,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   REMOVE ITEM (TOKEN SAFE)
+========================= */
+async function removeCartItem(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const { productId } = req.params;
+
+    const cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.products = cart.products.filter(
+      (p) => p.product.toString() !== productId
+    );
+
+    await cart.save();
+    await cart.populate("products.product");
+
+    res.status(200).json({
+      user: userId,
+      products: cart.products,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* =========================
+   CLEAR CART (FIX 500 ERROR)
+========================= */
+async function clearCartItems(req, res, next) {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "No autorizado" });
+    }
+
+    const cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(200).json({
+        message: "Cart already empty",
+        products: [],
+      });
+    }
+
+    cart.products = [];
+    await cart.save();
+
+    return res.status(200).json({
+      message: "Cart cleared successfully",
+      products: [],
+    });
+  } catch (error) {
+    console.error("CLEAR CART ERROR:", error);
     next(error);
   }
 }
@@ -133,135 +271,6 @@ async function deleteCart(req, res, next) {
     }
 
     res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
-}
-
-/* =========================
-   ADD PRODUCT (RÚBRICA FLOW SAFE)
-========================= */
-async function addProductToCart(req, res, next) {
-  try {
-    const { userId, productId, quantity = 1 } = req.body;
-
-    let cart = await Cart.findOne({ user: userId });
-
-    if (!cart) {
-      cart = await Cart.create({
-        user: userId,
-        products: [{ product: productId, quantity }],
-      });
-    } else {
-      const index = cart.products.findIndex(
-        (p) => p.product.toString() === productId
-      );
-
-      if (index >= 0) {
-        cart.products[index].quantity += quantity;
-      } else {
-        cart.products.push({ product: productId, quantity });
-      }
-    }
-
-    await cart.save();
-    await cart.populate("products.product");
-
-    res.status(200).json({
-      user: userId,
-      products: cart.products,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-/* =========================
-   UPDATE ITEM
-========================= */
-async function updateCartItem(req, res, next) {
-  try {
-    const { userId, productId, quantity } = req.body;
-
-    const cart = await Cart.findOne({ user: userId });
-
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    const item = cart.products.find(
-      (p) => p.product.toString() === productId
-    );
-
-    if (!item) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    item.quantity = quantity;
-
-    await cart.save();
-    await cart.populate("products.product");
-
-    res.status(200).json({
-      user: userId,
-      products: cart.products,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-/* =========================
-   REMOVE ITEM
-========================= */
-async function removeCartItem(req, res, next) {
-  try {
-    const { userId } = req.body;
-    const { productId } = req.params;
-
-    const cart = await Cart.findOne({ user: userId });
-
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    cart.products = cart.products.filter(
-      (p) => p.product.toString() !== productId
-    );
-
-    await cart.save();
-    await cart.populate("products.product");
-
-    res.status(200).json({
-      user: userId,
-      products: cart.products,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-/* =========================
-   CLEAR CART
-========================= */
-async function clearCartItems(req, res, next) {
-  try {
-    const { userId } = req.body;
-
-    const cart = await Cart.findOne({ user: userId });
-
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    cart.products = [];
-
-    await cart.save();
-
-    res.status(200).json({
-      user: userId,
-      products: [],
-    });
   } catch (error) {
     next(error);
   }
