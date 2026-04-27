@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Icon from "../../components/common/Icon/Icon";
 import { http } from "../../services/http";
+import { navStyles, navContrastFix } from "./NavigationStyles";
 
 const Navigation = ({ isMobile = false, onLinkClick }) => {
   const [categories, setCategories] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -19,22 +22,21 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
   }, []);
 
   const getSubcategories = (parentId) => {
-    return categories.filter(
-      (cat) => cat.parentCategory?._id === parentId
-    );
+    return categories
+      .filter((cat) => cat.parentCategory?._id === parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  /* =========================
-     MOBILE
-  ========================= */
+  /* ========================= MOBILE ========================= */
   if (isMobile) {
     return (
-      <div>
+      <div className={navStyles.mobileWrapper}>
         {categories.map((category) => (
           <Link
             key={category._id}
             to={`/categories/${category.slug || category._id}`}
             onClick={onLinkClick}
+            className={navStyles.mainCategoryLink}
           >
             {category.name}
           </Link>
@@ -43,37 +45,49 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
     );
   }
 
-  /* =========================
-     DESKTOP
-  ========================= */
+  /* ========================= DESKTOP ========================= */
   return (
-    <div>
-      {categories.map((category) => {
-        const subcategories = getSubcategories(category._id);
+    <div className={navStyles.wrapper}>
+      <div className={navStyles.inner}>
 
-        return (
-          <div key={category._id}>
-            {/* CATEGORÍA PRINCIPAL (SIEMPRE SE MUESTRA) */}
-            <Link to={`/categories/${category.slug || category._id}`}>
-              {category.name}
-            </Link>
+        <div className="relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            Categorías
+          </button>
 
-            {/* SUBCATEGORÍAS */}
-            {subcategories.length > 0 && (
-              <div>
-                {subcategories.map((sub) => (
-                  <Link
-                    key={sub._id}
-                    to={`/categories/${sub.slug || sub._id}`}
-                  >
-                    {sub.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          {isDropdownOpen && (
+            <div>
+              {categories.map((category) => {
+                const subcategories = getSubcategories(category._id);
+
+                return (
+                  <div key={category._id}>
+
+                    {/* CATEGORÍA PRINCIPAL */}
+                    <Link to={`/categories/${category.slug || category._id}`}>
+                      {category.name}
+                    </Link>
+
+                    {/* SUBCATEGORÍAS */}
+                    {subcategories.map((sub) => (
+                      <Link
+                        key={sub._id}
+                        to={`/categories/${sub.slug || sub._id}`}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 };
