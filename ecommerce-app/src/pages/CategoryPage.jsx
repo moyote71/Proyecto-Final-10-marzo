@@ -17,17 +17,19 @@ export default function CategoryPage() {
       try {
         setLoading(true);
 
-        // 1. categoría (solo info visual)
+        // 1. categoría
         const categoryRes = await http.get(`/categories/slug/${slug}`);
         setCategory(categoryRes.data);
 
-        // 2. productos reales
+        // 2. productos (IMPORTANTE: backend ya soporta slug)
         const productsRes = await http.get(`/products/category/${slug}`);
 
-        // 🔥 FIX IMPORTANTE: backend devuelve ARRAY directo
-        setProducts(Array.isArray(productsRes.data)
-          ? productsRes.data
-          : productsRes.data.products || []
+        const data = productsRes.data;
+
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : data.products || []
         );
 
       } catch (err) {
@@ -41,14 +43,16 @@ export default function CategoryPage() {
     fetchData();
   }, [slug]);
 
-  if (loading) return <p>Cargando...</p>;
+  if (loading) return <p className="text-black">Cargando...</p>;
 
   return (
-    <div>
-      <h1>{category?.name}</h1>
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">
+        {category?.name || "Categoría"}
+      </h1>
 
       {products.length === 0 ? (
-        <p>No hay productos</p>
+        <p className="text-gray-500">No hay productos</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {products.map((p) => (
