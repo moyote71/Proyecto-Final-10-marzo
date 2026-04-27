@@ -9,59 +9,64 @@ import {
     removeFromWishList,
 } from "../../services/wishListService";
 import { useAuth } from "../../context/AuthContext";
+import getProductImage from "../../utils/getProductImage";
 
-export default function ProductCard({ product, orientation = "vertical" }) {
+export default function ProductCard({ product }) {
     const { addToCart } = useCart();
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
 
+    const productId = product?._id?.toString();
+
+    /* =========================
+       WISHLIST
+    ========================= */
     const { data: wishlistData } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
-        enabled: isAuthenticated && !loading,
-        retry: false, // 🔥 evita loops si falla
+        enabled: isAuthenticated,
+        retry: false,
     });
 
-    const wishlist = Array.isArray(wishlistData) ? wishlistData : [];
+    const wishlist = Array.isArray(wishlistData)
+        ? wishlistData
+        : wishlistData?.products || [];
 
     const inWishList = wishlist.some((item) => {
-        const itemId = item?.product?._id || item?.product || item?._id;
-        return itemId === product?._id;
+        const id =
+            item?.product?._id?.toString() ||
+            item?.product?.toString() ||
+            item?._id?.toString();
+
+        return id === productId;
     });
 
     const toggleMutation = useMutation({
-        mutationFn: () =>
-            inWishList
-                ? removeFromWishList(product?._id)
-                : addToWishList(product?._id),
-        onSuccess: () => queryClient.invalidateQueries(["wishlist"]),
+        mutationFn: async () => {
+            if (!productId) return;
+
+            return inWishList
+                ? removeFromWishList(productId)
+                : addToWishList(productId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["wishlist"]);
+        },
     });
 
     if (!product) return null;
 
     const { name, price, stock, description } = product;
 
-    // ✅ IMAGEN 100% SEGURA
-    const productImageUrl =
-        Array.isArray(product?.imagesUrl) && product.imagesUrl.length > 0
-            ? product.imagesUrl[0]
-            : "https://placehold.co/800x600?text=Producto";
-
-    // Categoría segura
-    const categoryLink =
-        product?.category?.slug ||
-        product?.category?._id ||
-        null;
+    /* =========================
+       🔥 IMAGEN ROBUSTA (FIX REAL)
+    ========================= */
+    const productImageUrl = getProductImage(product);
 
     return (
-        <div
-            className={`rounded-xl p-4 flex shadow-md bg-white border relative ${
-                orientation === "horizontal"
-                    ? "md:flex-row flex-col gap-4"
-                    : "flex-col gap-4"
-            }`}
-        >
-            {/* Wishlist */}
+        <div className="relative rounded-xl p-4 flex shadow-md bg-white border">
+
+            {/* ❤️ */}
             {isAuthenticated && (
                 <button
                     onClick={(e) => {
@@ -69,22 +74,20 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                         e.stopPropagation();
                         toggleMutation.mutate();
                     }}
-                    className="absolute top-2 right-2 z-10 text-2xl bg-white/70 rounded-full w-8 h-8 flex items-center justify-center"
+                    className={`absolute top-2 right-2 z-10 text-2xl transition hover:scale-110 ${
+                        inWishList ? "text-red-500" : "text-gray-400"
+                    }`}
                 >
                     {inWishList ? "❤️" : "🤍"}
                 </button>
             )}
 
-            {/* Imagen */}
-            <Link to={`/product/${product?._id}`}>
+            {/* IMAGE */}
+            <Link to={`/product/${productId}`}>
                 <img
                     src={productImageUrl}
                     alt={name}
-                    className={`object-cover rounded-lg border ${
-                        orientation === "horizontal"
-                            ? "w-40 h-40"
-                            : "w-full h-56"
-                    }`}
+                    className="w-40 h-40 object-cover rounded-lg"
                     onError={(e) => {
                         e.target.src =
                             "https://placehold.co/800x600?text=Producto";
@@ -92,30 +95,17 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                 />
             </Link>
 
-            {/* Content */}
-            <div className="flex flex-col flex-1">
-                <h3 className="text-lg font-semibold">
-                    <Link to={`/product/${product?._id}`}>{name}</Link>
-                </h3>
+            {/* CONTENT */}
+            <div className="ml-4 flex flex-col flex-1">
+                <h3 className="font-semibold">{name}</h3>
 
-                {product?.category && categoryLink && (
-                    <Link
-                        to={`/categories/${categoryLink}`}
-                        className="text-xs text-blue-500 mb-1"
-                    >
-                        {product.category.name}
-                    </Link>
-                )}
-
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="text-sm text-gray-500">
                     {description?.slice(0, 60)}
                 </p>
 
-                <div className="text-xl font-bold text-teal-500 mb-2">
-                    ${price}
-                </div>
+                <div className="text-teal-500 font-bold">${price}</div>
 
-                <div className="flex justify-between items-center mt-auto">
+                <div className="mt-auto flex justify-between items-center">
                     <Badge
                         text={stock > 0 ? "En stock" : "Agotado"}
                         variant={stock > 0 ? "success" : "error"}

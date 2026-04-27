@@ -8,9 +8,8 @@ import dbConnection from "./src/config/database.js";
 import errorHandler from "./src/middlewares/errorHandler.js";
 import logger from "./src/middlewares/logger.js";
 import { apiLimiter } from "./src/middlewares/rateLimiter.js";
+import uploadRoutes from "./src/routes/uploadRoutes.js";
 import routes from "./src/routes/index.js";
-
-console.log("🚀 SERVER BOOTING...");
 
 dotenv.config();
 
@@ -29,11 +28,19 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 /* =========================
-   CORS (SIMPLIFICADO Y SEGURO)
+   CORS (ROBUSTO)
 ========================= */
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN, // 🔥 SIN split
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -69,19 +76,13 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   DEBUG CRÍTICO
-========================= */
-console.log("🔥 ROUTES LOADING...");
-
-/* =========================
-   API ROUTES
+   ROUTES
 ========================= */
 app.use("/api", routes);
-
-console.log("✅ ROUTES REGISTERED");
+app.use("/api/upload", uploadRoutes);
 
 /* =========================
-   404 HANDLER
+   404
 ========================= */
 app.use((req, res) => {
   res.status(404).json({

@@ -12,8 +12,6 @@ import Badge from "../common/Bagde";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage/ErrorMessage";
 import Loading from "../common/Loading/Loading";
-import formatImageUrl from "../../utils/formatImageUrl";
-
 import styles from "./ProductDetailsStyles";
 
 export default function ProductDetails({ productId }) {
@@ -30,9 +28,13 @@ export default function ProductDetails({ productId }) {
 
     const [reviewComment, setReviewComment] = useState("");
     const [reviewScore, setReviewScore] = useState(5);
+    const [activeImage, setActiveImage] = useState(null);
 
     const queryClient = useQueryClient();
 
+    /* =========================
+       REVIEWS
+    ========================= */
     const { data: reviews = [], isLoading: loadingReviews } = useQuery({
         queryKey: ["reviews", productId],
         queryFn: () => getProductReviews(productId),
@@ -49,6 +51,9 @@ export default function ProductDetails({ productId }) {
         },
     });
 
+    /* =========================
+       LOAD PRODUCT
+    ========================= */
     useEffect(() => {
         if (!productId) return;
 
@@ -57,7 +62,9 @@ export default function ProductDetails({ productId }) {
         });
     }, [productId, fetchProduct, setError]);
 
-    // 🔥 categoría segura
+    /* =========================
+       CATEGORY SAFE
+    ========================= */
     const resolvedCategory = useMemo(() => {
         if (!product?.category) return null;
 
@@ -74,18 +81,33 @@ export default function ProductDetails({ productId }) {
         );
     }, [product]);
 
-    // 🔥 FIX CRÍTICO: evitar undefined en rutas
     const categorySlug =
-    resolvedCategory?.slug ||
-    resolvedCategory?._id ||
-    product?.category?.slug ||
-    product?.category?._id ||
-    null;
+        resolvedCategory?.slug ||
+        resolvedCategory?._id ||
+        product?.category?.slug ||
+        product?.category?._id ||
+        null;
+
+    /* =========================
+       IMAGES FIX REAL
+    ========================= */
+    const images = Array.isArray(product?.imagesUrl)
+        ? product.imagesUrl.filter(Boolean)
+        : [];
+
+    const mainImage =
+        activeImage ||
+        images[0] ||
+        product?.image ||
+        "https://placehold.co/800x600?text=Sin+Imagen";
 
     const handleAddToCart = () => {
         if (product) addToCart(product, 1);
     };
 
+    /* =========================
+       STATES
+    ========================= */
     if (loading) {
         return (
             <div className={styles.container()}>
@@ -114,20 +136,16 @@ export default function ProductDetails({ productId }) {
         description,
         price,
         stock,
-        image,
-        imagesUrl,
         category,
     } = product;
-
-    const productImageUrl =
-    formatImageUrl(image || imagesUrl?.[0]) ||
-    "https://placehold.co/800x600?text=Sin+Imagen";
 
     const stockBadge = stock > 0 ? "success" : "error";
     const stockLabel = stock > 0 ? "En stock" : "Agotado";
 
     return (
         <div className={styles.container()}>
+
+            {/* BREADCRUMB */}
             <BreadCrumb
                 items={[
                     { label: "Inicio", to: "/" },
@@ -144,20 +162,45 @@ export default function ProductDetails({ productId }) {
                 ]}
             />
 
+            {/* PRODUCT MAIN */}
             <div className={styles.main()}>
+
+                {/* IMAGE SECTION */}
                 <div className={styles.imageWrapper()}>
+
                     <img
-                        src={productImageUrl}
+                        src={mainImage}
                         alt={name}
+                        className={styles.image()}
                         onError={(e) => {
                             e.target.src =
                                 "https://placehold.co/800x600?text=Producto";
                         }}
-                        className={styles.image()}
                     />
+
+                    {/* THUMBNAILS */}
+                    {images.length > 1 && (
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                            {images.map((img, i) => (
+                                <img
+                                    key={i}
+                                    src={img}
+                                    alt={`thumb-${i}`}
+                                    className={`w-16 h-16 object-cover rounded border cursor-pointer ${
+                                        img === mainImage
+                                            ? "border-teal-500"
+                                            : ""
+                                    }`}
+                                    onClick={() => setActiveImage(img)}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
 
+                {/* INFO */}
                 <div className={styles.info()}>
+
                     <h1 className="text-2xl font-bold text-gray-800">
                         {name}
                     </h1>
@@ -184,7 +227,9 @@ export default function ProductDetails({ productId }) {
                         )}
                     </div>
 
-                    <div className={styles.price()}>${price}</div>
+                    <div className={styles.price()}>
+                        ${price}
+                    </div>
 
                     <div className={styles.actions()}>
                         <Button
@@ -208,12 +253,14 @@ export default function ProductDetails({ productId }) {
 
             {/* REVIEWS */}
             <div className="mt-12 border-t pt-8">
+
                 <h2 className="text-2xl font-bold mb-6">
                     Reseñas del Producto
                 </h2>
 
                 {isAuthenticated ? (
                     <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+
                         <h3 className="text-lg font-semibold mb-3">
                             Deja tu reseña
                         </h3>
@@ -270,6 +317,7 @@ export default function ProductDetails({ productId }) {
                     </div>
                 )}
 
+                {/* REVIEWS LIST */}
                 <div className="flex flex-col gap-4">
                     {loadingReviews ? (
                         <p>Cargando reseñas...</p>

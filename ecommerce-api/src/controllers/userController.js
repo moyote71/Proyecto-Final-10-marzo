@@ -3,10 +3,8 @@ import User from "../models/user.js";
 
 // Obtener perfil del usuario autenticado
 const getUserProfile = async (req, res, next) => {
-  console.log("=== GET USER PROFILE HIT ===");
-  console.log("User from token:", req.user);
   try {
-    const userId = req.user.userId; // Asumiendo que tienes middleware de autenticación
+    const userId = req.user.userId || req.user.id;
 
     const user = await User.findById(userId).select("-hashPassword");
 
@@ -82,7 +80,7 @@ const getUserById = async (req, res, next) => {
 // Actualizar perfil del usuario
 const updateUserProfile = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.userId || req.user.id;
     const { displayName, email, phone, avatar } = req.body;
 
     // Validar que al menos un campo esté presente
@@ -128,7 +126,7 @@ const updateUserProfile = async (req, res, next) => {
 // Cambiar contraseña
 const changePassword = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.userId || req.user.id;
     const { currentPassword, newPassword } = req.body;
 
     const user = await User.findById(userId);
@@ -214,7 +212,7 @@ const updateUser = async (req, res, next) => {
 // Desactivar usuario
 const deactivateUser = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.userId || req.user.id;
 
     const user = await User.findById(userId);
     if (!user) {
