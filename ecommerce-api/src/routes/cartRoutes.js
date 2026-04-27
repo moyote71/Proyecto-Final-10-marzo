@@ -29,17 +29,9 @@ const router = express.Router();
 router.get("/", authMiddleware, isAdmin, getCarts);
 
 /* =========================
-   GET MY CART (🔥 FIX)
+   GET MY CART (CLEAN FIX)
 ========================= */
-router.get(
-  "/me",
-  authMiddleware,
-  (req, res, next) => {
-    req.params.id = req.user.userId; // 🔥 FORZAR desde token
-    next();
-  },
-  getCartByUser
-);
+router.get("/me", authMiddleware, getCartByUser);
 
 /* =========================
    ADD PRODUCT
@@ -52,10 +44,6 @@ router.post(
     quantityValidation("quantity", true),
   ],
   validate,
-  (req, res, next) => {
-    req.body.userId = req.user.userId;
-    next();
-  },
   addProductToCart
 );
 
@@ -70,10 +58,6 @@ router.put(
     quantityValidation("quantity", true),
   ],
   validate,
-  (req, res, next) => {
-    req.body.userId = req.user.userId;
-    next();
-  },
   updateCartItem
 );
 
@@ -85,38 +69,13 @@ router.delete(
   authMiddleware,
   [mongoIdValidation("productId", "Product ID")],
   validate,
-  (req, res, next) => {
-    req.body.userId = req.user.userId;
-    next();
-  },
   removeCartItem
-);
-
-/* =========================
-   GET MY CART (TOKEN)
-========================= */
-router.get(
-  "/me",
-  authMiddleware,
-  async (req, res, next) => {
-    req.params.id = req.user.userId;
-    next();
-  },
-  getCartByUser
 );
 
 /* =========================
    CLEAR CART
 ========================= */
-router.post(
-  "/clear",
-  authMiddleware,
-  (req, res, next) => {
-    req.body.userId = req.user.userId;
-    next();
-  },
-  clearCartItems
-);
+router.post("/clear", authMiddleware, clearCartItems);
 
 /* =========================
    ADMIN EXTRA
@@ -130,13 +89,6 @@ router.get(
   getCartById
 );
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  [mongoIdValidation("id", "Cart ID")],
-  validate,
-  deleteCart
-);
+router.delete("/:id", authMiddleware, isAdmin, deleteCart);
 
 export default router;

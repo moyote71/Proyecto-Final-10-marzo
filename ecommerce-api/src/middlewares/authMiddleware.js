@@ -37,18 +37,18 @@ const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded?.userId) {
-      return res.status(401).json({ message: "Token inválido" });
+      return res.status(401).json({
+        message: "Invalid token payload",
+      });
     }
 
-    req.user = decoded;
-
     // =========================
-    // 5. NORMALIZAR USER (🔥 FIX CLAVE)
+    // 5. NORMALIZAR USER (FIX REAL)
     // =========================
     req.user = {
-      id: decoded.userId || decoded.id,
-      userId: decoded.userId || decoded.id,
+      userId: decoded.userId,
       role: decoded.role || "customer",
+      displayName: decoded.displayName,
     };
 
     next();
