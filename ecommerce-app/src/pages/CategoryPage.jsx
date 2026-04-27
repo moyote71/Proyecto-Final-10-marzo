@@ -1,10 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/ProductCard/ProductCard";
+import ProductCard from "../components/common/ProductCard/ProductCard";
 
 export default function CategoryPage() {
-  const { id } = useParams(); // 🔥 FIX AQUÍ
+  const { id } = useParams();
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
@@ -17,21 +17,14 @@ export default function CategoryPage() {
       try {
         setLoading(true);
 
-        // categoría
-        const { data: cat } = await http.get(`/categories/slug/${id}`);
-        setCategory(cat);
+        // ✅ AHORA SÍ: por ID
+        const { data } = await http.get(`/categories/${id}`);
 
-        if (!cat?._id) {
-          setProducts([]);
-          return;
-        }
+        setCategory(data.category || data);
 
-        // productos
-        const { data: prod } = await http.get(
-          `/products/category/${cat._id}`
-        );
-
-        setProducts(Array.isArray(prod) ? prod : []);
+        // ✅ productos ya vienen aquí mismo
+        setProducts(data.products || []);
+        
       } catch (err) {
         console.error("Error cargando categoría:", err);
         setProducts([]);
