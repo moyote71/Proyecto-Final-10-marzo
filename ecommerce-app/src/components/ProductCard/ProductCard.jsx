@@ -9,8 +9,9 @@ import {
     removeFromWishList,
 } from "../../services/wishListService";
 import { useAuth } from "../../context/AuthContext";
+import getProductImage from "../../utils/getProductImage";
 
-export default function ProductCard({ product, orientation = "vertical" }) {
+export default function ProductCard({ product }) {
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     const productId = product?._id?.toString();
 
     /* =========================
-       WISHLIST QUERY (OPTIMIZADO)
+       WISHLIST
     ========================= */
     const { data: wishlistData } = useQuery({
         queryKey: ["wishlist"],
@@ -27,9 +28,6 @@ export default function ProductCard({ product, orientation = "vertical" }) {
         retry: false,
     });
 
-    /* =========================
-       NORMALIZACIÓN ROBUSTA
-    ========================= */
     const wishlist = Array.isArray(wishlistData)
         ? wishlistData
         : wishlistData?.products || [];
@@ -43,9 +41,6 @@ export default function ProductCard({ product, orientation = "vertical" }) {
         return id === productId;
     });
 
-    /* =========================
-       TOGGLE WISHLIST
-    ========================= */
     const toggleMutation = useMutation({
         mutationFn: async () => {
             if (!productId) return;
@@ -63,15 +58,15 @@ export default function ProductCard({ product, orientation = "vertical" }) {
 
     const { name, price, stock, description } = product;
 
-    const productImageUrl =
-        Array.isArray(product?.imagesUrl) && product.imagesUrl.length > 0
-            ? product.imagesUrl[0]
-            : "https://placehold.co/800x600?text=Producto";
+    /* =========================
+       🔥 IMAGEN ROBUSTA (FIX REAL)
+    ========================= */
+    const productImageUrl = getProductImage(product);
 
     return (
         <div className="relative rounded-xl p-4 flex shadow-md bg-white border">
 
-            {/* ❤️ WISHLIST BUTTON */}
+            {/* ❤️ */}
             {isAuthenticated && (
                 <button
                     onClick={(e) => {
@@ -79,7 +74,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                         e.stopPropagation();
                         toggleMutation.mutate();
                     }}
-                    className={`absolute top-2 right-2 z-10 text-2xl transition-transform hover:scale-110 ${
+                    className={`absolute top-2 right-2 z-10 text-2xl transition hover:scale-110 ${
                         inWishList ? "text-red-500" : "text-gray-400"
                     }`}
                 >
