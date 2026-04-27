@@ -1,8 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/common/ProductCard/ProductCard.jsx";
-
+import ProductCard from "../components/ProductCard/ProductCard";
 
 export default function CategoryPage() {
     const { slug } = useParams();
