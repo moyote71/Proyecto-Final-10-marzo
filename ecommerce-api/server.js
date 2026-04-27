@@ -31,28 +31,25 @@ if (process.env.NODE_ENV !== "test") {
    CORS FIX (PRODUCCIÓN ROBUSTA)
 ========================= */
 const allowedOrigins = [
-  "https://proyecto-final-10-marzo-qv08.onrender.com",
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://proyecto-final-10-marzo-qv08.onrender.com",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // permitir requests sin origin (postman / server-to-server)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      console.log("❌ CORS bloqueado:", origin);
-      return callback(null, false); // importante: NO romper headers
+      return callback(null, false);
     },
     credentials: true,
   })
 );
-
 /* =========================
    MIDDLEWARES
 ========================= */

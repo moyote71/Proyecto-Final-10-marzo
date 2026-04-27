@@ -2,11 +2,10 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
-export const http = axios.create({
-    baseURL: API_BASE,
-    withCredentials: true,
-    timeout: 10000,
-});
+  export const http = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true, // 🔥 obligatorio
+  });
 
 /* =========================
    RESPONSE INTERCEPTOR

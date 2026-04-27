@@ -14,14 +14,14 @@ export function AuthProvider({ children }) {
     const isAdmin = user?.role === "admin";
 
     /* =========================
-       CHECK AUTH SOLO UNA VEZ
+       CHECK AUTH (COOKIE SESSION)
     ========================= */
     useEffect(() => {
         const checkAuth = async () => {
             try {
                 const res = await http.get("/users/profile");
 
-                setUser(res?.data?.user || res?.data || null);
+                setUser(res?.data?.user || null);
             } catch (error) {
                 setUser(null);
             } finally {
@@ -38,17 +38,18 @@ export function AuthProvider({ children }) {
     const login = async (email, password) => {
         const result = await authLogin(email, password);
 
-        if (!result.success) return result;
+        if (result.success) {
+            try {
+                const res = await http.get("/users/profile");
+                setUser(res?.data?.user || null);
+            } catch {
+                setUser(null);
+            }
 
-        try {
-            const res = await http.get("/users/profile");
-            setUser(res?.data?.user || res?.data || null);
-        } catch {
-            setUser(null);
+            navigate("/");
         }
 
-        navigate("/");
-        return { success: true };
+        return result;
     };
 
     /* =========================
@@ -57,17 +58,18 @@ export function AuthProvider({ children }) {
     const register = async (name, email, password) => {
         const result = await authRegister(name, email, password);
 
-        if (!result.success) return result;
+        if (result.success) {
+            try {
+                const res = await http.get("/users/profile");
+                setUser(res?.data?.user || null);
+            } catch {
+                setUser(null);
+            }
 
-        try {
-            const res = await http.get("/users/profile");
-            setUser(res?.data?.user || res?.data || null);
-        } catch {
-            setUser(null);
+            navigate("/");
         }
 
-        navigate("/");
-        return { success: true };
+        return result;
     };
 
     /* =========================
@@ -77,12 +79,16 @@ export function AuthProvider({ children }) {
         try {
             await http.post("/auth/logout");
         } catch (e) {
-            console.error(e);
+            console.error("Logout error:", e);
         } finally {
             setUser(null);
             navigate("/login");
         }
     };
+
+    if (loading) {
+        return <div className="p-4 text-center">Cargando...</div>;
+    }
 
     return (
         <AuthContext.Provider
