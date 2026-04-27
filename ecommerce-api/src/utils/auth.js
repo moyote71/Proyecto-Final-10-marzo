@@ -9,18 +9,15 @@ export const login = async (email, password) => {
       "/auth/login",
       { email, password },
       {
-        withCredentials: true, // 🔥 ESTE ES EL FIX REAL
+        withCredentials: true, // 🔥 OBLIGATORIO AQUÍ
       }
     );
 
-    return {
-      success: true,
-      data: res.data,
-    };
+    return { success: true };
   } catch (err) {
     return {
       success: false,
-      message: err.response?.data?.message || "Error al iniciar sesión",
+      message: err.response?.data?.message || "Error",
     };
   }
 };
