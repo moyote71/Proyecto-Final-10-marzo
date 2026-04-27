@@ -193,7 +193,7 @@ async function removeCartItem(req, res, next) {
 /* =========================
    CLEAR CART (FIX 500 ERROR)
 ========================= */
-export const clearCartItems = async (req, res, next) => {
+async function clearCartItems(req, res, next) {
   try {
     const userId = req.user?.userId;
 
@@ -203,7 +203,6 @@ export const clearCartItems = async (req, res, next) => {
 
     const cart = await Cart.findOne({ user: userId });
 
-    // si no existe carrito
     if (!cart) {
       return res.status(200).json({
         message: "Cart already empty",
@@ -211,23 +210,18 @@ export const clearCartItems = async (req, res, next) => {
       });
     }
 
-    // 🔥 seguridad extra contra null/undefined
     cart.products = [];
-
     await cart.save();
 
     return res.status(200).json({
       message: "Cart cleared successfully",
       products: [],
     });
-
   } catch (error) {
-    console.error("🔥 CLEAR CART ERROR:", error);
-    return res.status(500).json({
-      message: "Error clearing cart",
-    });
+    console.error("CLEAR CART ERROR:", error);
+    next(error);
   }
-};
+}
 
 /* =========================
    UPDATE CART
