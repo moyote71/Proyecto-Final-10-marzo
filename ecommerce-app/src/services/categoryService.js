@@ -1,123 +1,66 @@
 import { http } from "./http";
-import { fetchProducts } from "./productService";
 
 /* =========================
-   GET ALL CATEGORIES
+   CATEGORIES
 ========================= */
 export const fetchCategories = async () => {
-    const response = await http.get("/categories");
-    return response.data?.data || response.data || [];
+    const res = await http.get("/categories");
+    return res.data || [];
 };
 
-/* =========================
-   SEARCH
-========================= */
-export const searchCategories = async (query) => {
-    const response = await http.get(`/categories/search?q=${query}`);
-    return response.data?.data || response.data || [];
-};
-
-/* =========================
-   GET BY ID (LEGACY)
-========================= */
-export const getCategoryById = async (categoryId) => {
-    const response = await http.get(`/categories/${categoryId}`);
-    return response.data?.data || response.data || null;
-};
-
-/* =========================
-   GET BY SLUG (NUEVO)
-========================= */
 export const getCategoryBySlug = async (slug) => {
-    const response = await http.get(`/categories/slug/${slug}`);
-    return response.data;
+    const res = await http.get(`/categories/slug/${slug}`);
+    return res.data;
 };
 
 /* =========================
-   CHILD CATEGORIES
-========================= */
-export const getChildCategories = async (parentCategoryId) => {
-    const categories = await fetchCategories();
-
-    return categories.filter((cat) => {
-        const parentId =
-            typeof cat.parentCategory === "object"
-                ? cat.parentCategory?._id
-                : cat.parentCategory;
-
-        return parentId === parentCategoryId;
-    });
-};
-
-/* =========================
-   PRODUCTS BY CATEGORY
+   PRODUCTS BY CATEGORY (BACKEND POWERED)
 ========================= */
 export const getProductsByCategory = async (categoryId) => {
-    const allProducts = await fetchProducts();
-
-    return allProducts.filter((product) => {
-        const prodCatId =
-            typeof product.category === "object"
-                ? product.category?._id
-                : product.category;
-
-        return prodCatId === categoryId;
-    });
+    const res = await http.get(`/products/category/${categoryId}`);
+    return res.data || [];
 };
 
 /* =========================
-   PRODUCTS BY CATEGORY + CHILDREN
+   CATEGORY + CHILDREN (FRONT LOGIC OPTIMIZED)
 ========================= */
 export const getProductsByCategoryAndChildren = async (categoryId) => {
-    const allProducts = await fetchProducts();
-    const allCategories = await fetchCategories();
+    const [products, categories] = await Promise.all([
+        http.get(`/products/category/${categoryId}`).then(r => r.data || []),
+        http.get("/categories").then(r => r.data || []),
+    ]);
 
-    const category = allCategories.find(
-        (cat) => cat._id === categoryId
-    );
-
-    if (!category) return [];
+    const category = categories.find(c => c._id === categoryId);
+    if (!category) return products;
 
     const isParent = !category.parentCategory;
 
-    if (isParent) {
-        const childCategoryIds = allCategories
-            .filter((cat) => {
-                const parentId =
-                    typeof cat.parentCategory === "object"
-                        ? cat.parentCategory?._id
-                        : cat.parentCategory;
+    if (!isParent) return products;
 
-                return parentId === categoryId;
-            })
-            .map((cat) => cat._id);
+    const children = categories
+        .filter(c => {
+            const parentId =
+                typeof c.parentCategory === "object"
+                    ? c.parentCategory?._id
+                    : c.parentCategory;
 
-        const allCategoryIds = [categoryId, ...childCategoryIds];
+            return parentId === categoryId;
+        })
+        .map(c => c._id);
 
-        return allProducts.filter((product) => {
-            const prodCatId =
-                typeof product.category === "object"
-                    ? product.category?._id
-                    : product.category;
+    const allIds = [categoryId, ...children];
 
-            return allCategoryIds.includes(prodCatId);
-        });
-    }
-
-    return allProducts.filter((product) => {
-        const prodCatId =
-            typeof product.category === "object"
-                ? product.category?._id
-                : product.category;
-
-        return prodCatId === categoryId;
-    });
+    return products.filter(p =>
+        allIds.includes(
+            typeof p.category === "object" ? p.category?._id : p.category
+        )
+    );
 };
 
 /* =========================
-   PARENT CATEGORIES
+   OPTIONAL
 ========================= */
 export const getParentCategories = async () => {
-    const categories = await fetchCategories();
-    return categories.filter((cat) => !cat.parentCategory);
+    const res = await http.get("/categories");
+    return (res.data || []).filter(c => !c.parentCategory);
 };

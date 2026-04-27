@@ -36,7 +36,7 @@ const initialState = {
 };
 
 /* =========================
-   REDUCER (robusto)
+   REDUCER
 ========================= */
 function cartReducer(state, action) {
     switch (action.type) {
@@ -58,7 +58,6 @@ function cartReducer(state, action) {
                 error: action.payload,
             };
 
-        /* ---------- ADD ---------- */
         case ACTIONS.ADD_ITEM_OPTIMISTIC: {
             const { product, quantity } = action.payload;
 
@@ -89,7 +88,6 @@ function cartReducer(state, action) {
             };
         }
 
-        /* ---------- REMOVE ---------- */
         case ACTIONS.REMOVE_ITEM_OPTIMISTIC:
             return {
                 ...state,
@@ -98,7 +96,6 @@ function cartReducer(state, action) {
                 ),
             };
 
-        /* ---------- UPDATE ---------- */
         case ACTIONS.UPDATE_QUANTITY_OPTIMISTIC:
             return {
                 ...state,
@@ -114,14 +111,12 @@ function cartReducer(state, action) {
                     .filter((i) => i.quantity > 0),
             };
 
-        /* ---------- CLEAR ---------- */
         case ACTIONS.CLEAR_CART:
             return {
                 ...state,
                 cartItems: [],
             };
 
-        /* ---------- REVERT (fallback seguridad) ---------- */
         case ACTIONS.REVERT_CART:
             return {
                 ...state,
@@ -141,10 +136,10 @@ export function CartProvider({ children }) {
     const { user } = useAuth();
 
     /* =========================
-       LOAD CART
+       LOAD CART (TOKEN BASED)
     ========================= */
     useEffect(() => {
-        if (!user?._id) {
+        if (!user) {
             dispatch({
                 type: ACTIONS.FETCH_SUCCESS,
                 payload: [],
@@ -156,7 +151,7 @@ export function CartProvider({ children }) {
             dispatch({ type: ACTIONS.FETCH_START });
 
             try {
-                const cart = await fetchCart(user._id);
+                const cart = await fetchCart();
 
                 const products = cart?.products ?? [];
 
@@ -194,10 +189,10 @@ export function CartProvider({ children }) {
             payload: { product, quantity },
         });
 
-        if (!user?._id) return;
+        if (!user) return;
 
         try {
-            await addToCartAPI(user._id, product._id, quantity);
+            await addToCartAPI(product._id, quantity);
         } catch (err) {
             console.error("Add to cart failed:", err);
         }
@@ -214,10 +209,10 @@ export function CartProvider({ children }) {
             payload: productId,
         });
 
-        if (!user?._id) return;
+        if (!user) return;
 
         try {
-            await removeFromCartAPI(user._id, productId);
+            await removeFromCartAPI(productId);
         } catch (err) {
             dispatch({
                 type: ACTIONS.REVERT_CART,
@@ -237,17 +232,13 @@ export function CartProvider({ children }) {
             payload: { productId, quantity },
         });
 
-        if (!user?._id) return;
+        if (!user) return;
 
         try {
             if (quantity <= 0) {
-                await removeFromCartAPI(user._id, productId);
+                await removeFromCartAPI(productId);
             } else {
-                await updateCartItemAPI(
-                    user._id,
-                    productId,
-                    quantity
-                );
+                await updateCartItemAPI(productId, quantity);
             }
         } catch (err) {
             dispatch({
@@ -265,10 +256,10 @@ export function CartProvider({ children }) {
 
         dispatch({ type: ACTIONS.CLEAR_CART });
 
-        if (!user?._id) return;
+        if (!user) return;
 
         try {
-            await clearCartAPI(user._id);
+            await clearCartAPI();
         } catch (err) {
             dispatch({
                 type: ACTIONS.REVERT_CART,
@@ -278,7 +269,7 @@ export function CartProvider({ children }) {
     };
 
     /* =========================
-       TOTAL
+       TOTALS
     ========================= */
     const getTotalPrice = () =>
         state.cartItems.reduce(
