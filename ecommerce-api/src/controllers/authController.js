@@ -47,6 +47,11 @@ export const register = async (req, res, next) => {
   try {
     const { displayName, email, password } = req.body;
 
+    // 🔥 FIX 1: validación obligatoria
+    if (!displayName || !email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ message: "User already exists" });
@@ -58,8 +63,29 @@ export const register = async (req, res, next) => {
       displayName,
       email,
       hashPassword,
-      role: "customer ",
+      role: "customer", // 🔥 FIX 2
     });
+
+    const token = generateToken(user);
+
+    res.cookie("token", token, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.status(201).json({
+      message: "User created",
+      user: {
+        _id: user._id,
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
     // 🔥 OPCIONAL PERO RECOMENDADO: auto login después de registro
     const token = generateToken(user);
