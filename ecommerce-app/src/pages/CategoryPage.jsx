@@ -17,15 +17,18 @@ export default function CategoryPage() {
       try {
         setLoading(true);
 
-        // 1. categoría (solo info)
-        const catRes = await http.get(`/categories/slug/${slug}`);
-        setCategory(catRes.data);
+        // 1. categoría (solo info visual)
+        const categoryRes = await http.get(`/categories/slug/${slug}`);
+        setCategory(categoryRes.data);
 
-        // 2. productos reales por categoría
-        const prodRes = await http.get(`/products/category/${slug}`);
+        // 2. productos reales
+        const productsRes = await http.get(`/products/category/${slug}`);
 
-        // backend a veces devuelve array directo o {products}
-        setProducts(prodRes.data.products || prodRes.data || []);
+        // 🔥 FIX IMPORTANTE: backend devuelve ARRAY directo
+        setProducts(Array.isArray(productsRes.data)
+          ? productsRes.data
+          : productsRes.data.products || []
+        );
 
       } catch (err) {
         console.error("Error cargando categoría:", err);
