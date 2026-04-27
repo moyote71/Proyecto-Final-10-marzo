@@ -12,22 +12,27 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function ProductCard({ product, orientation = "vertical" }) {
     const { addToCart } = useCart();
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
 
+    const productId = product?._id?.toString();
+
+    /* =========================
+       WISHLIST QUERY (OPTIMIZADO)
+    ========================= */
     const { data: wishlistData } = useQuery({
         queryKey: ["wishlist"],
         queryFn: getWishList,
-        enabled: isAuthenticated && !loading,
+        enabled: isAuthenticated,
         retry: false,
     });
 
-    // 🔥 NORMALIZACIÓN REAL
+    /* =========================
+       NORMALIZACIÓN ROBUSTA
+    ========================= */
     const wishlist = Array.isArray(wishlistData)
         ? wishlistData
         : wishlistData?.products || [];
-
-    const productId = product?._id?.toString();
 
     const inWishList = wishlist.some((item) => {
         const id =
@@ -38,12 +43,20 @@ export default function ProductCard({ product, orientation = "vertical" }) {
         return id === productId;
     });
 
+    /* =========================
+       TOGGLE WISHLIST
+    ========================= */
     const toggleMutation = useMutation({
-        mutationFn: () =>
-            inWishList
+        mutationFn: async () => {
+            if (!productId) return;
+
+            return inWishList
                 ? removeFromWishList(productId)
-                : addToWishList(productId),
-        onSuccess: () => queryClient.invalidateQueries(["wishlist"]),
+                : addToWishList(productId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["wishlist"]);
+        },
     });
 
     if (!product) return null;
@@ -58,7 +71,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
     return (
         <div className="relative rounded-xl p-4 flex shadow-md bg-white border">
 
-            {/* ❤️ */}
+            {/* ❤️ WISHLIST BUTTON */}
             {isAuthenticated && (
                 <button
                     onClick={(e) => {
@@ -66,7 +79,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                         e.stopPropagation();
                         toggleMutation.mutate();
                     }}
-                    className={`absolute top-2 right-2 z-10 text-2xl transition ${
+                    className={`absolute top-2 right-2 z-10 text-2xl transition-transform hover:scale-110 ${
                         inWishList ? "text-red-500" : "text-gray-400"
                     }`}
                 >
@@ -74,14 +87,20 @@ export default function ProductCard({ product, orientation = "vertical" }) {
                 </button>
             )}
 
+            {/* IMAGE */}
             <Link to={`/product/${productId}`}>
                 <img
                     src={productImageUrl}
                     alt={name}
                     className="w-40 h-40 object-cover rounded-lg"
+                    onError={(e) => {
+                        e.target.src =
+                            "https://placehold.co/800x600?text=Producto";
+                    }}
                 />
             </Link>
 
+            {/* CONTENT */}
             <div className="ml-4 flex flex-col flex-1">
                 <h3 className="font-semibold">{name}</h3>
 
@@ -91,7 +110,7 @@ export default function ProductCard({ product, orientation = "vertical" }) {
 
                 <div className="text-teal-500 font-bold">${price}</div>
 
-                <div className="mt-auto flex justify-between">
+                <div className="mt-auto flex justify-between items-center">
                     <Badge
                         text={stock > 0 ? "En stock" : "Agotado"}
                         variant={stock > 0 ? "success" : "error"}
