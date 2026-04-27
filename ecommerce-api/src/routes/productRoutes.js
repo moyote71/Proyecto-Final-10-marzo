@@ -1,117 +1,71 @@
 import express from "express";
 import {
-    createProduct,
-    deleteProduct,
-    getProductByCategory,
-    getProductById,
-    getProducts,
-    searchProducts,
-    updateProduct,
+  createProduct,
+  deleteProduct,
+  getProductByCategory,
+  getProductById,
+  getProducts,
+  searchProducts,
+  updateProduct,
 } from "../controllers/productController.js";
+
 import authMiddleware from "../middlewares/authMiddleware.js";
 import isAdmin from "../middlewares/isAdminMiddleware.js";
 import validate from "../middlewares/validation.js";
-import {
-    bodyMongoIdValidation,
-    imagesUrlValidation,
-    mongoIdValidation,
-    orderValidation,
-    paginationValidation,
-    priceOptionalValidation,
-    priceValidation,
-    productDescriptionValidation,
-    productNameValidation,
-    queryBooleanValidation,
-    queryMongoIdValidation,
-    queryPriceValidation,
-    searchQueryValidation,
-    sortFieldValidation,
-    stockOptionalValidation,
-    stockValidation
-} from "../middlewares/validators.js";
 
-console.log("🛍️ PRODUCT ROUTES LOADED");
+import {
+  mongoIdValidation,
+} from "../middlewares/validators.js";
 
 const router = express.Router();
 
 /* =========================
-   PRODUCTS
-   BASE: /api/products
+   GET ALL PRODUCTS
 ========================= */
+router.get("/", getProducts);
 
-// GET /api/products
-router.get("/", [...paginationValidation()], validate, getProducts);
+/* =========================
+   SEARCH
+========================= */
+router.get("/search", searchProducts);
 
-// GET /api/products/search
+/* =========================
+   GET BY CATEGORY (🔥 FIX FINAL)
+========================= */
+router.get("/category/:categoryId", getProductByCategory);
+
+/* =========================
+   GET BY ID
+========================= */
 router.get(
-  "/search",
-  [
-    searchQueryValidation(),
-    queryMongoIdValidation("category", "Category"),
-    queryPriceValidation("minPrice"),
-    queryPriceValidation("maxPrice"),
-    queryBooleanValidation("inStock"),
-    sortFieldValidation(["name", "price", "createdAt"]),
-    orderValidation(),
-    ...paginationValidation(),
-  ],
+  "/:id",
+  [mongoIdValidation("id", "Product ID")],
   validate,
-  searchProducts
+  getProductById
 );
 
-// GET /api/products/category/:idCategory
-router.get(
-  "/category/:idCategory",
-  [mongoIdValidation("idCategory", "Category ID")],
-  validate,
-  getProductByCategory
-);
+/* =========================
+   CREATE
+========================= */
+router.post("/", authMiddleware, isAdmin, createProduct);
 
-// GET /api/products/:id
-router.get("/:id", [mongoIdValidation("id", "Product ID")], validate, getProductById);
-
-// POST /api/products (admin)
-router.post(
-  "/",
-  authMiddleware,
-  isAdmin,
-  [
-    productNameValidation(true),
-    productDescriptionValidation(true),
-    priceValidation("price"),
-    stockValidation(),
-    ...imagesUrlValidation(true),
-    bodyMongoIdValidation("category", "Category"),
-  ],
-  validate,
-  createProduct
-);
-
-// PUT /api/products/:id (admin)
+/* =========================
+   UPDATE
+========================= */
 router.put(
   "/:id",
   authMiddleware,
   isAdmin,
-  [
-    mongoIdValidation("id", "Product ID"),
-    productNameValidation(false),
-    productDescriptionValidation(false),
-    priceOptionalValidation("price"),
-    stockOptionalValidation(),
-    ...imagesUrlValidation(false),
-    bodyMongoIdValidation("category", "Category", true),
-  ],
-  validate,
   updateProduct
 );
 
-// DELETE /api/products/:id (admin)
+/* =========================
+   DELETE
+========================= */
 router.delete(
   "/:id",
   authMiddleware,
   isAdmin,
-  [mongoIdValidation("id", "Product ID")],
-  validate,
   deleteProduct
 );
 

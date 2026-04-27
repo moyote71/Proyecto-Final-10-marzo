@@ -51,21 +51,19 @@ async function getProductById(req, res, next) {
 }
 
 /* ========================= */
+/* =========================
+   GET PRODUCTS BY CATEGORY
+========================= */
 async function getProductByCategory(req, res, next) {
   try {
-    const id = req.params.idCategory;
+    const categoryId = req.params.categoryId;
 
-    const products = await Product.find({ category: id })
+    const products = await Product.find({ category: categoryId })
       .populate("category")
-      .sort({ createdAt: -1 }); // 🔥 también aquí
+      .sort({ createdAt: -1 });
 
-    if (products.length === 0) {
-      return res.status(404).json({
-        message: "No products found on this category",
-      });
-    }
-
-    res.json(products);
+    // 🔥 IMPORTANTE: nunca devolver 404 por vacío
+    return res.status(200).json(products);
   } catch (error) {
     next(error);
   }
