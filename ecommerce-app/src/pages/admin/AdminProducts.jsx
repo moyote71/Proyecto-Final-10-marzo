@@ -49,12 +49,9 @@ export default function AdminProducts() {
     const fetchCategories = async () => {
         try {
             const res = await http.get("/categories");
-
-            const data = Array.isArray(res.data) ? res.data : [];
-            setCategories(data);
+            setCategories(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Error loading categories:", err);
-            setCategories([]);
         }
     };
 
@@ -64,57 +61,47 @@ export default function AdminProducts() {
     }, []);
 
     /* =========================
-       CLOUDINARY UPLOAD
+       CLOUDINARY UPLOAD (SIMPLE)
     ========================= */
     const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+        const file = e.target.files[0];
+        if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-        alert("La imagen es muy grande (máx 2MB)");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_PRESET);
-
-    try {
-        setUploading(true);
-
-        const res = await fetch(CLOUDINARY_URL, {
-            method: "POST",
-            body: formData,
-        });
-
-        const data = await res.json();
-
-        if (!data.secure_url) {
-            throw new Error("Error subiendo imagen");
+        if (file.size > 2 * 1024 * 1024) {
+            alert("La imagen es muy grande (máx 2MB)");
+            return;
         }
 
-        // 🔥 REEMPLAZA COMPLETAMENTE LA IMAGEN
-        setForm((prev) => ({
-            ...prev,
-            imagesUrl: [data.secure_url],
-        }));
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", CLOUDINARY_PRESET);
 
-    } catch (err) {
-        console.error(err);
-        alert("Error subiendo imagen");
-    } finally {
-        setUploading(false);
-    }
-};
+        try {
+            setUploading(true);
 
-    /* =========================
-       REMOVE IMAGE
-    ========================= */
-    const removeImage = (index) => {
-        setForm((prev) => ({
-            ...prev,
-            imagesUrl: prev.imagesUrl.filter((_, i) => i !== index),
-        }));
+            const res = await fetch(CLOUDINARY_URL, {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (!data.secure_url) {
+                throw new Error("Error subiendo imagen");
+            }
+
+            // 🔥 REEMPLAZA IMAGEN (UNA SOLA)
+            setForm((prev) => ({
+                ...prev,
+                imagesUrl: [data.secure_url],
+            }));
+
+        } catch (err) {
+            console.error(err);
+            alert("Error subiendo imagen");
+        } finally {
+            setUploading(false);
+        }
     };
 
     /* =========================
@@ -131,12 +118,7 @@ export default function AdminProducts() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (
-            !form.name.trim() ||
-            !form.description.trim() ||
-            !form.price ||
-            !form.stock
-        ) {
+        if (!form.name || !form.description || !form.price || !form.stock) {
             alert("Completa todos los campos");
             return;
         }
@@ -169,7 +151,7 @@ export default function AdminProducts() {
             resetForm();
             await fetchProducts();
         } catch (err) {
-            console.error("ERROR BACKEND:", err.response?.data || err);
+            console.error(err);
             alert("Error al guardar producto");
         } finally {
             setSaving(false);
@@ -184,12 +166,10 @@ export default function AdminProducts() {
 
         try {
             await http.delete(`/products/${id}`);
-
             if (editingId === id) resetForm();
-
             await fetchProducts();
         } catch (err) {
-            console.error("Error deleting product:", err);
+            console.error(err);
         }
     };
 
@@ -205,9 +185,7 @@ export default function AdminProducts() {
             price: p.price || "",
             stock: p.stock || "",
             category: p.category?._id || p.category || "",
-            imagesUrl: Array.isArray(p.imagesUrl)
-                ? p.imagesUrl
-                : [],
+            imagesUrl: p.imagesUrl || [],
         });
     };
 
@@ -219,13 +197,14 @@ export default function AdminProducts() {
     }
 
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-6">
+        <div className="p-6 max-w-6xl mx-auto">
+
+            <h1 className="text-2xl font-semibold mb-6">
                 Gestión de Productos
             </h1>
 
             {/* FORM */}
-            <form onSubmit={handleSubmit} className="space-y-2 mb-8">
+            <form onSubmit={handleSubmit} className="space-y-4 mb-10">
 
                 <input
                     placeholder="Nombre"
@@ -233,7 +212,7 @@ export default function AdminProducts() {
                     onChange={(e) =>
                         setForm({ ...form, name: e.target.value })
                     }
-                    className="border p-2 w-full"
+                    className="border p-2 w-full rounded"
                 />
 
                 <input
@@ -242,7 +221,7 @@ export default function AdminProducts() {
                     onChange={(e) =>
                         setForm({ ...form, description: e.target.value })
                     }
-                    className="border p-2 w-full"
+                    className="border p-2 w-full rounded"
                 />
 
                 <input
@@ -252,7 +231,7 @@ export default function AdminProducts() {
                     onChange={(e) =>
                         setForm({ ...form, price: e.target.value })
                     }
-                    className="border p-2 w-full"
+                    className="border p-2 w-full rounded"
                 />
 
                 <input
@@ -262,7 +241,7 @@ export default function AdminProducts() {
                     onChange={(e) =>
                         setForm({ ...form, stock: e.target.value })
                     }
-                    className="border p-2 w-full"
+                    className="border p-2 w-full rounded"
                 />
 
                 <select
@@ -270,7 +249,7 @@ export default function AdminProducts() {
                     onChange={(e) =>
                         setForm({ ...form, category: e.target.value })
                     }
-                    className="border p-2 w-full"
+                    className="border p-2 w-full rounded"
                 >
                     <option value="">Selecciona categoría</option>
                     {categories.map((c) => (
@@ -280,47 +259,59 @@ export default function AdminProducts() {
                     ))}
                 </select>
 
-                {/* UPLOAD */}
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="border p-2 w-full"
-                />
+                {/* IMAGE APPLE STYLE */}
+                <div className="border rounded-xl p-4 bg-white shadow-sm">
 
-                {uploading && (
-                    <p className="text-blue-500 text-sm">
-                        Subiendo imagen...
+                    <p className="text-sm text-gray-500 mb-2">
+                        Imagen del producto
                     </p>
-                )}
 
-                {/* PREVIEW */}
-                  <div className="flex gap-2 flex-wrap">
-                    {form.imagesUrl?.[0] && (
-                        <div className="relative">
+                    {form.imagesUrl?.[0] ? (
+                        <div className="relative group">
+
                             <img
                                 src={form.imagesUrl[0]}
-                                className="w-24 h-24 object-cover rounded border"
+                                className="w-full h-64 object-cover rounded-xl transition group-hover:scale-[1.02]"
+                                alt="product"
                             />
 
-                        {/* botón para eliminar */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setForm({ ...form, imagesUrl: [] })
-                            }
-                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1"
-                        >
-                            X
-                        </button>
-                    </div>
-                )}
-            </div>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xl transition">
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setForm({ ...form, imagesUrl: [] })
+                                    }
+                                    className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                                >
+                                    Eliminar imagen
+                                </button>
+
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="w-full h-64 flex items-center justify-center border-2 border-dashed rounded-xl text-gray-400">
+                            Sin imagen
+                        </div>
+                    )}
+
+                    <label className="mt-4 block w-full text-center bg-black text-white py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
+
+                        {uploading ? "Subiendo..." : "Cambiar imagen"}
+
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                        />
+                    </label>
+                </div>
 
                 <div className="flex gap-2">
                     <button
                         disabled={saving}
-                        className="bg-blue-600 text-white px-4 py-2"
+                        className="bg-blue-600 text-white px-4 py-2 rounded"
                     >
                         {saving
                             ? "Guardando..."
@@ -333,7 +324,7 @@ export default function AdminProducts() {
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="bg-gray-500 text-white px-4 py-2"
+                            className="bg-gray-500 text-white px-4 py-2 rounded"
                         >
                             Cancelar
                         </button>
@@ -369,14 +360,14 @@ export default function AdminProducts() {
                                 <td className="space-x-2">
                                     <button
                                         onClick={() => handleEdit(p)}
-                                        className="bg-yellow-500 px-2"
+                                        className="bg-yellow-500 px-2 rounded"
                                     >
                                         Edit
                                     </button>
 
                                     <button
                                         onClick={() => handleDelete(p._id)}
-                                        className="bg-red-600 text-white px-2"
+                                        className="bg-red-600 text-white px-2 rounded"
                                     >
                                         Delete
                                     </button>
