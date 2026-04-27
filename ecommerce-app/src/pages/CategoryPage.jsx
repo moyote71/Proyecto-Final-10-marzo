@@ -4,30 +4,29 @@ import { http } from "../services/http";
 import ProductCard from "../components/ProductCard/ProductCard";
 
 export default function CategoryPage() {
-  const { slug } = useParams();
+  const { id } = useParams(); // 🔥 FIX AQUÍ
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!id) return;
 
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1. traer categoría por slug
-        const { data: cat } = await http.get(`/categories/slug/${slug}`);
+        // categoría
+        const { data: cat } = await http.get(`/categories/slug/${id}`);
         setCategory(cat);
 
-        // 🚨 FIX IMPORTANTE: validar id antes de pedir productos
         if (!cat?._id) {
           setProducts([]);
           return;
         }
 
-        // 2. productos por category ID real
+        // productos
         const { data: prod } = await http.get(
           `/products/category/${cat._id}`
         );
@@ -42,21 +41,18 @@ export default function CategoryPage() {
     };
 
     fetchData();
-  }, [slug]);
+  }, [id]);
 
-  if (loading)
-    return (
-      <p className="text-black p-6 font-medium">Cargando...</p>
-    );
+  if (loading) return <p className="p-6">Cargando...</p>;
 
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">
-        {category?.name || "Categoría"}
+        {category?.name}
       </h1>
 
       {products.length === 0 ? (
-        <p className="text-gray-500">No hay productos</p>
+        <p>No hay productos</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {products.map((p) => (
