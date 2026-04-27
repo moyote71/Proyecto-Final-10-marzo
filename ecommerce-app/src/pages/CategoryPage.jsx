@@ -1,93 +1,65 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
+import ProductCard from "../components/ProductCard/ProductCard";
 
 export default function CategoryPage() {
-  const { slug } = useParams();
+  const { id } = useParams(); // 🔥 FIX AQUÍ
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!slug) return;
+    if (!id) return;
 
-    const fetchCategory = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError("");
 
-        const res = await http.get(`/categories/slug/${slug}`);
+        // categoría
+        const { data: cat } = await http.get(`/categories/slug/${id}`);
+        setCategory(cat);
 
-        console.log("🔥 RESPUESTA BACKEND:", res.data);
+        if (!cat?._id) {
+          setProducts([]);
+          return;
+        }
 
-        // 🔥 FIX ROBUSTO: soporta varios formatos
-        const data = res.data?.category || res.data;
-
-        setCategory(data);
-
-        setProducts(
-          data?.products ||
-          res.data?.products ||
-          []
+        // productos
+        const { data: prod } = await http.get(
+          `/products/category/${cat._id}`
         );
 
+        setProducts(Array.isArray(prod) ? prod : []);
       } catch (err) {
-        console.error("❌ ERROR CATEGORY:", err);
-        setError("Error cargando categoría");
+        console.error("Error cargando categoría:", err);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategory();
-  }, [slug]);
+    fetchData();
+  }, [id]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[60vh] text-black">
-        Cargando...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-red-600 text-center mt-10">
-        {error}
-      </div>
-    );
-  }
+  if (loading) return <p className="p-6">Cargando...</p>;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 bg-white text-black">
-
-      <h1 className="text-2xl font-bold mb-6">
-        {category?.name || "Categoría"}
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">
+        {category?.name}
       </h1>
 
       {products.length === 0 ? (
-        <p className="text-gray-500">
-          Esta categoría no tiene productos o no están llegando del backend
-        </p>
+        <p>No hay productos</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {products.map((p) => (
-            <div
-              key={p._id}
-              className="border rounded-lg p-4 shadow-sm bg-white"
-            >
-              <h2 className="font-semibold">{p.name}</h2>
-              <p className="text-gray-600">${p.price}</p>
-            </div>
+            <ProductCard key={p._id} product={p} />
           ))}
-
         </div>
       )}
-
     </div>
   );
 }
