@@ -1,53 +1,58 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/ProductCard/ProductCard";
+import ProductCard from "../components/common/ProductCard/ProductCard";
 
 export default function CategoryPage() {
-    const { slug } = useParams();
+  const { slug } = useParams();
 
-    const [category, setCategory] = useState(null);
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!slug) return;
+  useEffect(() => {
+    if (!slug) return;
 
-        const fetchCategory = async () => {
-            try {
-                setLoading(true);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-                const res = await http.get(`/categories/${slug}`);
+        // 1. categoría (solo info)
+        const catRes = await http.get(`/categories/slug/${slug}`);
+        setCategory(catRes.data);
 
-                setCategory(res.data);
-                setProducts(res.data.products || []);
-            } catch (err) {
-                console.error("Error cargando categoría:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        // 2. productos reales por categoría
+        const prodRes = await http.get(`/products/category/${slug}`);
 
-        fetchCategory();
-    }, [slug]);
+        // backend a veces devuelve array directo o {products}
+        setProducts(prodRes.data.products || prodRes.data || []);
 
-    if (loading) return <div className="p-4 text-white">Cargando...</div>;
+      } catch (err) {
+        console.error("Error cargando categoría:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return (
-        <div className="p-6 text-white">
-            <h1 className="text-2xl font-bold mb-6">
-                {category?.name}
-            </h1>
+    fetchData();
+  }, [slug]);
 
-            {products.length === 0 ? (
-                <p>No hay productos en esta categoría</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {products.map((p) => (
-                        <ProductCard key={p._id} product={p} />
-                    ))}
-                </div>
-            )}
+  if (loading) return <p>Cargando...</p>;
+
+  return (
+    <div>
+      <h1>{category?.name}</h1>
+
+      {products.length === 0 ? (
+        <p>No hay productos</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {products.map((p) => (
+            <ProductCard key={p._id} product={p} />
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }
