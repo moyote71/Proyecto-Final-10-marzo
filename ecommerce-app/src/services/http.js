@@ -2,13 +2,9 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
-if (!API_BASE) {
-  throw new Error("REACT_APP_API_BASE_URL no está definido");
-}
-
 export const http = axios.create({
   baseURL: API_BASE,
-  withCredentials: true, // 🔥 CLAVE para cookies en producción
+  withCredentials: true,
   timeout: 10000,
 });
 
@@ -21,11 +17,11 @@ http.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      console.warn("🔒 No autenticado (sin sesión o cookie no enviada)");
+      console.log("🔒 No autenticado");
     }
 
     if (status === 404) {
-      console.warn("⚠️ Endpoint no encontrado:", error.config?.url);
+      console.log("⚠️ Endpoint no encontrado:", error.config?.url);
     }
 
     return Promise.reject(error);

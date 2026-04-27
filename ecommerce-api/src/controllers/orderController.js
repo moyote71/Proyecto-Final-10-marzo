@@ -30,7 +30,9 @@ export const getOrderById = async (req, res, next) => {
       .populate("shippingAddress")
       .populate("paymentMethod");
 
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     res.json(order);
   } catch (error) {
@@ -39,10 +41,15 @@ export const getOrderById = async (req, res, next) => {
 };
 
 /* =========================
-   GET MY ORDERS
+   GET MY ORDERS (USER LOGGED IN)
 ========================= */
 export const getOrdersByUser = async (req, res, next) => {
   try {
+    // 🔥 FIX: evitar acceso sin token
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const orders = await Order.find({ user: req.user.userId })
       .populate("products.productId")
       .populate("shippingAddress")
@@ -116,7 +123,7 @@ export const createOrder = async (req, res, next) => {
 };
 
 /* =========================
-   UPDATE ORDER STATUS
+   UPDATE ORDER STATUS (ADMIN)
 ========================= */
 export const updateOrderStatus = async (req, res, next) => {
   try {
@@ -125,6 +132,10 @@ export const updateOrderStatus = async (req, res, next) => {
       { status: req.body.status },
       { new: true }
     );
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     res.json(order);
   } catch (error) {
@@ -143,6 +154,10 @@ export const updatePaymentStatus = async (req, res, next) => {
       { new: true }
     );
 
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
     res.json(order);
   } catch (error) {
     next(error);
@@ -156,12 +171,15 @@ export const cancelOrder = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
 
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     if (["delivered", "cancelled"].includes(order.status)) {
       return res.status(400).json({ message: "Cannot cancel order" });
     }
 
+    // restaurar stock
     await Promise.all(
       order.products.map((item) =>
         Product.findByIdAndUpdate(item.productId, {
@@ -184,7 +202,12 @@ export const cancelOrder = async (req, res, next) => {
 ========================= */
 export const deleteOrder = async (req, res, next) => {
   try {
-    await Order.findByIdAndDelete(req.params.id);
+    const order = await Order.findByIdAndDelete(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
     res.json({ message: "Deleted" });
   } catch (error) {
     next(error);
