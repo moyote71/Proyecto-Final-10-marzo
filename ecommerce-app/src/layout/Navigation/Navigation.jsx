@@ -19,29 +19,33 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
   }, []);
 
   const getSubcategories = (parentId) => {
-    return categories
-      .filter((cat) => cat.parentCategory?._id === parentId)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return categories.filter(
+      (cat) => cat.parentCategory?._id === parentId
+    );
   };
 
+  /* =========================
+     MOBILE
+  ========================= */
   if (isMobile) {
     return (
       <div>
         {categories.map((category) => (
-          category?.slug && (
-            <Link
-              key={category._id}
-              to={`/categories/${category.slug || category._id}`}
-              onClick={onLinkClick}
-            >
-              {category.name}
-            </Link>
-          )
+          <Link
+            key={category._id}
+            to={`/categories/${category.slug || category._id}`}
+            onClick={onLinkClick}
+          >
+            {category.name}
+          </Link>
         ))}
       </div>
     );
   }
 
+  /* =========================
+     DESKTOP
+  ========================= */
   return (
     <div>
       {categories.map((category) => {
@@ -49,22 +53,24 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
 
         return (
           <div key={category._id}>
-            {category.slug && (
-              <Link to={`/categories/${category.slug}`}>
-                {category.name}
-              </Link>
-            )}
+            {/* CATEGORÍA PRINCIPAL (SIEMPRE SE MUESTRA) */}
+            <Link to={`/categories/${category.slug || category._id}`}>
+              {category.name}
+            </Link>
 
-            {subcategories.map((sub) => (
-              sub.slug && (
-                <Link
-                  key={sub._id}
-                  to={`/categories/${sub.slug}`}
-                >
-                  {sub.name}
-                </Link>
-              )
-            ))}
+            {/* SUBCATEGORÍAS */}
+            {subcategories.length > 0 && (
+              <div>
+                {subcategories.map((sub) => (
+                  <Link
+                    key={sub._id}
+                    to={`/categories/${sub.slug || sub._id}`}
+                  >
+                    {sub.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
