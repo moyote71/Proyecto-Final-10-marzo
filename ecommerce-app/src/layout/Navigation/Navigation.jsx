@@ -51,9 +51,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
       <div className={navStyles.inner}>
 
         <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
+          <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
             Categorías
           </button>
 
@@ -65,12 +63,10 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                 return (
                   <div key={category._id}>
 
-                    {/* CATEGORÍA PRINCIPAL */}
                     <Link to={`/categories/${category.slug || category._id}`}>
                       {category.name}
                     </Link>
 
-                    {/* SUBCATEGORÍAS */}
                     {subcategories.map((sub) => (
                       <Link
                         key={sub._id}
