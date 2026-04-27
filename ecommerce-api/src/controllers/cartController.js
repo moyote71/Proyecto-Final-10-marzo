@@ -195,14 +195,20 @@ async function removeCartItem(req, res, next) {
 ========================= */
 async function clearCartItems(req, res, next) {
   try {
-    console.log("🟡 CLEAR CART HIT");
+    console.log("🔥 CLEAR CART HIT");
+    console.log("HEADERS AUTH:", req.headers.authorization);
+    console.log("COOKIES:", req.cookies);
     console.log("USER:", req.user);
 
-    const userId = req.user?.userId;
+    const userId = req.user?.userId || req.user?.id;
+
+    console.log("USER ID RESOLVED:", userId);
 
     if (!userId) {
-      console.log("❌ NO USER ID");
-      return res.status(401).json({ message: "No userId in token" });
+      return res.status(401).json({
+        message: "UserId missing in request",
+        debug: req.user,
+      });
     }
 
     const cart = await Cart.findOne({ user: userId });
@@ -211,6 +217,7 @@ async function clearCartItems(req, res, next) {
 
     if (!cart) {
       return res.status(200).json({
+        message: "Cart already empty",
         user: userId,
         products: [],
       });
@@ -220,16 +227,22 @@ async function clearCartItems(req, res, next) {
 
     await cart.save();
 
-    console.log("✅ CART CLEARED");
+    console.log("✅ CART CLEARED SUCCESSFULLY");
 
     return res.status(200).json({
+      message: "Cart cleared",
       user: userId,
       products: [],
     });
 
   } catch (error) {
-    console.error("🔥 CLEAR CART ERROR:", error);
-    next(error);
+    console.error("🔥 CLEAR CART CRASH ERROR:");
+    console.error(error); // 👈 ESTE ES EL IMPORTANTE
+
+    return res.status(500).json({
+      message: error.message,
+      stack: error.stack,
+    });
   }
 }
 
