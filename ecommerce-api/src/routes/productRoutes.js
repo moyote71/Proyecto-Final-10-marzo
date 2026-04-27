@@ -12,10 +12,7 @@ import {
 import authMiddleware from "../middlewares/authMiddleware.js";
 import isAdmin from "../middlewares/isAdminMiddleware.js";
 import validate from "../middlewares/validation.js";
-
-import {
-  mongoIdValidation,
-} from "../middlewares/validators.js";
+import { mongoIdValidation } from "../middlewares/validators.js";
 
 const router = express.Router();
 
@@ -30,9 +27,10 @@ router.get("/", getProducts);
 router.get("/search", searchProducts);
 
 /* =========================
-   GET BY CATEGORY (🔥 FIX FINAL)
+   GET BY CATEGORY (🔥 FIX REAL)
+   soporta slug o id
 ========================= */
-router.get("/category/idCategory", getProductByCategory);
+router.get("/category/:idCategory", getProductByCategory);
 
 /* =========================
    GET BY ID
@@ -52,21 +50,11 @@ router.post("/", authMiddleware, isAdmin, createProduct);
 /* =========================
    UPDATE
 ========================= */
-router.put(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  updateProduct
-);
+router.put("/:id", authMiddleware, isAdmin, updateProduct);
 
 /* =========================
    DELETE
 ========================= */
-router.delete(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  deleteProduct
-);
+router.delete("/:id", authMiddleware, isAdmin, deleteProduct);
 
 export default router;

@@ -17,6 +17,7 @@ import styles from "./ProductDetailsStyles";
 export default function ProductDetails({ productId }) {
     const { isAuthenticated } = useAuth();
     const { addToCart } = useCart();
+    const queryClient = useQueryClient();
 
     const {
         execute: fetchProduct,
@@ -29,8 +30,6 @@ export default function ProductDetails({ productId }) {
     const [reviewComment, setReviewComment] = useState("");
     const [reviewScore, setReviewScore] = useState(5);
     const [activeImage, setActiveImage] = useState(null);
-
-    const queryClient = useQueryClient();
 
     /* =========================
        REVIEWS
@@ -57,13 +56,13 @@ export default function ProductDetails({ productId }) {
     useEffect(() => {
         if (!productId) return;
 
-        fetchProduct(productId).then((foundProduct) => {
-            if (!foundProduct) setError("Producto no encontrado");
+        fetchProduct(productId).then((found) => {
+            if (!found) setError("Producto no encontrado");
         });
-    }, [productId, fetchProduct, setError]);
+    }, [productId]);
 
     /* =========================
-       CATEGORY SAFE
+       CATEGORY SAFE FIX (IMPORTANTE)
     ========================= */
     const resolvedCategory = useMemo(() => {
         if (!product?.category) return null;
@@ -82,14 +81,10 @@ export default function ProductDetails({ productId }) {
     }, [product]);
 
     const categorySlug =
-        resolvedCategory?.slug ||
-        resolvedCategory?._id ||
-        product?.category?.slug ||
-        product?.category?._id ||
-        null;
+        resolvedCategory?.slug || product?.category?.slug;
 
     /* =========================
-       IMAGES FIX REAL
+       IMAGES FIX
     ========================= */
     const images = Array.isArray(product?.imagesUrl)
         ? product.imagesUrl.filter(Boolean)
@@ -119,25 +114,14 @@ export default function ProductDetails({ productId }) {
     if (error) {
         return (
             <div className={styles.container()}>
-                <ErrorMessage>
-                    {error}
-                    <p className="text-sm text-gray-500 mt-2">
-                        Revisa nuestra <Link to="/">página principal</Link>
-                    </p>
-                </ErrorMessage>
+                <ErrorMessage>{error}</ErrorMessage>
             </div>
         );
     }
 
     if (!product) return null;
 
-    const {
-        name,
-        description,
-        price,
-        stock,
-        category,
-    } = product;
+    const { name, description, price, stock, category } = product;
 
     const stockBadge = stock > 0 ? "success" : "error";
     const stockLabel = stock > 0 ? "En stock" : "Agotado";
@@ -145,142 +129,78 @@ export default function ProductDetails({ productId }) {
     return (
         <div className={styles.container()}>
 
-            {/* BREADCRUMB */}
+            {/* =========================
+                BREADCRUMB FIX IMPORTANTE
+            ========================= */}
             <BreadCrumb
-                items={[
-                    { label: "Inicio", to: "/" },
-                    categorySlug
-                        ? {
-                              label:
-                                  resolvedCategory?.name ||
-                                  category?.name ||
-                                  "Categoría",
-                              to: `/category/${categorySlug}`,
-                          }
-                        : { label: "Categoría" },
-                    { label: name },
-                ]}
+                categories={category ? [category] : []}
             />
 
-            {/* PRODUCT MAIN */}
+            {/* PRODUCT */}
             <div className={styles.main()}>
 
-                {/* IMAGE SECTION */}
                 <div className={styles.imageWrapper()}>
-
                     <img
                         src={mainImage}
                         alt={name}
                         className={styles.image()}
-                        onError={(e) => {
-                            e.target.src =
-                                "https://placehold.co/800x600?text=Producto";
-                        }}
                     />
-
-                    {/* THUMBNAILS */}
-                    {images.length > 1 && (
-                        <div className="flex gap-2 mt-3 flex-wrap">
-                            {images.map((img, i) => (
-                                <img
-                                    key={i}
-                                    src={img}
-                                    alt={`thumb-${i}`}
-                                    className={`w-16 h-16 object-cover rounded border cursor-pointer ${
-                                        img === mainImage
-                                            ? "border-teal-500"
-                                            : ""
-                                    }`}
-                                    onClick={() => setActiveImage(img)}
-                                />
-                            ))}
-                        </div>
-                    )}
                 </div>
 
-                {/* INFO */}
                 <div className={styles.info()}>
 
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        {name}
-                    </h1>
+                    <h1>{name}</h1>
 
-                    {(resolvedCategory?.name || category?.name) && (
-                        <span className={styles.category()}>
-                            {resolvedCategory?.name || category?.name}
-                        </span>
+                    {category?.name && (
+                        <Link
+                            to={`/categories/${category.slug}`}
+                            className="text-sm text-blue-600"
+                        >
+                            {category.name}
+                        </Link>
                     )}
 
-                    <p className={styles.description()}>
-                        {description}
-                    </p>
+                    <p>{description}</p>
 
-                    <div className={styles.stock()}>
-                        <Badge
-                            text={stockLabel}
-                            variant={stockBadge}
-                        />
-                        {stock > 0 && (
-                            <span className="text-gray-500 text-sm">
-                                {stock} unidades disponibles
-                            </span>
-                        )}
-                    </div>
+                    <Badge
+                        text={stockLabel}
+                        variant={stockBadge}
+                    />
 
                     <div className={styles.price()}>
                         ${price}
                     </div>
 
-                    <div className={styles.actions()}>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            disabled={stock === 0}
-                            onClick={handleAddToCart}
-                        >
-                            Agregar al carrito
-                        </Button>
+                    <Button
+                        onClick={handleAddToCart}
+                        disabled={stock === 0}
+                    >
+                        Agregar al carrito
+                    </Button>
 
-                        <Link
-                            to="/cart"
-                            className={styles.viewCart()}
-                        >
-                            Ver carrito
-                        </Link>
-                    </div>
+                    <Link to="/cart">Ver carrito</Link>
                 </div>
             </div>
 
             {/* REVIEWS */}
-            <div className="mt-12 border-t pt-8">
+            <div className="mt-10">
 
-                <h2 className="text-2xl font-bold mb-6">
-                    Reseñas del Producto
-                </h2>
+                <h2>Reseñas</h2>
 
                 {isAuthenticated ? (
-                    <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-
-                        <h3 className="text-lg font-semibold mb-3">
-                            Deja tu reseña
-                        </h3>
-
+                    <div>
                         <select
                             value={reviewScore}
                             onChange={(e) =>
                                 setReviewScore(Number(e.target.value))
                             }
                         >
-                            {[5, 4, 3, 2, 1].map((n) => (
-                                <option key={n} value={n}>
-                                    {n} ⭐️
-                                </option>
+                            {[5,4,3,2,1].map(n => (
+                                <option key={n} value={n}>{n} ⭐</option>
                             ))}
                         </select>
 
                         <textarea
-                            className="w-full border rounded p-2 mt-2"
-                            rows="3"
                             value={reviewComment}
                             onChange={(e) =>
                                 setReviewComment(e.target.value)
@@ -288,54 +208,30 @@ export default function ProductDetails({ productId }) {
                         />
 
                         <Button
-                            variant="primary"
                             onClick={() =>
                                 addReviewMutation.mutate({
                                     comment: reviewComment,
                                     rating: reviewScore,
                                 })
                             }
-                            disabled={
-                                addReviewMutation.isPending ||
-                                !reviewComment.trim()
-                            }
                         >
-                            {addReviewMutation.isPending
-                                ? "Enviando..."
-                                : "Enviar Reseña"}
+                            Enviar
                         </Button>
                     </div>
                 ) : (
-                    <div className="p-4 text-center text-gray-600">
-                        <Link
-                            to="/login"
-                            className="text-blue-600 font-bold"
-                        >
-                            Inicia sesión
-                        </Link>{" "}
-                        para dejar una reseña
-                    </div>
+                    <Link to="/login">Inicia sesión para reseñar</Link>
                 )}
 
-                {/* REVIEWS LIST */}
-                <div className="flex flex-col gap-4">
+                <div>
                     {loadingReviews ? (
-                        <p>Cargando reseñas...</p>
+                        <p>Cargando...</p>
                     ) : reviews.length === 0 ? (
-                        <p>No hay reseñas aún</p>
+                        <p>No hay reseñas</p>
                     ) : (
-                        reviews.map((review) => (
-                            <div
-                                key={review._id}
-                                className="border p-4 rounded"
-                            >
-                                <strong>
-                                    {review.user?.displayName ||
-                                        review.user?.email ||
-                                        "Usuario"}
-                                </strong>
-
-                                <p>{review.comment}</p>
+                        reviews.map(r => (
+                            <div key={r._id}>
+                                <strong>{r.user?.displayName}</strong>
+                                <p>{r.comment}</p>
                             </div>
                         ))
                     )}
