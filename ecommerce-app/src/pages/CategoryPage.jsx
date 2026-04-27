@@ -1,7 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/common/ProductCard/ProductCard";
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -42,19 +41,27 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="max-w-7xl mx-auto px-6 py-10 bg-white text-black">
 
-      <h1 className="text-2xl font-bold mb-6 text-black">
-        {category?.name}
+      <h1 className="text-2xl font-bold mb-6">
+        {category?.name || "Categoría"}
       </h1>
 
       {products.length === 0 ? (
         <p className="text-gray-500">No hay productos en esta categoría</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
+
+          {products.map((p) => (
+            <div
+              key={p._id}
+              className="border rounded-lg p-4 shadow-sm bg-white"
+            >
+              <h2 className="font-semibold text-lg">{p.name}</h2>
+              <p className="text-gray-600">${p.price}</p>
+            </div>
           ))}
+
         </div>
       )}
 
