@@ -46,8 +46,7 @@ function App() {
 
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/product/:productId" element={<Product />} />
-                <Route path="/categories/:slug" element={<CategoryPage />} />
-
+                <Route path="/categories/:id" element={<CategoryPage />} />
                 {/* USER */}
                 <Route
                   path="/profile"

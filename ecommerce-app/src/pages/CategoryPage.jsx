@@ -3,30 +3,27 @@ import { useEffect, useState } from "react";
 import { http } from "../services/http";
 
 export default function CategoryPage() {
-    const { slug } = useParams();
+    const { id } = useParams();
 
     const [category, setCategory] = useState(null);
     const [products, setProducts] = useState([]);
 
     useEffect(() => {
-        if (!slug) return;
+        if (!id) return;
 
         const fetchCategory = async () => {
             try {
-                const res = await http.get(`/categories/slug/${slug}`);
+                const res = await http.get(`/categories/${id}`);
 
                 setCategory(res.data);
                 setProducts(res.data.products || []);
             } catch (err) {
                 console.error("Error cargando categoría:", err);
-
-                setCategory(null);
-                setProducts([]);
             }
         };
 
         fetchCategory();
-    }, [slug]);
+    }, [id]);
 
     return (
         <div>
