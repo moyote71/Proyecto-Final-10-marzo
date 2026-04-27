@@ -175,34 +175,24 @@ export default function Checkout() {
      CREATE ORDER
   ========================= */
   const handleCreateOrder = async () => {
-    if (!selectedAddress || !selectedPayment) {
-      setError("Selecciona dirección y pago");
-      return;
-    }
+  if (!selectedAddress || !selectedPayment) {
+    setError("Selecciona dirección y pago");
+    return;
+  }
 
-    try {
-      const payload = {
-        products: cartItems.map((i) => ({
-          productId: i._id,
-          quantity: i.quantity,
-        })),
-        shippingAddress: selectedAddress._id,
-        paymentMethod: selectedPayment._id,
-        shippingCost,
-      };
+  try {
+    const res = await http.post("/orders/checkout");
 
-      const res = await http.post("/orders", payload);
+    clearCart();
 
-      clearCart();
-
-      navigate("/order-confirmation", {
-        state: { order: res.data },
-      });
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || "Error creando orden");
-    }
-  };
+    navigate("/order-confirmation", {
+      state: { order: res.data.order },
+    });
+  } catch (err) {
+    console.error(err);
+    setError(err.response?.data?.message || "Error creando orden");
+  }
+};                    
 
   if (loading) return <Loading message="Cargando checkout..." />;
   if (error) return <ErrorMessage message={error} />;

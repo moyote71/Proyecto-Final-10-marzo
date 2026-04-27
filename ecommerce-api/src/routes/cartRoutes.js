@@ -2,12 +2,10 @@ import express from "express";
 
 import {
   addProductToCart,
-  createCart,
   deleteCart,
   getCartById,
   getCartByUser,
   getCarts,
-  updateCart,
   updateCartItem,
   removeCartItem,
   clearCartItems,
@@ -31,13 +29,15 @@ const router = express.Router();
 router.get("/", authMiddleware, isAdmin, getCarts);
 
 /* =========================
-   GET CART BY USER (TOKEN SAFE)
+   GET MY CART (🔥 FIX)
 ========================= */
 router.get(
-  "/user/:id",
+  "/me",
   authMiddleware,
-  [mongoIdValidation("id", "User ID")],
-  validate,
+  (req, res, next) => {
+    req.params.id = req.user.userId; // 🔥 FORZAR desde token
+    next();
+  },
   getCartByUser
 );
 
@@ -53,7 +53,7 @@ router.post(
   ],
   validate,
   (req, res, next) => {
-    req.body.userId = req.user.userId; // 🔥 inyectar desde token
+    req.body.userId = req.user.userId;
     next();
   },
   addProductToCart
@@ -71,7 +71,7 @@ router.put(
   ],
   validate,
   (req, res, next) => {
-    req.body.userId = req.user.userId; // 🔥 token
+    req.body.userId = req.user.userId;
     next();
   },
   updateCartItem
@@ -83,15 +83,26 @@ router.put(
 router.delete(
   "/remove-item/:productId",
   authMiddleware,
-  [
-    mongoIdValidation("productId", "Product ID"),
-  ],
+  [mongoIdValidation("productId", "Product ID")],
   validate,
   (req, res, next) => {
-    req.body.userId = req.user.userId; // 🔥 token (NO body externo)
+    req.body.userId = req.user.userId;
     next();
   },
   removeCartItem
+);
+
+/* =========================
+   GET MY CART (TOKEN)
+========================= */
+router.get(
+  "/me",
+  authMiddleware,
+  async (req, res, next) => {
+    req.params.id = req.user.userId;
+    next();
+  },
+  getCartByUser
 );
 
 /* =========================
@@ -100,16 +111,15 @@ router.delete(
 router.post(
   "/clear",
   authMiddleware,
-  [],
   (req, res, next) => {
-    req.body.userId = req.user.userId; // 🔥 token
+    req.body.userId = req.user.userId;
     next();
   },
   clearCartItems
 );
 
 /* =========================
-   (OPCIONAL) GET BY ID ADMIN
+   ADMIN EXTRA
 ========================= */
 router.get(
   "/:id",
@@ -120,9 +130,6 @@ router.get(
   getCartById
 );
 
-/* =========================
-   (OPCIONAL) DELETE CART ADMIN
-========================= */
 router.delete(
   "/:id",
   authMiddleware,

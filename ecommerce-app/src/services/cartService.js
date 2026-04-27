@@ -1,7 +1,7 @@
 import { http } from "./http";
 
 /* =========================
-   GET CART (FIXED)
+   GET CART (CORRECTO)
 ========================= */
 export const fetchCart = async (userId) => {
     try {
@@ -21,9 +21,8 @@ export const fetchCart = async (userId) => {
 /* =========================
    ADD
 ========================= */
-export const addToCartAPI = async (userId, productId, quantity = 1) => {
+export const addToCartAPI = async (productId, quantity = 1) => {
     const res = await http.post("/cart/add-product", {
-        userId,
         productId,
         quantity,
     });
@@ -34,9 +33,8 @@ export const addToCartAPI = async (userId, productId, quantity = 1) => {
 /* =========================
    UPDATE
 ========================= */
-export const updateCartItemAPI = async (userId, productId, quantity) => {
+export const updateCartItemAPI = async (productId, quantity) => {
     const res = await http.put("/cart/update-item", {
-        userId,
         productId,
         quantity,
     });
@@ -47,13 +45,8 @@ export const updateCartItemAPI = async (userId, productId, quantity) => {
 /* =========================
    REMOVE
 ========================= */
-export const removeFromCartAPI = async (userId, productId) => {
-    const res = await http.delete(
-        `/cart/remove-item/${productId}`,
-        {
-            data: { userId },
-        }
-    );
+export const removeFromCartAPI = async (productId) => {
+    const res = await http.delete(`/cart/remove-item/${productId}`);
 
     return res.data;
 };
@@ -61,8 +54,8 @@ export const removeFromCartAPI = async (userId, productId) => {
 /* =========================
    CLEAR
 ========================= */
-export const clearCartAPI = async (userId) => {
-    const res = await http.post("/cart/clear", { userId });
+export const clearCartAPI = async () => {
+    const res = await http.post("/cart/clear");
 
     return res.data;
 };

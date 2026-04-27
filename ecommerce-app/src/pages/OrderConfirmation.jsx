@@ -22,10 +22,11 @@ export default function OrderConfirmation() {
     const fetchOrder = async () => {
       try {
         const response = await http.get(`/orders/${orderIdFromURL}`);
-        const data = response.data?.data || response.data;
-        if (data) {
-          setOrder(data);
-        } else {
+        const data = response.data?.order || response.data;
+
+if (data) {
+  setOrder(data);
+}else {
           navigate("/");
         }
       } catch {

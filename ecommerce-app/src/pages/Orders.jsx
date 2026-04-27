@@ -62,7 +62,7 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-        useEffect(() => {
+            useEffect(() => {
         const loadOrders = async () => {
             if (!user?._id) {
                 setOrders([]);
@@ -71,7 +71,8 @@ export default function Orders() {
             }
 
             try {
-                const response = await http.get(`/orders/user/${user._id}`);
+                // ✅ FIX PRINCIPAL: usar sesión (JWT cookie), no userId
+                const response = await http.get("/orders/me");
 
                 const rawOrders = Array.isArray(response.data)
                     ? response.data
@@ -96,7 +97,7 @@ export default function Orders() {
         };
 
         loadOrders();
-    }, [user?._id]);
+    }, [user?._id]);                                                                
 
     const selectedOrder = useMemo(
         () => orders.find((o) => o.id === selectedOrderId) || null,

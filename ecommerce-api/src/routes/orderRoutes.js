@@ -1,29 +1,49 @@
 import express from "express";
-import authMiddleware from "../middlewares/authMiddleware.js";
-
 import {
-  getOrders,
+  checkout,
+  getMyOrders,
   getOrderById,
-  getOrdersByUser,
-  createOrder,
   updateOrderStatus,
-  updatePaymentStatus,
-  cancelOrder,
-  deleteOrder,
 } from "../controllers/orderController.js";
+
+import authMiddleware from "../middlewares/authMiddleware.js";
+import isAdmin from "../middlewares/isAdminMiddleware.js";
+import validate from "../middlewares/validation.js";
+import { mongoIdValidation } from "../middlewares/validators.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, getOrders);
-router.get("/me", authMiddleware, getOrdersByUser);
-router.get("/:id", authMiddleware, getOrderById);
+/* =========================
+   CHECKOUT
+========================= */
+router.post("/checkout", authMiddleware, checkout);
 
-router.post("/", authMiddleware, createOrder);
+/* =========================
+   USER ORDERS
+========================= */
+router.get("/my-orders", authMiddleware, getMyOrders);
 
-router.patch("/:id/status", authMiddleware, updateOrderStatus);
-router.patch("/:id/payment-status", authMiddleware, updatePaymentStatus);
-router.patch("/:id/cancel", authMiddleware, cancelOrder);
+/* =========================
+   GET BY ID
+========================= */
+router.get(
+  "/:id",
+  authMiddleware,
+  [mongoIdValidation("id", "Order ID")],
+  validate,
+  getOrderById
+);
 
-router.delete("/:id", authMiddleware, deleteOrder);
+/* =========================
+   ADMIN UPDATE
+========================= */
+router.put(
+  "/:id",
+  authMiddleware,
+  isAdmin,
+  [mongoIdValidation("id", "Order ID")],
+  validate,
+  updateOrderStatus
+);
 
 export default router;
