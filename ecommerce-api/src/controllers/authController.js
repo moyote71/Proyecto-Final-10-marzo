@@ -36,7 +36,6 @@ const cookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "none",
-  domain: ".onrender.com", // 🔥 IMPORTANTE EN RENDER
   path: "/",
 };
 

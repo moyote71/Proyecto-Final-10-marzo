@@ -45,11 +45,12 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(null, false);
+      return callback(null, new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
 );
+
 /* =========================
    MIDDLEWARES
 ========================= */
