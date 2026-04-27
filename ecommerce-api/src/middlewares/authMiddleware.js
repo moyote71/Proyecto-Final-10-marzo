@@ -1,9 +1,20 @@
 import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
-  const token =
-    req.cookies?.token ||
-    req.headers.authorization?.split(" ")[1];
+  let token = null;
+
+  // 1. cookies (principal)
+  if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  // 2. fallback header
+  if (!token && req.headers.authorization) {
+    const parts = req.headers.authorization.split(" ");
+    if (parts[0] === "Bearer" && parts[1]) {
+      token = parts[1];
+    }
+  }
 
   if (!token) {
     return res.status(401).json({ message: "No token provided" });
@@ -19,7 +30,7 @@ const authMiddleware = (req, res, next) => {
 
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
