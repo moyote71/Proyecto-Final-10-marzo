@@ -9,6 +9,23 @@ export const http = axios.create({
 });
 
 /* =========================
+   REQUEST INTERCEPTOR 🔥 (FALTABA)
+========================= */
+http.interceptors.request.use(
+  (config) => {
+    // Si en algún punto usas token en localStorage
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* =========================
    RESPONSE INTERCEPTOR
 ========================= */
 http.interceptors.response.use(
@@ -18,10 +35,6 @@ http.interceptors.response.use(
 
     if (status === 401) {
       console.log("🔒 No autenticado");
-
-      // 🔥 OPCIONAL PERO RECOMENDADO:
-      // limpiar estado si quieres evitar loops de 401
-      // localStorage.removeItem("user"); (si usas persistencia)
     }
 
     if (status === 404) {
