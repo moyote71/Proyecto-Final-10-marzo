@@ -72,7 +72,7 @@ export default function Orders() {
 
             try {
                 // ✅ FIX PRINCIPAL: usar sesión (JWT cookie), no userId
-                const response = await http.get("/orders/me");
+                const response = await http.get("/orders/my-orders");
 
                 const rawOrders = Array.isArray(response.data)
                     ? response.data

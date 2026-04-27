@@ -51,17 +51,47 @@ async function getProductById(req, res, next) {
 }
 
 /* ========================= */
+/* =========================
+   GET PRODUCTS BY CATEGORY
+========================= */
 async function getProductByCategory(req, res, next) {
   try {
-    const id = req.params.idCategory;
+    const { idCategory } = req.params;
 
-    const products = await Product.find({ category: id })
-      .populate("category")
-      .sort({ createdAt: -1 }); // 🔥 también aquí
+    let products;
 
-    if (products.length === 0) {
-      return res.status(404).json({
-        message: "No products found on this category",
+    // =========================
+    // 1. SI ES MONGO ID
+    // =========================
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(idCategory);
+
+    if (isMongoId) {
+      products = await Product.find({ category: idCategory })
+        .populate("category")
+        .sort({ createdAt: -1 });
+    } else {
+      // =========================
+      // 2. SI ES SLUG (🔥 FIX CLAVE)
+      // =========================
+      const Category = (await import("../models/category.js")).default;
+
+      const category = await Category.findOne({ slug: idCategory });
+
+      if (!category) {
+        return res.status(404).json({
+          message: "Category not found",
+        });
+      }
+
+      products = await Product.find({ category: category._id })
+        .populate("category")
+        .sort({ createdAt: -1 });
+    }
+
+    if (!products.length) {
+      return res.status(200).json({
+        products: [],
+        message: "No products in this category",
       });
     }
 

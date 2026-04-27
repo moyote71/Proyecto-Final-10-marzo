@@ -56,12 +56,9 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
 
                 {categories.map((category) => (
                     <Link
-                        key={category._id}
-                        to={`/categories/${category.slug}`}
-                        className={navStyles.mobileLink}
-                        onClick={onLinkClick}
+                        to={`/categories/${category.slug || category._id}`}
+                        className={navStyles.mainCategoryLink}
                     >
-                        <Icon name="chevronRight" size={16} />
                         {category.name}
                     </Link>
                 ))}
