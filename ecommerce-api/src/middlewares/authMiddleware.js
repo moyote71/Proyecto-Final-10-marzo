@@ -6,20 +6,20 @@ const authMiddleware = (req, res, next) => {
     req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "No token" });
+    return res.status(401).json({ message: "No token provided" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
-      userId: decoded.userId,   // 👈 CONSISTENTE CON TODO EL BACK
+      userId: decoded.userId,
       role: decoded.role,
     };
 
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
