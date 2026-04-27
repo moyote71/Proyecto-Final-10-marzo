@@ -27,8 +27,12 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
             .sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    // 🔥 FIX: evita undefined y usa slug o id
-    const getCategoryUrl = (cat) => cat?.slug || cat?._id;
+    const getCategoryUrl = (cat) => cat?._id;
+
+    const handleClick = () => {
+        setIsDropdownOpen(false); // 🔥 CERRAR AL CLICK
+        onLinkClick?.();
+    };
 
     /* ========================= MOBILE ========================= */
     if (isMobile) {
@@ -38,7 +42,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                     <Link
                         key={category._id}
                         to={`/categories/${getCategoryUrl(category)}`}
-                        onClick={onLinkClick}
+                        onClick={handleClick}
                         className={navStyles.mobileLink}
                     >
                         {category.name}
@@ -53,10 +57,19 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
         <div className={navStyles.wrapper}>
             <div className={navStyles.inner}>
 
-                <div className="relative">
+                {/* BACKDROP (mejora UX) */}
+                {isDropdownOpen && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsDropdownOpen(false)}
+                    />
+                )}
+
+                <div className="relative z-50">
+
                     <button
-                        className={navStyles.dropdownButton}
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className={`${navStyles.dropdownButton} text-white`}
+                        onClick={() => setIsDropdownOpen((prev) => !prev)}
                     >
                         <Icon name="menu" size={16} />
                         Categorías
@@ -70,16 +83,15 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
 
                                 return (
                                     <div key={category._id} className={navStyles.categoryGroup}>
-                                        
-                                        {/* MAIN CATEGORY */}
+
                                         <Link
                                             to={`/categories/${getCategoryUrl(category)}`}
                                             className={navStyles.mainCategoryLink}
+                                            onClick={handleClick}
                                         >
                                             {category.name}
                                         </Link>
 
-                                        {/* SUBCATEGORIES */}
                                         {subcategories.length > 0 && (
                                             <div className={navStyles.subcategoryList}>
                                                 {subcategories.map((sub) => (
@@ -87,6 +99,7 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
                                                         key={sub._id}
                                                         to={`/categories/${getCategoryUrl(sub)}`}
                                                         className={navStyles.subCategoryLink}
+                                                        onClick={handleClick}
                                                     >
                                                         {sub.name}
                                                     </Link>
