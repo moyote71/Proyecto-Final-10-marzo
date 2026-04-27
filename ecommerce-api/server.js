@@ -8,6 +8,7 @@ import dbConnection from "./src/config/database.js";
 import errorHandler from "./src/middlewares/errorHandler.js";
 import logger from "./src/middlewares/logger.js";
 import { apiLimiter } from "./src/middlewares/rateLimiter.js";
+import uploadRoutes from "./src/routes/uploadRoutes.js";
 import routes from "./src/routes/index.js";
 
 dotenv.config();
@@ -78,6 +79,7 @@ app.get("/", (req, res) => {
    ROUTES
 ========================= */
 app.use("/api", routes);
+app.use("/api/upload", uploadRoutes);
 
 /* =========================
    404
