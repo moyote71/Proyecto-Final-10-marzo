@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/ProductCard/ProductCard";
+import ProductCard from "../components/common/ProductCard/ProductCard";
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -17,23 +17,22 @@ export default function CategoryPage() {
       try {
         setLoading(true);
 
-        // 1. categoría
-        const categoryRes = await http.get(`/categories/slug/${slug}`);
-        setCategory(categoryRes.data);
+        // 1. traer categoría por slug
+        const { data: cat } = await http.get(`/categories/slug/${slug}`);
+        setCategory(cat);
 
-        // 2. productos (IMPORTANTE: backend ya soporta slug)
-        const productsRes = await http.get(
-         `/products/category/${categoryRes.data._id}`
+        // 🚨 FIX IMPORTANTE: validar id antes de pedir productos
+        if (!cat?._id) {
+          setProducts([]);
+          return;
+        }
+
+        // 2. productos por category ID real
+        const { data: prod } = await http.get(
+          `/products/category/${cat._id}`
         );
 
-        const data = productsRes.data;
-
-        setProducts(
-          Array.isArray(data)
-            ? data
-            : data.products || []
-        );
-
+        setProducts(Array.isArray(prod) ? prod : []);
       } catch (err) {
         console.error("Error cargando categoría:", err);
         setProducts([]);
@@ -45,7 +44,10 @@ export default function CategoryPage() {
     fetchData();
   }, [slug]);
 
-  if (loading) return <p className="text-black">Cargando...</p>;
+  if (loading)
+    return (
+      <p className="text-black p-6 font-medium">Cargando...</p>
+    );
 
   return (
     <div className="p-6">
