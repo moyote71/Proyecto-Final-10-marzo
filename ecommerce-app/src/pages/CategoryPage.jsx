@@ -3,8 +3,7 @@ import { useParams } from "react-router-dom";
 import { http } from "../services/http";
 
 export default function CategoryPage() {
-  // 🔥 FIX: debe ser "slug", no categoryId
-  const { slug } = useParams();
+  const { slug } = useParams(); // puede ser slug o id
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,10 +17,12 @@ export default function CategoryPage() {
         setLoading(true);
         setError("");
 
-        // 🔥 FIX: endpoint correcto (slug o id, backend ya lo soporta)
         const res = await http.get(`/products/category/${slug}`);
 
-        setProducts(res.data || []);
+        // backend a veces manda array directo o {products}
+        const data = res.data?.products || res.data || [];
+
+        setProducts(data);
       } catch (err) {
         console.error("Error loading category products:", err);
         setProducts([]);
@@ -34,13 +35,9 @@ export default function CategoryPage() {
     fetchProducts();
   }, [slug]);
 
-  if (loading) {
-    return <p>Cargando productos...</p>;
-  }
+  if (loading) return <p>Cargando productos...</p>;
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+  if (error) return <p>{error}</p>;
 
   return (
     <div>
