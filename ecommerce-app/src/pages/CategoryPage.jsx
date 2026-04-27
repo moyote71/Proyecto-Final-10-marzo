@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { http } from "../services/http";
 
 export default function CategoryPage() {
-  const { slug } = useParams(); // puede ser slug o id
+  const { slug } = useParams();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,13 +19,11 @@ export default function CategoryPage() {
 
         const res = await http.get(`/products/category/${slug}`);
 
-        // backend a veces manda array directo o {products}
         const data = res.data?.products || res.data || [];
 
         setProducts(data);
       } catch (err) {
-        console.error("Error loading category products:", err);
-        setProducts([]);
+        console.error(err);
         setError("No se pudieron cargar los productos");
       } finally {
         setLoading(false);
@@ -35,13 +33,12 @@ export default function CategoryPage() {
     fetchProducts();
   }, [slug]);
 
-  if (loading) return <p>Cargando productos...</p>;
-
+  if (loading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div>
-      <h2>Productos de categoría</h2>
+      <h2>Productos</h2>
 
       {products.length === 0 ? (
         <p>No hay productos en esta categoría</p>
@@ -55,4 +52,4 @@ export default function CategoryPage() {
       )}
     </div>
   );
-}
+}   

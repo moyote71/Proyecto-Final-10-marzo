@@ -1,4 +1,5 @@
   import Category from "../models/category.js";
+  import Product from "../models/product.js";
 
   const slugify = (text) =>
     text
@@ -23,21 +24,26 @@
   }
 
   /* ========================= */
-  export async function getCategoryById(req, res, next) {
-    try {
-      const category = await Category.findById(req.params.id).populate(
-        "parentCategory"
-      );
+  export async function getCategoryBySlug(req, res, next) {
+  try {
+    const { slug } = req.params;
 
-      if (!category) {
-        return res.status(404).json({ message: "Category not found" });
-      }
+    const category = await Category.findOne({ slug }).populate("parentCategory");
 
-      res.status(200).json(category);
-    } catch (error) {
-      next(error);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
+
+    const products = await Product.find({ category: category._id });
+
+    res.status(200).json({
+      category,
+      products,
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   /* ========================= */
   export async function createCategory(req, res, next) {
