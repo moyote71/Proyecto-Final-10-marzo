@@ -30,23 +30,9 @@ if (process.env.NODE_ENV !== "test") {
 /* =========================
    CORS FIX (PRODUCCIÓN ROBUSTA)
 ========================= */
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://proyecto-final-10-marzo-qv08.onrender.com",
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(null, new Error("Not allowed by CORS"));
-    },
+    origin: "https://proyecto-final-10-marzo-qv08.onrender.com",
     credentials: true,
   })
 );

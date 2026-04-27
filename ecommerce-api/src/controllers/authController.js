@@ -30,7 +30,7 @@ const generateRefreshToken = (user) => {
 };
 
 /* =========================
-   COOKIE CONFIG
+   COOKIE CONFIG (🔥 FIX REAL)
 ========================= */
 const cookieOptions = {
   httpOnly: true,
@@ -60,11 +60,21 @@ export const register = async (req, res, next) => {
       role: "guest",
     });
 
+    // 🔥 OPCIONAL PERO RECOMENDADO: auto login después de registro
+    const token = generateToken(user);
+
+    res.cookie("token", token, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000,
+    });
+
     res.status(201).json({
       message: "User created",
       user: {
+        _id: user._id,
         displayName: user.displayName,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -73,7 +83,7 @@ export const register = async (req, res, next) => {
 };
 
 /* =========================
-   LOGIN
+   LOGIN (🔥 FIX CLAVE)
 ========================= */
 export const login = async (req, res, next) => {
   try {
@@ -90,17 +100,11 @@ export const login = async (req, res, next) => {
     }
 
     const token = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
 
+    // 🔥 IMPORTANTE: SOLO TOKEN (simplificamos)
     res.cookie("token", token, {
       ...cookieOptions,
       maxAge: 60 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth/refresh",
     });
 
     res.status(200).json({
@@ -118,74 +122,23 @@ export const login = async (req, res, next) => {
 };
 
 /* =========================
-   REFRESH TOKEN
-========================= */
-export const refreshToken = async (req, res) => {
-  try {
-    const token = req.cookies?.refreshToken || req.body.refreshToken;
-
-    if (!token) {
-      return res.status(401).json({ message: "No refresh token" });
-    }
-
-    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(403).json({ message: "User not found" });
-    }
-
-    const newToken = generateToken(user);
-    const newRefreshToken = generateRefreshToken(user);
-
-    res.cookie("token", newToken, {
-      ...cookieOptions,
-      maxAge: 60 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth/refresh",
-    });
-
-    res.json({
-      message: "Token refreshed",
-      user: {
-        _id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    return res.status(403).json({ message: "Invalid refresh token" });
-  }
-};
-
-/* =========================
    LOGOUT
 ========================= */
 export const logout = async (req, res) => {
-  res.clearCookie("token", cookieOptions);
-
-  res.clearCookie("refreshToken", {
+  res.clearCookie("token", {
     ...cookieOptions,
-    path: "/api/auth/refresh",
   });
 
   res.json({ message: "Logged out" });
 };
 
 /* =========================
-   CHECK EMAIL (🔥 FIX CLAVE)
+   CHECK EMAIL
 ========================= */
 export const checkEmail = async (req, res, next) => {
   try {
     const email = String(req.query.email || "").toLowerCase();
-
     const user = await User.findOne({ email });
-
     res.json({ taken: !!user });
   } catch (err) {
     next(err);
