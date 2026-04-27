@@ -30,14 +30,14 @@ const generateRefreshToken = (user) => {
 };
 
 /* =========================
-   COOKIE CONFIG (🔥 FIX REAL)
+   COOKIE CONFIG
 ========================= */
 const cookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "none",
   path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días (consistencia login)
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 /* =========================
@@ -47,7 +47,7 @@ export const register = async (req, res, next) => {
   try {
     const { displayName, email, password } = req.body;
 
-    // 🔥 FIX 1: validación obligatoria
+    // VALIDACIÓN
     if (!displayName || !email || !password) {
       return res.status(400).json({ message: "Missing fields" });
     }
@@ -63,7 +63,7 @@ export const register = async (req, res, next) => {
       displayName,
       email,
       hashPassword,
-      role: "customer", // 🔥 FIX 2
+      role: "customer",
     });
 
     const token = generateToken(user);
@@ -73,29 +73,7 @@ export const register = async (req, res, next) => {
       maxAge: 60 * 60 * 1000,
     });
 
-    res.status(201).json({
-      message: "User created",
-      user: {
-        _id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-    // 🔥 OPCIONAL PERO RECOMENDADO: auto login después de registro
-    const token = generateToken(user);
-
-    res.cookie("token", token, {
-      ...cookieOptions,
-      maxAge: 60 * 60 * 1000,
-    });
-
-    res.status(201).json({
+    return res.status(201).json({
       message: "User created",
       user: {
         _id: user._id,
@@ -110,11 +88,16 @@ export const register = async (req, res, next) => {
 };
 
 /* =========================
-   LOGIN (🔥 FIX CLAVE)
+   LOGIN
 ========================= */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    // VALIDACIÓN
+    if (!email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -128,13 +111,12 @@ export const login = async (req, res, next) => {
 
     const token = generateToken(user);
 
-    // 🔥 IMPORTANTE: SOLO TOKEN (simplificamos)
-          res.cookie("token", token, {
-        ...cookieOptions,
-        maxAge: 60 * 60 * 1000,
-        });
+    res.cookie("token", token, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000,
+    });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       user: {
         _id: user._id,
@@ -152,11 +134,8 @@ export const login = async (req, res, next) => {
    LOGOUT
 ========================= */
 export const logout = async (req, res) => {
-  res.clearCookie("token", {
-    ...cookieOptions,
-  });
-
-  res.json({ message: "Logged out" });
+  res.clearCookie("token", cookieOptions);
+  return res.json({ message: "Logged out" });
 };
 
 /* =========================
@@ -166,7 +145,7 @@ export const checkEmail = async (req, res, next) => {
   try {
     const email = String(req.query.email || "").toLowerCase();
     const user = await User.findOne({ email });
-    res.json({ taken: !!user });
+    return res.json({ taken: !!user });
   } catch (err) {
     next(err);
   }
