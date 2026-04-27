@@ -1,55 +1,45 @@
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { http } from "../services/http";
+import { useEffect, useState } from "react";
+import { http } from "../http";
 
 export default function CategoryPage() {
-  const { slug } = useParams();
+  const { slug } = useParams(); // 🔥 CAMBIO CLAVE (ANTES era id)
 
+  const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!slug) return;
 
-    const fetchProducts = async () => {
+    const fetchCategory = async () => {
       try {
-        setLoading(true);
-        setError("");
+        const res = await http.get(`/api/categories/slug/${slug}`);
 
-        const res = await http.get(`/products/category/${slug}`);
-
-        const data = res.data?.products || res.data || [];
-
-        setProducts(data);
+        setCategory(res.data);
+        setProducts(res.data.products || []);
       } catch (err) {
         console.error(err);
-        setError("No se pudieron cargar los productos");
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchCategory();
   }, [slug]);
-
-  if (loading) return <p>Cargando...</p>;
-  if (error) return <p>{error}</p>;
 
   return (
     <div>
-      <h2>Productos</h2>
+      <h1>{category?.name}</h1>
 
-      {products.length === 0 ? (
-        <p>No hay productos en esta categoría</p>
-      ) : (
-        products.map((p) => (
-          <div key={p._id}>
-            <h3>{p.name}</h3>
-            <p>${p.price}</p>
-          </div>
-        ))
-      )}
+      <div>
+        {products.length === 0 ? (
+          <p>No hay productos en esta categoría</p>
+        ) : (
+          products.map((p) => (
+            <div key={p._id}>
+              {p.name} - ${p.price}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
-}   
+}
