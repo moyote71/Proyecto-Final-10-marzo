@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { http } from "../services/http"; // 👈 IMPORTANTE (ajusta ruta)
+import { http } from "../services/http";
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -13,8 +13,7 @@ export default function CategoryPage() {
 
     const fetchCategory = async () => {
       try {
-        const res = await http.get(`/categories/slug/${slug}`); 
-        // 👆 SIN /api porque ya lo tiene axios
+        const res = await http.get(`/categories/slug/${slug}`);
 
         setCategory(res.data);
         setProducts(res.data.products || []);
