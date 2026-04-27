@@ -1,36 +1,63 @@
 import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
-  let token = null;
-
-  // 1. cookies (principal)
-  if (req.cookies?.token) {
-    token = req.cookies.token;
-  }
-
-  // 2. fallback header
-  if (!token && req.headers.authorization) {
-    const parts = req.headers.authorization.split(" ");
-    if (parts[0] === "Bearer" && parts[1]) {
-      token = parts[1];
-    }
-  }
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
   try {
+    let token = null;
+
+    // =========================
+    // 1. COOKIE (principal)
+    // =========================
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    // =========================
+    // 2. HEADER fallback
+    // =========================
+    if (!token && req.headers.authorization) {
+      const parts = req.headers.authorization.split(" ");
+
+      if (parts[0] === "Bearer" && parts[1]) {
+        token = parts[1];
+      }
+    }
+
+    // =========================
+    // 3. NO TOKEN
+    // =========================
+    if (!token) {
+      return res.status(401).json({
+        message: "No token provided",
+      });
+    }
+
+    // =========================
+    // 4. VERIFY TOKEN
+    // =========================
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (!decoded) {
+      return res.status(401).json({
+        message: "Invalid token",
+      });
+    }
+
+    // =========================
+    // 5. NORMALIZAR USER (🔥 FIX CLAVE)
+    // =========================
     req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
+      id: decoded.userId || decoded.id,
+      userId: decoded.userId || decoded.id,
+      role: decoded.role || "customer",
     };
 
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.error("🔥 AUTH ERROR:", err.message);
+
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
   }
 };
 
