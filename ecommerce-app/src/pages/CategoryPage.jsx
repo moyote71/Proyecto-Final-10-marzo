@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { http } from "../http.js";
+import { http } from "../services/http.js";
 
 export default function CategoryPage() {
   const { slug } = useParams(); // 🔥 CAMBIO CLAVE (ANTES era id)
