@@ -8,6 +8,7 @@ export default function CategoryPage() {
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!slug) return;
@@ -15,14 +16,26 @@ export default function CategoryPage() {
     const fetchCategory = async () => {
       try {
         setLoading(true);
+        setError("");
 
         const res = await http.get(`/categories/slug/${slug}`);
 
-        setCategory(res.data);
-        setProducts(res.data?.products || []);
+        console.log("🔥 RESPUESTA BACKEND:", res.data);
+
+        // 🔥 FIX ROBUSTO: soporta varios formatos
+        const data = res.data?.category || res.data;
+
+        setCategory(data);
+
+        setProducts(
+          data?.products ||
+          res.data?.products ||
+          []
+        );
 
       } catch (err) {
-        console.error("Error cargando categoría:", err);
+        console.error("❌ ERROR CATEGORY:", err);
+        setError("Error cargando categoría");
         setProducts([]);
       } finally {
         setLoading(false);
@@ -40,6 +53,14 @@ export default function CategoryPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-red-600 text-center mt-10">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 bg-white text-black">
 
@@ -48,7 +69,9 @@ export default function CategoryPage() {
       </h1>
 
       {products.length === 0 ? (
-        <p className="text-gray-500">No hay productos en esta categoría</p>
+        <p className="text-gray-500">
+          Esta categoría no tiene productos o no están llegando del backend
+        </p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
@@ -57,7 +80,7 @@ export default function CategoryPage() {
               key={p._id}
               className="border rounded-lg p-4 shadow-sm bg-white"
             >
-              <h2 className="font-semibold text-lg">{p.name}</h2>
+              <h2 className="font-semibold">{p.name}</h2>
               <p className="text-gray-600">${p.price}</p>
             </div>
           ))}
