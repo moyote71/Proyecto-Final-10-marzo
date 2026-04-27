@@ -28,19 +28,11 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 /* =========================
-   CORS (ROBUSTO)
+   CORS FIX (PRODUCCIÓN ROBUSTA)
 ========================= */
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "https://proyecto-final-10-marzo-qv08.onrender.com",
     credentials: true,
   })
 );
@@ -56,7 +48,7 @@ app.use("/api", apiLimiter);
 app.use("/uploads", express.static("uploads"));
 
 /* =========================
-   HEALTH
+   HEALTH CHECK
 ========================= */
 app.get("/health", (req, res) => {
   res.json({

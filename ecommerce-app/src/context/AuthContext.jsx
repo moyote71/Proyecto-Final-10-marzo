@@ -11,23 +11,19 @@ export function AuthProvider({ children }) {
     const navigate = useNavigate();
 
     const isAuthenticated = !!user;
-    const isAdmin = user?.role === "admin"; // 🔥 FIX IMPORTANTE
+    const isAdmin = user?.role === "admin";
 
+    /* =========================
+       CHECK AUTH (COOKIE SESSION)
+    ========================= */
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const res = await http.get("/users/profile", {
-                    withCredentials: true,
-                });
+                const res = await http.get("/users/profile");
 
                 setUser(res?.data?.user || null);
             } catch (error) {
-                if (error.response?.status === 401) {
-                    setUser(null);
-                } else {
-                    console.error("Error inesperado auth:", error);
-                    setUser(null);
-                }
+                setUser(null);
             } finally {
                 setLoading(false);
             }
@@ -36,51 +32,52 @@ export function AuthProvider({ children }) {
         checkAuth();
     }, []);
 
+    /* =========================
+       LOGIN
+    ========================= */
     const login = async (email, password) => {
         const result = await authLogin(email, password);
 
         if (result.success) {
             try {
-                const res = await http.get("/users/profile", {
-                    withCredentials: true,
-                });
-
+                const res = await http.get("/users/profile");
                 setUser(res?.data?.user || null);
             } catch {
                 setUser(null);
             }
 
             navigate("/");
-            return { success: true };
         }
 
         return result;
     };
 
+    /* =========================
+       REGISTER
+    ========================= */
     const register = async (name, email, password) => {
         const result = await authRegister(name, email, password);
 
         if (result.success) {
             try {
-                const res = await http.get("/users/profile", {
-                    withCredentials: true,
-                });
-
+                const res = await http.get("/users/profile");
                 setUser(res?.data?.user || null);
-                navigate("/");
-                return { success: true };
-            } catch (err) {
+            } catch {
                 setUser(null);
-                return { success: false };
             }
+
+            navigate("/");
         }
 
         return result;
     };
 
+    /* =========================
+       LOGOUT
+    ========================= */
     const logout = async () => {
         try {
-            await http.post("/auth/logout", {}, { withCredentials: true });
+            await http.post("/auth/logout");
         } catch (e) {
             console.error("Logout error:", e);
         } finally {
@@ -89,22 +86,22 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const value = {
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        isAuthenticated,
-        isAdmin, // 🔥 FIX EXPORTADO
-    };
-
     if (loading) {
         return <div className="p-4 text-center">Cargando...</div>;
     }
 
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider
+            value={{
+                user,
+                loading,
+                login,
+                register,
+                logout,
+                isAuthenticated,
+                isAdmin,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
