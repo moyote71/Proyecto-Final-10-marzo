@@ -17,20 +17,22 @@ export default function CategoryPage() {
       try {
         setLoading(true);
 
-        // 1. Obtener categoría por slug
+        // 1. categoría
         const categoryRes = await http.get(`/categories/slug/${slug}`);
-        const categoryData = categoryRes.data;
+        setCategory(categoryRes.data);
 
-        setCategory(categoryData);
-
-        // 🔥 2. IMPORTANTE: usar ID real de Mongo, no slug
+        // 2. productos (IMPORTANTE: backend ya soporta slug)
         const productsRes = await http.get(
-          `/products/category/${categoryData._id}`
+         `/products/category/${categoryRes.data._id}`
         );
 
         const data = productsRes.data;
 
-        setProducts(Array.isArray(data) ? data : data.products || []);
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : data.products || []
+        );
 
       } catch (err) {
         console.error("Error cargando categoría:", err);
@@ -43,26 +45,18 @@ export default function CategoryPage() {
     fetchData();
   }, [slug]);
 
-  if (loading) {
-    return (
-      <p className="text-black p-6 font-medium">
-        Cargando...
-      </p>
-    );
-  }
+  if (loading) return <p className="text-black">Cargando...</p>;
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-6 text-black">
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">
         {category?.name || "Categoría"}
       </h1>
 
       {products.length === 0 ? (
-        <p className="text-gray-500">
-          No hay productos en esta categoría
-        </p>
+        <p className="text-gray-500">No hay productos</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {products.map((p) => (
             <ProductCard key={p._id} product={p} />
           ))}
