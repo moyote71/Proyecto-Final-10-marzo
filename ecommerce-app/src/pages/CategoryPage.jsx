@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { http } from "../services/http.js";
+import { http } from "../services/http"; // 👈 IMPORTANTE (ajusta ruta)
 
 export default function CategoryPage() {
-  const { slug } = useParams(); // 🔥 CAMBIO CLAVE (ANTES era id)
+  const { slug } = useParams();
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
@@ -13,12 +13,13 @@ export default function CategoryPage() {
 
     const fetchCategory = async () => {
       try {
-        const res = await http.get(`/api/categories/slug/${slug}`);
+        const res = await http.get(`/categories/slug/${slug}`); 
+        // 👆 SIN /api porque ya lo tiene axios
 
         setCategory(res.data);
         setProducts(res.data.products || []);
       } catch (err) {
-        console.error(err);
+        console.error("Error cargando categoría:", err);
       }
     };
 
@@ -29,17 +30,15 @@ export default function CategoryPage() {
     <div>
       <h1>{category?.name}</h1>
 
-      <div>
-        {products.length === 0 ? (
-          <p>No hay productos en esta categoría</p>
-        ) : (
-          products.map((p) => (
-            <div key={p._id}>
-              {p.name} - ${p.price}
-            </div>
-          ))
-        )}
-      </div>
+      {products.length === 0 ? (
+        <p>No hay productos</p>
+      ) : (
+        products.map((p) => (
+          <div key={p._id}>
+            {p.name} - ${p.price}
+          </div>
+        ))
+      )}
     </div>
   );
 }
