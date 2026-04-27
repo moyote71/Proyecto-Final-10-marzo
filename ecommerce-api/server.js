@@ -15,6 +15,9 @@ dotenv.config();
 
 const app = express();
 
+/* =========================
+   TRUST PROXY (RENDER FIX)
+========================= */
 app.set("trust proxy", 1);
 
 /* =========================
@@ -25,15 +28,27 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 /* =========================
-   CORS FIX PRO (IMPORTANTE)
+   CORS FIX (PRODUCCIÓN ROBUSTA)
 ========================= */
+const allowedOrigins = [
+  "https://proyecto-final-10-marzo-qv08.onrender.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      process.env.CLIENT_URL,
-    ],
+    origin: function (origin, callback) {
+      // permitir requests sin origin (postman / server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("❌ CORS bloqueado:", origin);
+      return callback(null, false); // importante: NO romper headers
+    },
     credentials: true,
   })
 );
@@ -49,10 +64,41 @@ app.use("/api", apiLimiter);
 app.use("/uploads", express.static("uploads"));
 
 /* =========================
+   HEALTH CHECK
+========================= */
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+  });
+});
+
+/* =========================
+   ROOT
+========================= */
+app.get("/", (req, res) => {
+  res.json({
+    message: "E-commerce API",
+    status: "running",
+  });
+});
+
+/* =========================
    ROUTES
 ========================= */
 app.use("/api", routes);
 app.use("/api/upload", uploadRoutes);
+
+/* =========================
+   404
+========================= */
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
+    method: req.method,
+    url: req.originalUrl,
+  });
+});
 
 /* =========================
    ERROR HANDLER
@@ -60,10 +106,11 @@ app.use("/api/upload", uploadRoutes);
 app.use(errorHandler);
 
 /* =========================
-   START
+   START SERVER
 ========================= */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📦 API ready at /api`);
 });
