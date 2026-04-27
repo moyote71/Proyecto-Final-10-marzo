@@ -32,7 +32,7 @@ router.get("/search", searchProducts);
 /* =========================
    GET BY CATEGORY (🔥 FIX FINAL)
 ========================= */
-router.get("/category/:categoryId", getProductByCategory);
+router.get("/category/idCategory", getProductByCategory);
 
 /* =========================
    GET BY ID
