@@ -49,9 +49,12 @@ export default function AdminProducts() {
     const fetchCategories = async () => {
         try {
             const res = await http.get("/categories");
-            setCategories(Array.isArray(res.data) ? res.data : []);
+
+            const data = Array.isArray(res.data) ? res.data : [];
+            setCategories(data);
         } catch (err) {
             console.error("Error loading categories:", err);
+            setCategories([]);
         }
     };
 
@@ -64,43 +67,54 @@ export default function AdminProducts() {
        CLOUDINARY UPLOAD
     ========================= */
     const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-        // 🔥 seguridad básica
-        if (file.size > 2 * 1024 * 1024) {
-            alert("La imagen es muy grande (máx 2MB)");
-            return;
+    if (file.size > 2 * 1024 * 1024) {
+        alert("La imagen es muy grande (máx 2MB)");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_PRESET);
+
+    try {
+        setUploading(true);
+
+        const res = await fetch(CLOUDINARY_URL, {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!data.secure_url) {
+            throw new Error("Error subiendo imagen");
         }
 
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", CLOUDINARY_PRESET);
+        // 🔥 REEMPLAZA COMPLETAMENTE LA IMAGEN
+        setForm((prev) => ({
+            ...prev,
+            imagesUrl: [data.secure_url],
+        }));
 
-        try {
-            setUploading(true);
+    } catch (err) {
+        console.error(err);
+        alert("Error subiendo imagen");
+    } finally {
+        setUploading(false);
+    }
+};
 
-            const res = await fetch(CLOUDINARY_URL, {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await res.json();
-
-            if (!data.secure_url) {
-                throw new Error("Upload failed");
-            }
-
-            setForm((prev) => ({
-                ...prev,
-                imagesUrl: [...(prev.imagesUrl || []), data.secure_url],
-            }));
-        } catch (err) {
-            console.error("Cloudinary upload error:", err);
-            alert("Error subiendo imagen");
-        } finally {
-            setUploading(false);
-        }
+    /* =========================
+       REMOVE IMAGE
+    ========================= */
+    const removeImage = (index) => {
+        setForm((prev) => ({
+            ...prev,
+            imagesUrl: prev.imagesUrl.filter((_, i) => i !== index),
+        }));
     };
 
     /* =========================
@@ -117,7 +131,12 @@ export default function AdminProducts() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!form.name || !form.description || !form.price || !form.stock) {
+        if (
+            !form.name.trim() ||
+            !form.description.trim() ||
+            !form.price ||
+            !form.stock
+        ) {
             alert("Completa todos los campos");
             return;
         }
@@ -133,8 +152,8 @@ export default function AdminProducts() {
             price: Number(form.price),
             stock: Number(form.stock),
             category: form.category,
-            imagesUrl: form.imagesUrl?.filter(Boolean)?.length
-                ? form.imagesUrl.filter(Boolean)
+            imagesUrl: form.imagesUrl?.length
+                ? form.imagesUrl
                 : ["https://placehold.co/600x400.png"],
         };
 
@@ -165,7 +184,9 @@ export default function AdminProducts() {
 
         try {
             await http.delete(`/products/${id}`);
+
             if (editingId === id) resetForm();
+
             await fetchProducts();
         } catch (err) {
             console.error("Error deleting product:", err);
@@ -184,7 +205,9 @@ export default function AdminProducts() {
             price: p.price || "",
             stock: p.stock || "",
             category: p.category?._id || p.category || "",
-            imagesUrl: p.imagesUrl || [],
+            imagesUrl: Array.isArray(p.imagesUrl)
+                ? p.imagesUrl
+                : [],
         });
     };
 
@@ -257,7 +280,7 @@ export default function AdminProducts() {
                     ))}
                 </select>
 
-                {/* UPLOAD IMAGE */}
+                {/* UPLOAD */}
                 <input
                     type="file"
                     accept="image/*"
@@ -266,22 +289,33 @@ export default function AdminProducts() {
                 />
 
                 {uploading && (
-                    <p className="text-sm text-blue-500">
+                    <p className="text-blue-500 text-sm">
                         Subiendo imagen...
                     </p>
                 )}
 
                 {/* PREVIEW */}
-                <div className="flex gap-2 flex-wrap">
-                    {form.imagesUrl?.map((img, i) => (
-                        <img
-                            key={i}
-                            src={img}
-                            alt="preview"
-                            className="w-16 h-16 object-cover rounded"
-                        />
-                    ))}
-                </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {form.imagesUrl?.[0] && (
+                        <div className="relative">
+                            <img
+                                src={form.imagesUrl[0]}
+                                className="w-24 h-24 object-cover rounded border"
+                            />
+
+                        {/* botón para eliminar */}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setForm({ ...form, imagesUrl: [] })
+                            }
+                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1"
+                        >
+                            X
+                        </button>
+                    </div>
+                )}
+            </div>
 
                 <div className="flex gap-2">
                     <button
