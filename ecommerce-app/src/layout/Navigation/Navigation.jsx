@@ -1,63 +1,45 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/common/Icon/Icon";
-import categoriesData from "../../data/categories.json";
-import { navStyles, navContrastFix } from "./NavigationStyles";
+import { http } from "../../services/http";
+import { navStyles } from "./NavigationStyles";
 
 const Navigation = ({ isMobile = false, onLinkClick }) => {
     const [categories, setCategories] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     useEffect(() => {
-        const allParentIds = new Set(
-            categoriesData
-                .filter((cat) => cat.parentCategory)
-                .map((cat) => cat.parentCategory._id)
-        );
+        const fetchCategories = async () => {
+            try {
+                const res = await http.get("/categories");
+                setCategories(res.data);
+            } catch (err) {
+                console.error("Error cargando categorías", err);
+            }
+        };
 
-        const mainCategories = categoriesData.filter(
-            (cat) => !cat.parentCategory || allParentIds.has(cat._id)
-        );
-
-        setCategories(mainCategories);
+        fetchCategories();
     }, []);
 
     const getSubcategories = (parentId) => {
-        const subcategories = categoriesData.filter(
-            (cat) => cat.parentCategory && cat.parentCategory._id === parentId
-        );
-
-        return subcategories.sort((a, b) => a.name.localeCompare(b.name));
+        return categories
+            .filter((cat) => cat.parentCategory?._id === parentId)
+            .sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    /* =========================
-       MOBILE
-    ========================= */
+    // 🔥 FIX: evita undefined y usa slug o id
+    const getCategoryUrl = (cat) => cat?.slug || cat?._id;
+
+    /* ========================= MOBILE ========================= */
     if (isMobile) {
         return (
-            <div className={`${navStyles.mobileWrapper} ${navContrastFix.mobileWrapperFix()}`}>
-                <Link
-                    to="/new"
-                    className={navStyles.mobileLinkSpecial}
-                    onClick={onLinkClick}
-                >
-                    <Icon name="sparkles" size={20} />
-                    Novedades
-                </Link>
-
-                <Link
-                    to="/bestsellers"
-                    className={navStyles.mobileLinkSpecial}
-                    onClick={onLinkClick}
-                >
-                    <Icon name="star" size={20} />
-                    Más vendidos
-                </Link>
-
+            <div className={navStyles.mobileWrapper}>
                 {categories.map((category) => (
                     <Link
-                        to={`/categories/${category.slug || category._id}`}
-                        className={navStyles.mainCategoryLink}
+                        key={category._id}
+                        to={`/categories/${getCategoryUrl(category)}`}
+                        onClick={onLinkClick}
+                        className={navStyles.mobileLink}
                     >
                         {category.name}
                     </Link>
@@ -66,83 +48,58 @@ const Navigation = ({ isMobile = false, onLinkClick }) => {
         );
     }
 
-    /* =========================
-       DESKTOP
-    ========================= */
+    /* ========================= DESKTOP ========================= */
     return (
-        <div className={`${navStyles.wrapper} ${navContrastFix.allWhite()}`}>
+        <div className={navStyles.wrapper}>
             <div className={navStyles.inner}>
 
-                {/* DROPDOWN */}
                 <div className="relative">
                     <button
-                        className={`${navStyles.dropdownButton} ${navContrastFix.dropdownButtonFix()}`}
+                        className={navStyles.dropdownButton}
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                     >
                         <Icon name="menu" size={16} />
-                        <span>Todas las categorías</span>
+                        Categorías
                         <Icon name="chevronDown" size={14} />
                     </button>
 
                     {isDropdownOpen && (
-                        <div className={`${navStyles.dropdownMenu} ${navContrastFix.dropdownStrong()}`}>
+                        <div className={navStyles.dropdownMenu}>
                             {categories.map((category) => {
                                 const subcategories = getSubcategories(category._id);
 
                                 return (
-                                    <div
-                                        key={category._id}
-                                        className={navStyles.categoryGroup}
-                                    >
-                                        {/* ✔ FIX AQUÍ */}
+                                    <div key={category._id} className={navStyles.categoryGroup}>
+                                        
+                                        {/* MAIN CATEGORY */}
                                         <Link
-                                            to={`/categories/${category.slug}`}                                                className={navStyles.mainCategoryLink}
+                                            to={`/categories/${getCategoryUrl(category)}`}
+                                            className={navStyles.mainCategoryLink}
                                         >
-                                        {category.name}
-                                        {subcategories.length > 0 && (
-                                        <Icon name="chevronRight" size={12} />
-                                        )}
+                                            {category.name}
                                         </Link>
 
+                                        {/* SUBCATEGORIES */}
                                         {subcategories.length > 0 && (
                                             <div className={navStyles.subcategoryList}>
-                                                {subcategories.map((subcat) => (
+                                                {subcategories.map((sub) => (
                                                     <Link
-                                                        key={subcat._id}
-                                                        to={`/categories/${subcat.slug}`}
+                                                        key={sub._id}
+                                                        to={`/categories/${getCategoryUrl(sub)}`}
                                                         className={navStyles.subCategoryLink}
                                                     >
-                                                        {subcat.name}
+                                                        {sub.name}
                                                     </Link>
                                                 ))}
                                             </div>
                                         )}
+
                                     </div>
                                 );
                             })}
                         </div>
                     )}
                 </div>
-
-                {/* NAV HORIZONTAL */}
-                <nav className={`${navStyles.navHorizontal} ${navContrastFix.navHorizontalFix()}`}>
-                    <Link to="/new" className={navStyles.navLinkSpecial}>
-                        Servicios
-                    </Link>
-
-                    <Link to="/bestsellers" className={navStyles.navLinkSpecial}>
-                        Reparaciones
-                    </Link>
-
-                    <Link to="/bestsellers" className={navStyles.navLinkSpecial}>
-                        Soporte
-                    </Link>
-
-                    <Link to="/bestsellers" className={navStyles.navLinkSpecial}>
-                        Venta de Equipo
-                    </Link>
-                </nav>
 
             </div>
         </div>
