@@ -15,9 +15,6 @@ dotenv.config();
 
 const app = express();
 
-/* =========================
-   TRUST PROXY (RENDER FIX)
-========================= */
 app.set("trust proxy", 1);
 
 /* =========================
@@ -28,19 +25,15 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 /* =========================
-   CORS (ROBUSTO)
+   CORS FIX PRO (IMPORTANTE)
 ========================= */
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      process.env.CLIENT_URL,
+    ],
     credentials: true,
   })
 );
@@ -56,41 +49,10 @@ app.use("/api", apiLimiter);
 app.use("/uploads", express.static("uploads"));
 
 /* =========================
-   HEALTH
-========================= */
-app.get("/health", (req, res) => {
-  res.json({
-    status: "OK",
-    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  });
-});
-
-/* =========================
-   ROOT
-========================= */
-app.get("/", (req, res) => {
-  res.json({
-    message: "E-commerce API",
-    status: "running",
-  });
-});
-
-/* =========================
    ROUTES
 ========================= */
 app.use("/api", routes);
 app.use("/api/upload", uploadRoutes);
-
-/* =========================
-   404
-========================= */
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-    method: req.method,
-    url: req.originalUrl,
-  });
-});
 
 /* =========================
    ERROR HANDLER
@@ -98,11 +60,10 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 /* =========================
-   START SERVER
+   START
 ========================= */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📦 API ready at /api`);
+  console.log("🚀 Server running on port", PORT);
 });
