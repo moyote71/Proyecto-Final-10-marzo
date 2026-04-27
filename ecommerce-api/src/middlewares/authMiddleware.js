@@ -36,11 +36,11 @@ const authMiddleware = (req, res, next) => {
     // =========================
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!decoded) {
-      return res.status(401).json({
-        message: "Invalid token",
-      });
+    if (!decoded?.userId) {
+      return res.status(401).json({ message: "Token inválido" });
     }
+
+    req.user = decoded;
 
     // =========================
     // 5. NORMALIZAR USER (🔥 FIX CLAVE)

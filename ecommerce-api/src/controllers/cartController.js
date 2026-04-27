@@ -193,58 +193,41 @@ async function removeCartItem(req, res, next) {
 /* =========================
    CLEAR CART (FIX 500 ERROR)
 ========================= */
-async function clearCartItems(req, res, next) {
+export const clearCartItems = async (req, res, next) => {
   try {
-    console.log("🔥 CLEAR CART HIT");
-    console.log("HEADERS AUTH:", req.headers.authorization);
-    console.log("COOKIES:", req.cookies);
-    console.log("USER:", req.user);
-
-    const userId = req.user?.userId || req.user?.id;
-
-    console.log("USER ID RESOLVED:", userId);
+    const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({
-        message: "UserId missing in request",
-        debug: req.user,
-      });
+      return res.status(401).json({ message: "No autorizado" });
     }
 
     const cart = await Cart.findOne({ user: userId });
 
-    console.log("CART FOUND:", cart);
-
+    // si no existe carrito
     if (!cart) {
       return res.status(200).json({
         message: "Cart already empty",
-        user: userId,
         products: [],
       });
     }
 
+    // 🔥 seguridad extra contra null/undefined
     cart.products = [];
 
     await cart.save();
 
-    console.log("✅ CART CLEARED SUCCESSFULLY");
-
     return res.status(200).json({
-      message: "Cart cleared",
-      user: userId,
+      message: "Cart cleared successfully",
       products: [],
     });
 
   } catch (error) {
-    console.error("🔥 CLEAR CART CRASH ERROR:");
-    console.error(error); // 👈 ESTE ES EL IMPORTANTE
-
+    console.error("🔥 CLEAR CART ERROR:", error);
     return res.status(500).json({
-      message: error.message,
-      stack: error.stack,
+      message: "Error clearing cart",
     });
   }
-}
+};
 
 /* =========================
    UPDATE CART
