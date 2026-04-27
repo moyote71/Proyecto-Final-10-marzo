@@ -1,57 +1,63 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../services/http";
-import ProductCard from "../components/common/ProductCard/ProductCard";
 
 export default function CategoryPage() {
   const { slug } = useParams();
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
 
     const fetchCategory = async () => {
       try {
+        setLoading(true);
+
         const res = await http.get(`/categories/slug/${slug}`);
+
         setCategory(res.data);
 
-        // 🔥 FIX IMPORTANTE:
-        // si backend no manda products, hacemos fetch aparte
-        if (res.data.products) {
+        // SAFE CHECK
+        if (Array.isArray(res.data?.products)) {
           setProducts(res.data.products);
         } else {
-          const prodRes = await http.get(`/products?category=${res.data._id}`);
-          setProducts(prodRes.data);
+          setProducts([]);
         }
 
       } catch (err) {
         console.error("Error cargando categoría:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchCategory();
   }, [slug]);
 
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+  if (loading) return <p>Cargando...</p>;
 
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-10 text-white">
       <h1 className="text-2xl font-bold mb-6">
-        {category?.name}
+        {category?.name || "Categoría"}
       </h1>
 
-      {/* GRID DE PRODUCTOS */}
       {products.length === 0 ? (
-        <p className="text-gray-500">No hay productos en esta categoría</p>
+        <p>No hay productos</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((p) => (
-            <ProductCard key={p._id} product={p} />
+            <div key={p._id} className="bg-white text-black p-4 rounded">
+              <p className="font-semibold">{p.name}</p>
+              <p>${p.price}</p>
+            </div>
           ))}
         </div>
       )}
-
     </div>
   );
 }
