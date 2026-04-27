@@ -195,9 +195,19 @@ async function removeCartItem(req, res, next) {
 ========================= */
 async function clearCartItems(req, res, next) {
   try {
-    const userId = req.user.userId;
+    console.log("🟡 CLEAR CART HIT");
+    console.log("USER:", req.user);
+
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      console.log("❌ NO USER ID");
+      return res.status(401).json({ message: "No userId in token" });
+    }
 
     const cart = await Cart.findOne({ user: userId });
+
+    console.log("CART FOUND:", cart);
 
     if (!cart) {
       return res.status(200).json({
@@ -210,11 +220,15 @@ async function clearCartItems(req, res, next) {
 
     await cart.save();
 
-    res.status(200).json({
+    console.log("✅ CART CLEARED");
+
+    return res.status(200).json({
       user: userId,
       products: [],
     });
+
   } catch (error) {
+    console.error("🔥 CLEAR CART ERROR:", error);
     next(error);
   }
 }
